@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanctuary • Your Wellness Companion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background-layers">
+        <div class="grain"></div>
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="sanctuary-header">
+            <div class="header-content">
+                <h1 class="sanctuary-title">
+                    <span class="title-icon">🌿</span>
+                    <span class="title-text">Sanctuary</span>
+                </h1>
+                <p class="sanctuary-subtitle">Your gentle companion for mindful living</p>
+            </div>
+            <div class="current-date" id="currentDate"></div>
+        </header>
+
+        <!-- Welcome Message / Agent Response -->
+        <div class="agent-response-container" id="agentResponseContainer">
+            <div class="agent-avatar">
+                <div class="avatar-pulse"></div>
+                <span class="avatar-icon">✨</span>
+            </div>
+            <div class="agent-message" id="agentMessage">
+                <p>Welcome back. How are you feeling today?</p>
+            </div>
+        </div>
+
+        <!-- Main Navigation Tabs -->
+        <nav class="sanctuary-nav">
+            <button class="nav-tab active" data-section="checkin">
+                <span class="tab-icon">🌅</span>
+                <span class="tab-label">Check-in</span>
+            </button>
+            <button class="nav-tab" data-section="journal">
+                <span class="tab-icon">📖</span>
+                <span class="tab-label">Journal</span>
+            </button>
+            <button class="nav-tab" data-section="insights">
+                <span class="tab-icon">🌙</span>
+                <span class="tab-label">Insights</span>
+            </button>
+            <button class="nav-tab" data-section="settings">
+                <span class="tab-icon">⚙️</span>
+                <span class="tab-label">Settings</span>
+            </button>
+        </nav>
+
+        <!-- Content Sections -->
+        <div class="content-wrapper">
+            
+            <!-- Check-in Section -->
+            <section class="content-section active" id="checkin">
+                <div class="section-intro">
+                    <h2 class="section-title">Daily Check-in</h2>
+                    <p class="section-description">Take a moment to reflect on where you are right now</p>
+                </div>
+
+                <form class="checkin-form" id="checkinForm">
+                    
+                    <!-- 1. Physical Health -->
+                    <div class="form-domain">
+                        <div class="domain-header">
+                            <h3 class="domain-title">
+                                <span class="domain-icon">💚</span>
+                                Physical Well-being
+                            </h3>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Energy Level</label>
+                            <div class="scale-input">
+                                <input type="range" min="1" max="5" value="3" id="energyLevel" class="range-slider">
+                                <div class="scale-labels">
+                                    <span>Drained</span>
+                                    <span>Low</span>
+                                    <span>Okay</span>
+                                    <span>Good</span>
+                                    <span>Vibrant</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Physical Soreness</label>
+                            <div class="button-group">
+                                <button type="button" class="option-btn active" data-group="soreness" data-value="none">None</button>
+                                <button type="button" class="option-btn" data-group="soreness" data-value="mild">Mild</button>
+                                <button type="button" class="option-btn" data-group="soreness" data-value="moderate">Moderate</button>
+                                <button type="button" class="option-btn" data-group="soreness" data-value="high">High</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Any pain or discomfort?</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="pain" value="knees">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Knees</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="pain" value="back">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Back</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="pain" value="shoulders">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Shoulders</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="pain" value="neck">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Neck</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="pain" value="headache">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Headache</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Sleep Quality (last night)</label>
+                            <div class="scale-input">
+                                <input type="range" min="1" max="5" value="3" id="sleepQuality" class="range-slider">
+                                <div class="scale-labels">
+                                    <span>Terrible</span>
+                                    <span>Poor</span>
+                                    <span>Okay</span>
+                                    <span>Good</span>
+                                    <span>Great</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Sleep Duration</label>
+                            <div class="time-input-group">
+                                <input type="time" id="bedtime" class="time-input">
+                                <span class="time-separator">to</span>
+                                <input type="time" id="waketime" class="time-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Illness or Recovery Status</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="health-status" value="sick">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Feeling sick</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="health-status" value="recovering">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Recovering</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="health-status" value="injured">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Managing injury</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Mental & Emotional State -->
+                    <div class="form-domain">
+                        <div class="domain-header">
+                            <h3 class="domain-title">
+                                <span class="domain-icon">🧡</span>
+                                Mental & Emotional
+                            </h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Current Mood</label>
+                            <div class="emoji-scale">
+                                <button type="button" class="emoji-btn" data-group="mood" data-value="1">😞</button>
+                                <button type="button" class="emoji-btn" data-group="mood" data-value="2">😕</button>
+                                <button type="button" class="emoji-btn active" data-group="mood" data-value="3">😐</button>
+                                <button type="button" class="emoji-btn" data-group="mood" data-value="4">🙂</button>
+                                <button type="button" class="emoji-btn" data-group="mood" data-value="5">😊</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Stress Level</label>
+                            <div class="scale-input">
+                                <input type="range" min="1" max="5" value="3" id="stressLevel" class="range-slider stress">
+                                <div class="scale-labels">
+                                    <span>Calm</span>
+                                    <span>Mild</span>
+                                    <span>Moderate</span>
+                                    <span>High</span>
+                                    <span>Overwhelming</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Current State</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="mental-state" value="anxious">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Feeling anxious</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="mental-state" value="overwhelmed">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Overwhelmed</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="mental-state" value="scattered">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Scattered/unfocused</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="mental-state" value="peaceful">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Peaceful</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">What's on your mind? (optional)</label>
+                            <textarea 
+                                id="reflection" 
+                                class="text-area" 
+                                placeholder="A sentence or two about what you're feeling..."
+                                rows="3"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">What's weighing on you today?</label>
+                            <textarea 
+                                id="weighing" 
+                                class="text-area" 
+                                placeholder="Anything creating pressure or worry..."
+                                rows="3"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 3. Spiritual & Meaning -->
+                    <div class="form-domain">
+                        <div class="domain-header">
+                            <h3 class="domain-title">
+                                <span class="domain-icon">💜</span>
+                                Spirit & Purpose
+                            </h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Today's Intention</label>
+                            <input 
+                                type="text" 
+                                id="intention" 
+                                class="text-input" 
+                                placeholder="What quality or focus do you want to bring to today?"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">One thing you're grateful for</label>
+                            <input 
+                                type="text" 
+                                id="gratitude" 
+                                class="text-input" 
+                                placeholder="Something that brought light to your day..."
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Did today align with what matters to you?</label>
+                            <div class="button-group">
+                                <button type="button" class="option-btn" data-group="alignment" data-value="no">Not really</button>
+                                <button type="button" class="option-btn active" data-group="alignment" data-value="somewhat">Somewhat</button>
+                                <button type="button" class="option-btn" data-group="alignment" data-value="yes">Yes</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Nutrition -->
+                    <div class="form-domain">
+                        <div class="domain-header">
+                            <h3 class="domain-title">
+                                <span class="domain-icon">🍊</span>
+                                Nourishment
+                            </h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Meals & Snacks Today</label>
+                            <textarea 
+                                id="meals" 
+                                class="text-area" 
+                                placeholder="What did you eat? (no need to be precise)"
+                                rows="3"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Hunger & Satisfaction</label>
+                            <div class="scale-input">
+                                <input type="range" min="1" max="5" value="3" id="satisfaction" class="range-slider">
+                                <div class="scale-labels">
+                                    <span>Still hungry</span>
+                                    <span>Slight</span>
+                                    <span>Satisfied</span>
+                                    <span>Full</span>
+                                    <span>Very full</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Today's eating context</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="eating-context" value="rushed">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Rushed meals</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="eating-context" value="social">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Social eating</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="eating-context" value="emotional">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Emotional eating</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="eating-context" value="mindful">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Mindful meals</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Any strong cravings?</label>
+                            <input 
+                                type="text" 
+                                id="cravings" 
+                                class="text-input" 
+                                placeholder="What are you craving?"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- 5. Time & Energy Planning -->
+                    <div class="form-domain">
+                        <div class="domain-header">
+                            <h3 class="domain-title">
+                                <span class="domain-icon">⏰</span>
+                                Time & Capacity
+                            </h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Available time today</label>
+                            <input 
+                                type="text" 
+                                id="timeBlocks" 
+                                class="text-input" 
+                                placeholder="e.g., 'Morning free, afternoon packed'"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Energy Forecast</label>
+                            <div class="button-group">
+                                <button type="button" class="option-btn" data-group="energy-forecast" data-value="low">Low</button>
+                                <button type="button" class="option-btn active" data-group="energy-forecast" data-value="medium">Medium</button>
+                                <button type="button" class="option-btn" data-group="energy-forecast" data-value="high">High</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Top 3 Priorities</label>
+                            <input type="text" id="priority1" class="text-input priority-input" placeholder="1. Most important">
+                            <input type="text" id="priority2" class="text-input priority-input" placeholder="2. Important">
+                            <input type="text" id="priority3" class="text-input priority-input" placeholder="3. Would be nice">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Must do vs Nice to do</label>
+                            <textarea 
+                                id="mustNice" 
+                                class="text-area" 
+                                placeholder="What absolutely needs to happen vs what can wait?"
+                                rows="3"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 6. Work/Study Load -->
+                    <div class="form-domain">
+                        <div class="domain-header">
+                            <h3 class="domain-title">
+                                <span class="domain-icon">📚</span>
+                                Mental Load
+                            </h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Cognitive Load</label>
+                            <div class="scale-input">
+                                <input type="range" min="1" max="5" value="3" id="cognitiveLoad" class="range-slider">
+                                <div class="scale-labels">
+                                    <span>Light</span>
+                                    <span>Moderate</span>
+                                    <span>Busy</span>
+                                    <span>Heavy</span>
+                                    <span>Crushing</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Upcoming Deadlines</label>
+                            <textarea 
+                                id="deadlines" 
+                                class="text-area" 
+                                placeholder="Any time-sensitive work or commitments?"
+                                rows="2"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Focus Difficulty</label>
+                            <div class="button-group">
+                                <button type="button" class="option-btn" data-group="focus" data-value="easy">Easy focus</button>
+                                <button type="button" class="option-btn active" data-group="focus" data-value="moderate">Some effort</button>
+                                <button type="button" class="option-btn" data-group="focus" data-value="hard">Very hard</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Context Switching Today</label>
+                            <div class="button-group">
+                                <button type="button" class="option-btn" data-group="switching" data-value="minimal">Minimal</button>
+                                <button type="button" class="option-btn active" data-group="switching" data-value="moderate">Moderate</button>
+                                <button type="button" class="option-btn" data-group="switching" data-value="excessive">Excessive</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. Environment & Context -->
+                    <div class="form-domain">
+                        <div class="domain-header">
+                            <h3 class="domain-title">
+                                <span class="domain-icon">🏡</span>
+                                Environment
+                            </h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Primary Location Today</label>
+                            <div class="button-group">
+                                <button type="button" class="option-btn active" data-group="location" data-value="home">Home</button>
+                                <button type="button" class="option-btn" data-group="location" data-value="work">Work</button>
+                                <button type="button" class="option-btn" data-group="location" data-value="campus">Campus</button>
+                                <button type="button" class="option-btn" data-group="location" data-value="other">Other</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Noise Level</label>
+                            <div class="button-group">
+                                <button type="button" class="option-btn active" data-group="noise" data-value="quiet">Quiet</button>
+                                <button type="button" class="option-btn" data-group="noise" data-value="moderate">Moderate</button>
+                                <button type="button" class="option-btn" data-group="noise" data-value="loud">Loud</button>
+                                <button type="button" class="option-btn" data-group="noise" data-value="chaotic">Chaotic</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Space Condition</label>
+                            <div class="button-group">
+                                <button type="button" class="option-btn" data-group="space" data-value="tidy">Tidy</button>
+                                <button type="button" class="option-btn active" data-group="space" data-value="lived-in">Lived-in</button>
+                                <button type="button" class="option-btn" data-group="space" data-value="messy">Messy</button>
+                                <button type="button" class="option-btn" data-group="space" data-value="chaotic">Chaotic</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Digital Overwhelm</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="digital" value="notifications">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Too many notifications</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="digital" value="tabs">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Browser tab chaos</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="digital" value="messages">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Unread messages piling up</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="digital" value="social">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Social media draining</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 8. Goals & Habits -->
+                    <div class="form-domain">
+                        <div class="domain-header">
+                            <h3 class="domain-title">
+                                <span class="domain-icon">🎯</span>
+                                Progress & Growth
+                            </h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">What are you optimizing for right now?</label>
+                            <textarea 
+                                id="optimizing" 
+                                class="text-area" 
+                                placeholder="e.g., Rest and recovery, creative projects, social connection..."
+                                rows="2"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Habits Today</label>
+                            <div class="habit-tracker">
+                                <div class="habit-item">
+                                    <span class="habit-name">Morning routine</span>
+                                    <div class="habit-buttons">
+                                        <button type="button" class="habit-btn" data-habit="morning" data-status="done">✓ Done</button>
+                                        <button type="button" class="habit-btn" data-habit="morning" data-status="partial">~ Partial</button>
+                                        <button type="button" class="habit-btn" data-habit="morning" data-status="skipped">✕ Skipped</button>
+                                    </div>
+                                </div>
+                                <div class="habit-item">
+                                    <span class="habit-name">Movement/exercise</span>
+                                    <div class="habit-buttons">
+                                        <button type="button" class="habit-btn" data-habit="movement" data-status="done">✓ Done</button>
+                                        <button type="button" class="habit-btn" data-habit="movement" data-status="partial">~ Partial</button>
+                                        <button type="button" class="habit-btn" data-habit="movement" data-status="skipped">✕ Skipped</button>
+                                    </div>
+                                </div>
+                                <div class="habit-item">
+                                    <span class="habit-name">Mindfulness/reflection</span>
+                                    <div class="habit-buttons">
+                                        <button type="button" class="habit-btn" data-habit="mindfulness" data-status="done">✓ Done</button>
+                                        <button type="button" class="habit-btn" data-habit="mindfulness" data-status="partial">~ Partial</button>
+                                        <button type="button" class="habit-btn" data-habit="mindfulness" data-status="skipped">✕ Skipped</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn" id="submitCheckin">
+                            <span class="btn-icon">✨</span>
+                            <span class="btn-text">Share with Sanctuary</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Journal Section -->
+            <section class="content-section" id="journal">
+                <div class="section-intro">
+                    <h2 class="section-title">Journal</h2>
+                    <p class="section-description">Your personal entries and reflections</p>
+                </div>
+
+                <div class="journal-container" id="journalContainer">
+                    <!-- Journal entries will be populated here -->
+                    <div class="empty-state">
+                        <div class="empty-icon">📖</div>
+                        <p>Your journal entries will appear here once you complete check-ins</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Insights Section -->
+            <section class="content-section" id="insights">
+                <div class="section-intro">
+                    <h2 class="section-title">Insights</h2>
+                    <p class="section-description">Patterns and gentle wisdom from your journey</p>
+                </div>
+
+                <div class="insights-container" id="insightsContainer">
+                    <div class="empty-state">
+                        <div class="empty-icon">🌙</div>
+                        <p>Insights will emerge as patterns develop over time</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section class="content-section" id="settings">
+                <div class="section-intro">
+                    <h2 class="section-title">Settings</h2>
+                    <p class="section-description">Customize your sanctuary experience</p>
+                </div>
+
+                <div class="settings-container">
+                    <div class="setting-group">
+                        <h3 class="setting-title">API Configuration</h3>
+                        <div class="form-group">
+                            <label class="form-label">Anthropic API Key</label>
+                            <input 
+                                type="password" 
+                                id="apiKey" 
+                                class="text-input" 
+                                placeholder="sk-ant-..."
+                            >
+                            <p class="help-text">Your API key is stored locally and never shared</p>
+                        </div>
+                        <button type="button" class="secondary-btn" id="saveApiKey">Save API Key</button>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3 class="setting-title">Data Management</h3>
+                        <button type="button" class="secondary-btn" id="exportData">Export All Data</button>
+                        <button type="button" class="danger-btn" id="clearData">Clear All Data</button>
+                        <p class="help-text">Export creates a JSON backup of all your check-ins</p>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3 class="setting-title">About</h3>
+                        <p class="about-text">
+                            Sanctuary is your gentle companion for mindful living. It uses AI to understand your patterns 
+                            and provide supportive guidance without judgment or metrics-driven pressure.
+                        </p>
+                        <p class="about-text">
+                            Built with care for those who want to live intentionally.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Reflecting on your check-in...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="storage.js"></script>
+    <script src="agent.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
