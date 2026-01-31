@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
   } catch (err) {
-    console.error("Benji/Sanctuary header failed:", err);
+    console.error("Benji/Benji header failed:", err);
     root.innerHTML = `
       <div style="
         padding:12px;

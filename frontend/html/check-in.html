@@ -1,617 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Check-in • Sanctuary</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/frontend/css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check-in • Benji</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/frontend/css/styles.css">
 </head>
+
 <body data-page="check-in">
 
-    <!-- keep this root (benji.js can still use it if needed) -->
-    <div id="benji-root"></div>
+  <!-- keep this root (benji.js can still use it if needed) -->
+  <div id="benji-root"></div>
 
-    <!-- Animated Background -->
-    <div class="background-layers">
-        <div class="grain"></div>
-        <div class="gradient-orb orb-1"></div>
-        <div class="gradient-orb orb-2"></div>
-        <div class="gradient-orb orb-3"></div>
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+
+    <!-- Domain Navigation (Sub-tabs for Check-in) -->
+    <nav class="Benji-nav" id="checkinTabs">
+      <button class="nav-tab active" data-domain="day">
+        <span class="tab-icon">🧡</span>
+        <span class="tab-label">Overall Day</span>
+      </button>
+      <button class="nav-tab" data-domain="fitness">
+        <span class="tab-icon">💚</span>
+        <span class="tab-label">Fitness</span>
+      </button>
+      <button class="nav-tab" data-domain="wellness">
+        <span class="tab-icon">💜</span>
+        <span class="tab-label">Wellness</span>
+      </button>
+    </nav>
+
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+      <div class="progress-text">
+        <span id="progressText">Overall Day</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
     </div>
 
-    <!-- Main Container -->
-    <div class="container">
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+      <form class="checkin-form" id="checkinForm">
 
-        <!-- Agent Response Container -->
-        <div class="agent-response-container" id="agentResponseContainer">
-            <div class="agent-avatar">
-                <div class="avatar-pulse"></div>
-                <span class="avatar-icon">✨</span>
+        <!-- TAB: Overall Day -->
+        <div class="domain-section active" id="domain-day">
+          <div class="section-intro">
+            <h2 class="section-title">Overall Day</h2>
+            <p class="section-description">How did today feel overall?</p>
+          </div>
+
+          <div class="form-domain">
+
+            <div class="form-group">
+              <label class="form-label">How did your day go (1–10)</label>
+              <div class="scale-input">
+                <input type="range" min="1" max="10" value="7" id="dayScore" class="range-slider">
+                <div class="scale-labels">
+                  <span>1</span><span>3</span><span>5</span><span>7</span><span>10</span>
+                </div>
+              </div>
+              <!-- if your CSS doesn't have this class, it will still display fine -->
+              <div class="value-readout">
+                <span id="dayScoreValue">7</span>/10
+              </div>
             </div>
-            <div class="agent-message" id="agentMessage">
-                <p>Welcome back. How are you feeling today?</p>
+
+            <div class="form-group">
+              <label class="form-label">Optional user description</label>
+              <textarea
+                id="dayNotes"
+                class="text-area"
+                placeholder="A sentence or two…"
+                rows="3"
+              ></textarea>
             </div>
+
+            <div class="form-group">
+              <label class="form-label">Relevant tags</label>
+              <div class="checkbox-group" id="tagGroup">
+                <!-- reusing your checkbox styling so it matches EXACTLY like before -->
+                <label class="checkbox-label">
+                  <input type="checkbox" name="tags" value="Relationship">
+                  <span class="checkbox-custom"></span>
+                  <span>Relationship</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="tags" value="Academics">
+                  <span class="checkbox-custom"></span>
+                  <span>Academics</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="tags" value="Work">
+                  <span class="checkbox-custom"></span>
+                  <span>Work</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="tags" value="Family">
+                  <span class="checkbox-custom"></span>
+                  <span>Family</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="tags" value="Friends">
+                  <span class="checkbox-custom"></span>
+                  <span>Friends</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="tags" value="Health">
+                  <span class="checkbox-custom"></span>
+                  <span>Health</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="tags" value="Money">
+                  <span class="checkbox-custom"></span>
+                  <span>Money</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="tags" value="Other">
+                  <span class="checkbox-custom"></span>
+                  <span>Other</span>
+                </label>
+              </div>
+            </div>
+
+          </div>
         </div>
 
-        <!-- Domain Navigation (Sub-tabs for Check-in) -->
-        <nav class="sanctuary-nav">
-            <button class="nav-tab active" data-domain="physical">
-                <span class="tab-icon">💚</span>
-                <span class="tab-label">Physical</span>
-            </button>
-            <button class="nav-tab" data-domain="mental">
-                <span class="tab-icon">🧡</span>
-                <span class="tab-label">Mental</span>
-            </button>
-            <button class="nav-tab" data-domain="spiritual">
-                <span class="tab-icon">💜</span>
-                <span class="tab-label">Spirit</span>
-            </button>
-            </button>
-        </nav>
+        <!-- TAB: Fitness -->
+        <div class="domain-section" id="domain-fitness">
+          <div class="section-intro">
+            <h2 class="section-title">Fitness</h2>
+            <p class="section-description">Movement + body check.</p>
+          </div>
 
-        <!-- Progress Indicator -->
-        <div class="progress-indicator">
-            <div class="progress-text">
-                <span id="progressText">Complete what feels right today</span>
+          <div class="form-domain">
+
+            <div class="form-group">
+              <label class="form-label">Fitness check in (1–5)</label>
+              <div class="scale-input">
+                <input type="range" min="1" max="5" value="3" id="fitnessScore" class="range-slider">
+                <div class="scale-labels">
+                  <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                </div>
+              </div>
+              <div class="value-readout">
+                <span id="fitnessScoreValue">3</span>/5
+              </div>
             </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+
+            <div class="form-group">
+              <label class="form-label">Optional user description</label>
+              <textarea
+                id="fitnessNotes"
+                class="text-area"
+                placeholder="Workout, run, soreness, energy…"
+                rows="3"
+              ></textarea>
             </div>
+
+            <div class="form-group">
+              <label class="form-label">Overall wellness check in (1–5)</label>
+              <div class="scale-input">
+                <input type="range" min="1" max="5" value="3" id="wellnessScore" class="range-slider">
+                <div class="scale-labels">
+                  <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                </div>
+              </div>
+              <div class="value-readout">
+                <span id="wellnessScoreValue">3</span>/5
+              </div>
+            </div>
+
+          </div>
         </div>
 
-        <!-- Content Wrapper -->
-        <div class="content-wrapper">
-            <form class="checkin-form" id="checkinForm">
-                
-                <!-- Physical Domain -->
-                <div class="domain-section active" id="domain-physical">
-                    <div class="section-intro">
-                        <h2 class="section-title">Physical Well-being</h2>
-                        <p class="section-description">How does your body feel today?</p>
-                    </div>
+        <!-- TAB: Wellness -->
+        <div class="domain-section" id="domain-wellness">
+          <div class="section-intro">
+            <h2 class="section-title">Wellness</h2>
+            <p class="section-description">Mind + basics check.</p>
+          </div>
 
-                    <div class="form-domain">
-                        <div class="form-group">
-                            <label class="form-label">Energy Level</label>
-                            <div class="scale-input">
-                                <input type="range" min="1" max="5" value="3" id="energyLevel" class="range-slider">
-                                <div class="scale-labels">
-                                    <span>Drained</span>
-                                    <span>Low</span>
-                                    <span>Okay</span>
-                                    <span>Good</span>
-                                    <span>Vibrant</span>
-                                </div>
-                            </div>
-                        </div>
+          <div class="form-domain">
 
-                        <div class="form-group">
-                            <label class="form-label">Physical Soreness</label>
-                            <div class="button-group">
-                                <button type="button" class="option-btn active" data-group="soreness" data-value="none">None</button>
-                                <button type="button" class="option-btn" data-group="soreness" data-value="mild">Mild</button>
-                                <button type="button" class="option-btn" data-group="soreness" data-value="moderate">Moderate</button>
-                                <button type="button" class="option-btn" data-group="soreness" data-value="high">High</button>
-                            </div>
-                        </div>
+            <div class="form-group">
+              <label class="form-label">Optional user description of day</label>
+              <textarea
+                id="wellnessNotes"
+                class="text-area"
+                placeholder="Anything you want to note…"
+                rows="3"
+              ></textarea>
+            </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Any pain or discomfort?</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="pain" value="knees">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Knees</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="pain" value="back">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Back</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="pain" value="shoulders">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Shoulders</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="pain" value="neck">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Neck</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="pain" value="headache">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Headache</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Sleep Quality (last night)</label>
-                            <div class="scale-input">
-                                <input type="range" min="1" max="5" value="3" id="sleepQuality" class="range-slider">
-                                <div class="scale-labels">
-                                    <span>Terrible</span>
-                                    <span>Poor</span>
-                                    <span>Okay</span>
-                                    <span>Good</span>
-                                    <span>Great</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Sleep Duration</label>
-                            <div class="time-input-group">
-                                <input type="time" id="bedtime" class="time-input">
-                                <span class="time-separator">to</span>
-                                <input type="time" id="waketime" class="time-input">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Illness or Recovery Status</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="health-status" value="sick">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Feeling sick</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="health-status" value="recovering">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Recovering</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="health-status" value="injured">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Managing injury</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
+            <div class="form-group">
+              <label class="form-label">How much stress? (1–5)</label>
+              <div class="scale-input">
+                <input type="range" min="1" max="5" value="3" id="stressScore" class="range-slider stress">
+                <div class="scale-labels">
+                  <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                 </div>
+              </div>
+              <div class="value-readout">
+                <span id="stressScoreValue">3</span>/5
+              </div>
+            </div>
 
-                <!-- Mental & Emotional Domain -->
-                <div class="domain-section" id="domain-mental">
-                    <div class="section-intro">
-                        <h2 class="section-title">Mental & Emotional</h2>
-                        <p class="section-description">What's your inner landscape like?</p>
-                    </div>
+            <div class="form-group">
+              <label class="form-label">Good mood? (1–5)</label>
+              <div class="emoji-scale" id="moodGroup">
+                <!-- reusing your emoji button style -->
+                <button type="button" class="emoji-btn active" data-group="mood" data-value="1">1</button>
+                <button type="button" class="emoji-btn" data-group="mood" data-value="2">2</button>
+                <button type="button" class="emoji-btn" data-group="mood" data-value="3">3</button>
+                <button type="button" class="emoji-btn" data-group="mood" data-value="4">4</button>
+                <button type="button" class="emoji-btn" data-group="mood" data-value="5">5</button>
+              </div>
+            </div>
 
-                    <div class="form-domain">
-                        <div class="form-group">
-                            <label class="form-label">Current Mood</label>
-                            <div class="emoji-scale">
-                                <button type="button" class="emoji-btn" data-group="mood" data-value="1">😞</button>
-                                <button type="button" class="emoji-btn" data-group="mood" data-value="2">😕</button>
-                                <button type="button" class="emoji-btn active" data-group="mood" data-value="3">😐</button>
-                                <button type="button" class="emoji-btn" data-group="mood" data-value="4">🙂</button>
-                                <button type="button" class="emoji-btn" data-group="mood" data-value="5">😊</button>
-                            </div>
-                        </div>
+            <div class="form-group">
+              <label class="form-label">Did they eat?</label>
+              <div class="button-group">
+                <button type="button" class="option-btn active" data-group="ate" data-value="yes">Yes</button>
+                <button type="button" class="option-btn" data-group="ate" data-value="no">No</button>
+              </div>
+            </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Stress Level</label>
-                            <div class="scale-input">
-                                <input type="range" min="1" max="5" value="3" id="stressLevel" class="range-slider stress">
-                                <div class="scale-labels">
-                                    <span>Calm</span>
-                                    <span>Mild</span>
-                                    <span>Moderate</span>
-                                    <span>High</span>
-                                    <span>Overwhelming</span>
-                                </div>
-                            </div>
-                        </div>
+            <div class="form-group">
+              <label class="form-label">Did they drink water?</label>
+              <div class="button-group">
+                <button type="button" class="option-btn active" data-group="water" data-value="yes">Yes</button>
+                <button type="button" class="option-btn" data-group="water" data-value="no">No</button>
+              </div>
+            </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Current State</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="mental-state" value="anxious">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Feeling anxious</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="mental-state" value="overwhelmed">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Overwhelmed</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="mental-state" value="scattered">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Scattered/unfocused</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="mental-state" value="peaceful">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Peaceful</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">What's on your mind? (optional)</label>
-                            <textarea 
-                                id="reflection" 
-                                class="text-area" 
-                                placeholder="A sentence or two about what you're feeling..."
-                                rows="3"
-                            ></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">What's weighing on you today?</label>
-                            <textarea 
-                                id="weighing" 
-                                class="text-area" 
-                                placeholder="Anything creating pressure or worry..."
-                                rows="3"
-                            ></textarea>
-                        </div>
-                    </div>
+            <div class="form-group">
+              <label class="form-label">How was their sleep? (1–5)</label>
+              <div class="scale-input">
+                <input type="range" min="1" max="5" value="3" id="sleepScore" class="range-slider">
+                <div class="scale-labels">
+                  <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                 </div>
+              </div>
+              <div class="value-readout">
+                <span id="sleepScoreValue">3</span>/5
+              </div>
+            </div>
 
-                <!-- Spiritual & Meaning Domain -->
-                <div class="domain-section" id="domain-spiritual">
-                    <div class="section-intro">
-                        <h2 class="section-title">Spirit & Purpose</h2>
-                        <p class="section-description">What matters to you right now?</p>
-                    </div>
-
-                    <div class="form-domain">
-                        <div class="form-group">
-                            <label class="form-label">Today's Intention</label>
-                            <input 
-                                type="text" 
-                                id="intention" 
-                                class="text-input" 
-                                placeholder="What quality or focus do you want to bring to today?"
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">One thing you're grateful for</label>
-                            <input 
-                                type="text" 
-                                id="gratitude" 
-                                class="text-input" 
-                                placeholder="Something that brought light to your day..."
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Did today align with what matters to you?</label>
-                            <div class="button-group">
-                                <button type="button" class="option-btn" data-group="alignment" data-value="no">Not really</button>
-                                <button type="button" class="option-btn active" data-group="alignment" data-value="somewhat">Somewhat</button>
-                                <button type="button" class="option-btn" data-group="alignment" data-value="yes">Yes</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Nutrition Domain -->
-                <div class="domain-section" id="domain-nutrition">
-                    <div class="section-intro">
-                        <h2 class="section-title">Nourishment</h2>
-                        <p class="section-description">How did you nourish yourself today?</p>
-                    </div>
-
-                    <div class="form-domain">
-                        <div class="form-group">
-                            <label class="form-label">Meals & Snacks Today</label>
-                            <textarea 
-                                id="meals" 
-                                class="text-area" 
-                                placeholder="What did you eat? (no need to be precise)"
-                                rows="3"
-                            ></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Hunger & Satisfaction</label>
-                            <div class="scale-input">
-                                <input type="range" min="1" max="5" value="3" id="satisfaction" class="range-slider">
-                                <div class="scale-labels">
-                                    <span>Still hungry</span>
-                                    <span>Slight</span>
-                                    <span>Satisfied</span>
-                                    <span>Full</span>
-                                    <span>Very full</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Today's eating context</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="eating-context" value="rushed">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Rushed meals</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="eating-context" value="social">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Social eating</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="eating-context" value="emotional">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Emotional eating</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="eating-context" value="mindful">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Mindful meals</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Any strong cravings?</label>
-                            <input 
-                                type="text" 
-                                id="cravings" 
-                                class="text-input" 
-                                placeholder="What are you craving?"
-                            >
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Time & Energy Planning Domain -->
-                <div class="domain-section" id="domain-planning">
-                    <div class="section-intro">
-                        <h2 class="section-title">Time & Capacity</h2>
-                        <p class="section-description">What's realistic for today?</p>
-                    </div>
-
-                    <div class="form-domain">
-                        <div class="form-group">
-                            <label class="form-label">Available time today</label>
-                            <input 
-                                type="text" 
-                                id="timeBlocks" 
-                                class="text-input" 
-                                placeholder="e.g., 'Morning free, afternoon packed'"
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Energy Forecast</label>
-                            <div class="button-group">
-                                <button type="button" class="option-btn" data-group="energy-forecast" data-value="low">Low</button>
-                                <button type="button" class="option-btn active" data-group="energy-forecast" data-value="medium">Medium</button>
-                                <button type="button" class="option-btn" data-group="energy-forecast" data-value="high">High</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Top 3 Priorities</label>
-                            <input type="text" id="priority1" class="text-input priority-input" placeholder="1. Most important">
-                            <input type="text" id="priority2" class="text-input priority-input" placeholder="2. Important">
-                            <input type="text" id="priority3" class="text-input priority-input" placeholder="3. Would be nice">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Must do vs Nice to do</label>
-                            <textarea 
-                                id="mustNice" 
-                                class="text-area" 
-                                placeholder="What absolutely needs to happen vs what can wait?"
-                                rows="3"
-                            ></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Work/Study Load Domain -->
-                <div class="domain-section" id="domain-workload">
-                    <div class="section-intro">
-                        <h2 class="section-title">Mental Load</h2>
-                        <p class="section-description">How much is on your plate?</p>
-                    </div>
-
-                    <div class="form-domain">
-                        <div class="form-group">
-                            <label class="form-label">Cognitive Load</label>
-                            <div class="scale-input">
-                                <input type="range" min="1" max="5" value="3" id="cognitiveLoad" class="range-slider">
-                                <div class="scale-labels">
-                                    <span>Light</span>
-                                    <span>Moderate</span>
-                                    <span>Busy</span>
-                                    <span>Heavy</span>
-                                    <span>Crushing</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Upcoming Deadlines</label>
-                            <textarea 
-                                id="deadlines" 
-                                class="text-area" 
-                                placeholder="Any time-sensitive work or commitments?"
-                                rows="2"
-                            ></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Focus Difficulty</label>
-                            <div class="button-group">
-                                <button type="button" class="option-btn" data-group="focus" data-value="easy">Easy focus</button>
-                                <button type="button" class="option-btn active" data-group="focus" data-value="moderate">Some effort</button>
-                                <button type="button" class="option-btn" data-group="focus" data-value="hard">Very hard</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Context Switching Today</label>
-                            <div class="button-group">
-                                <button type="button" class="option-btn" data-group="switching" data-value="minimal">Minimal</button>
-                                <button type="button" class="option-btn active" data-group="switching" data-value="moderate">Moderate</button>
-                                <button type="button" class="option-btn" data-group="switching" data-value="excessive">Excessive</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Environment & Context Domain -->
-                <div class="domain-section" id="domain-environment">
-                    <div class="section-intro">
-                        <h2 class="section-title">Environment</h2>
-                        <p class="section-description">What's your space like today?</p>
-                    </div>
-
-                    <div class="form-domain">
-                        <div class="form-group">
-                            <label class="form-label">Primary Location Today</label>
-                            <div class="button-group">
-                                <button type="button" class="option-btn active" data-group="location" data-value="home">Home</button>
-                                <button type="button" class="option-btn" data-group="location" data-value="work">Work</button>
-                                <button type="button" class="option-btn" data-group="location" data-value="campus">Campus</button>
-                                <button type="button" class="option-btn" data-group="location" data-value="other">Other</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Noise Level</label>
-                            <div class="button-group">
-                                <button type="button" class="option-btn active" data-group="noise" data-value="quiet">Quiet</button>
-                                <button type="button" class="option-btn" data-group="noise" data-value="moderate">Moderate</button>
-                                <button type="button" class="option-btn" data-group="noise" data-value="loud">Loud</button>
-                                <button type="button" class="option-btn" data-group="noise" data-value="chaotic">Chaotic</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Space Condition</label>
-                            <div class="button-group">
-                                <button type="button" class="option-btn" data-group="space" data-value="tidy">Tidy</button>
-                                <button type="button" class="option-btn active" data-group="space" data-value="lived-in">Lived-in</button>
-                                <button type="button" class="option-btn" data-group="space" data-value="messy">Messy</button>
-                                <button type="button" class="option-btn" data-group="space" data-value="chaotic">Chaotic</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Digital Overwhelm</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="digital" value="notifications">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Too many notifications</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="digital" value="tabs">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Browser tab chaos</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="digital" value="messages">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Unread messages piling up</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="digital" value="social">
-                                    <span class="checkbox-custom"></span>
-                                    <span>Social media draining</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Progress & Growth Domain -->
-                <div class="domain-section" id="domain-progress">
-                    <div class="section-intro">
-                        <h2 class="section-title">Progress & Growth</h2>
-                        <p class="section-description">What are you working towards?</p>
-                    </div>
-
-                    <div class="form-domain">
-                        <div class="form-group">
-                            <label class="form-label">What are you optimizing for right now?</label>
-                            <textarea 
-                                id="optimizing" 
-                                class="text-area" 
-                                placeholder="e.g., Rest and recovery, creative projects, social connection..."
-                                rows="2"
-                            ></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Habits Today</label>
-                            <div class="habit-tracker">
-                                <div class="habit-item">
-                                    <span class="habit-name">Morning routine</span>
-                                    <div class="habit-buttons">
-                                        <button type="button" class="habit-btn" data-habit="morning" data-status="done">✓ Done</button>
-                                        <button type="button" class="habit-btn" data-habit="morning" data-status="partial">~ Partial</button>
-                                        <button type="button" class="habit-btn" data-habit="morning" data-status="skipped">✕ Skipped</button>
-                                    </div>
-                                </div>
-                                <div class="habit-item">
-                                    <span class="habit-name">Movement/exercise</span>
-                                    <div class="habit-buttons">
-                                        <button type="button" class="habit-btn" data-habit="movement" data-status="done">✓ Done</button>
-                                        <button type="button" class="habit-btn" data-habit="movement" data-status="partial">~ Partial</button>
-                                        <button type="button" class="habit-btn" data-habit="movement" data-status="skipped">✕ Skipped</button>
-                                    </div>
-                                </div>
-                                <div class="habit-item">
-                                    <span class="habit-name">Mindfulness/reflection</span>
-                                    <div class="habit-buttons">
-                                        <button type="button" class="habit-btn" data-habit="mindfulness" data-status="done">✓ Done</button>
-                                        <button type="button" class="habit-btn" data-habit="mindfulness" data-status="partial">~ Partial</button>
-                                        <button type="button" class="habit-btn" data-habit="mindfulness" data-status="skipped">✕ Skipped</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </form>
+          </div>
         </div>
 
-        <!-- Navigation Buttons -->
-        <div class="domain-navigation">
-            <button class="nav-arrow-btn" id="prevDomain" disabled>
-                <span>← Previous</span>
-            </button>
-            <button class="nav-arrow-btn primary" id="nextDomain">
-                <span>Next →</span>
-            </button>
-            <button class="submit-btn" id="submitCheckin" style="display: none;">
-                <span class="btn-icon">✨</span>
-                <span class="btn-text">Complete Check-in</span>
-            </button>
-        </div>
-
+      </form>
     </div>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">Reflecting on your check-in...</p>
-        </div>
+    <!-- Navigation Buttons (kept EXACTLY like before) -->
+    <div class="domain-navigation">
+      <button class="nav-arrow-btn" id="prevDomain" disabled>
+        <span>← Previous</span>
+      </button>
+      <button class="nav-arrow-btn primary" id="nextDomain">
+        <span>Next →</span>
+      </button>
+      <button class="submit-btn" id="submitCheckin" style="display: none;">
+        <span class="btn-icon">✨</span>
+        <span class="btn-text">Complete Check-in</span>
+      </button>
     </div>
 
-    <!-- Scripts -->
-    <script src="/frontend/js/storage.js"></script>
-    <script src="/frontend/js/agent.js"></script>
-    <script src="/frontend/js/check-in.js"></script>
-    <script src="/frontend/components/benji.js"></script>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Reflecting on your check-in...</p>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/frontend/js/storage.js"></script>
+  <script src="/frontend/js/agent.js"></script>
+  <script src="/frontend/js/check-in.js"></script>
+  <script src="/frontend/components/benji.js"></script>
 </body>
 </html>
-
