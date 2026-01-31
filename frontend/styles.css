@@ -1993,6 +1993,175 @@ body {
 }
 
 /* ====================================
+   Onboarding Consent Icon
+   ==================================== */
+.ob-consent-icon {
+    font-size: 2.75rem;
+    text-align: center;
+    margin-bottom: var(--space-xs);
+}
+
+/* ====================================
+   Onboarding 1-5 Labeled Scale
+   ==================================== */
+.ob-labeled-scale {
+    margin-bottom: var(--space-lg);
+}
+
+.ob-scale-question {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.ob-scale-track {
+    display: flex;
+    gap: 6px;
+}
+
+.ob-scale-pip {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: var(--space-xs) 2px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+}
+
+.ob-scale-pip:hover {
+    transform: translateY(-2px);
+}
+
+.ob-pip-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--clay-100);
+    border: 2px solid var(--clay-200);
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ob-scale-pip:hover .ob-pip-dot {
+    border-color: var(--sage-light);
+    background: var(--forest-50);
+}
+
+.ob-scale-pip.selected .ob-pip-dot {
+    background: var(--sage);
+    border-color: var(--sage-dark);
+    box-shadow: 0 3px 10px rgba(1,104,68,0.3);
+}
+
+.ob-scale-pip.selected .ob-pip-dot::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+}
+
+.ob-pip-label {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.3;
+    transition: color var(--transition-fast);
+}
+
+.ob-scale-pip.selected .ob-pip-label {
+    color: var(--sage-dark);
+    font-weight: 600;
+}
+
+/* ====================================
+   Onboarding Collapsible
+   ==================================== */
+.ob-collapsible {
+    margin-top: var(--space-md);
+    margin-bottom: var(--space-sm);
+}
+
+.ob-collapsible-trigger {
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--sage);
+    text-align: left;
+    padding: var(--space-xs) 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color var(--transition-fast);
+}
+
+.ob-collapsible-trigger:hover {
+    color: var(--sage-dark);
+}
+
+.ob-collapsible-arrow {
+    display: inline-block;
+    font-size: 1.1rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: rotate(90deg);
+}
+
+.ob-collapsible:not(.open) .ob-collapsible-arrow {
+    transform: rotate(0deg);
+}
+
+.ob-collapsible-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ob-collapsible.open .ob-collapsible-body {
+    max-height: 200px;
+}
+
+/* ====================================
+   Onboarding Reflection Textarea
+   ==================================== */
+.ob-reflection-input {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    background: var(--clay-50);
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    resize: vertical;
+    line-height: 1.6;
+    outline: none;
+    transition: all var(--transition-base);
+    margin-top: var(--space-xs);
+}
+
+.ob-reflection-input:focus {
+    background: white;
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(1,104,68,0.1);
+}
+
+.ob-reflection-input::placeholder {
+    color: var(--clay-300);
+}
+
+/* ====================================
    Onboarding Responsive
    ==================================== */
 @media (max-width: 600px) {
@@ -2015,6 +2184,19 @@ body {
 
     .ob-scale-row {
         flex-direction: column;
+    }
+
+    .ob-scale-track {
+        gap: 3px;
+    }
+
+    .ob-pip-dot {
+        width: 30px;
+        height: 30px;
+    }
+
+    .ob-pip-label {
+        font-size: 0.625rem;
     }
 }
 
