@@ -1,15 +1,15 @@
 import os
 import json
-from google import genai
 from dotenv import load_dotenv
+load_dotenv()
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from tools import MANDATORY_TOOLS, OPTIONAL_TOOLS
+from backend.llm.tools import MANDATORY_TOOLS, OPTIONAL_TOOLS
 
 class BenjiLLM:
     def __init__(self):
-        load_dotenv()
         self.model = ChatGoogleGenerativeAI(
             model="gemini-2.5-pro",
             api_key=os.getenv("GEMINI_API_KEY"),
@@ -105,16 +105,21 @@ class BenjiLLM:
                 else:
                     self.user_facts[fact] = value
 
-    def run(self, user_input: str) -> str:
+    def run(self, user_input: str, user_facts: dict | None = None) -> str:
         """
         Main agent loop: collect facts, call tools, respond.
         """
+
+        if user_facts:
+            for key, value in user_facts.items():
+                if value is not None:
+                    self.user_facts[key] = value
         extracted_facts = self.extract_facts_from_input(user_input)
         for key, value in extracted_facts.items():
-            if value:
+            if key not in self.user_facts and value:
                 self.user_facts[key] = value
         print(self.user_facts)
-        self.ask_for_missing_facts()
+        
         tool_outputs = {}
         for name, tool in self.mandatory_tools.items():
             tool_outputs[name] = tool(self.user_facts)
