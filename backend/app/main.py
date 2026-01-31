@@ -52,6 +52,14 @@ class RunGoalsRequest(BaseModel):
     user_goal: str
     user_facts: Optional[Dict] = None
     user_id: Optional[str] = None
+    
+class RunUpcomingRequest(BaseModel):
+    user_facts: Optional[Dict[str, Any]] = None
+    user_id: Optional[str] = None
+
+
+class RunUpcomingResponse(BaseModel):
+    upcoming: Dict[str, Any]
 
 class SMARTGoal(BaseModel):
     Specific: str
@@ -243,7 +251,7 @@ def firebase_health():
     doc = ref.get()
     return {"firestore": "ok", "db": "benji", "doc": doc.to_dict()}
 
-    return {"response": output}
+
 @app.post("/goals", response_model=RunGoalsResponse)
 def run_goals_endpoint(payload: RunGoalsRequest):
     """
@@ -258,6 +266,28 @@ def run_goals_endpoint(payload: RunGoalsRequest):
         # Return only the smart_goals list
         smart_goals = result.get("smart_goals", [])
         return {"smart_goals": smart_goals}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    
+##TODO Create a route to update user facts adding goals
+
+@app.post("/upcoming", response_model=RunUpcomingResponse)
+def run_upcoming_endpoint(payload: RunUpcomingRequest):
+    """
+    Generate a 2-day upcoming plan using stored SMART goals
+    and optionally persist it to user facts.
+    """
+
+    try:
+        result = benji.run_upcoming_plan(
+            user_facts=payload.user_facts,
+            user_id=payload.user_id
+        )
+
+        upcoming = result.get("upcoming", {})
+        return {"upcoming": upcoming}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

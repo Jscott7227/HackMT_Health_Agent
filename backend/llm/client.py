@@ -8,7 +8,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
 
-from backend.llm.tools import MANDATORY_TOOLS, OPTIONAL_TOOLS, BenjiGoalsTool
+from backend.llm.tools import MANDATORY_TOOLS, OPTIONAL_TOOLS, BenjiGoalsTool, UpcomingPlanTool
 
 class BenjiLLM:
     def __init__(self):
@@ -51,7 +51,6 @@ class BenjiLLM:
             raw_content = "\n".join(lines)
 
         try:
-            print(raw_content)
             selected_tools = json.loads(raw_content)
             if not isinstance(selected_tools, list):
                 selected_tools = []
@@ -189,6 +188,19 @@ Provide clear, actionable guidance while emphasizing the importance of professio
         """
 
         facts = self.user_facts.copy()
+        
+        if user_id:
+            try:
+                from backend.app.main import get_user_by_id
+                user = get_user_by_id(user_id)
+
+                if user:
+                    stored = user.get("user_facts", {})
+                    facts.update(stored)
+            except Exception as e:
+                print(f"Warning: failed to load user facts for {user_id}: {e}")
+        
+        
         if user_facts:
             facts.update(user_facts)
 
@@ -209,6 +221,65 @@ Provide clear, actionable guidance while emphasizing the importance of professio
         self.user_facts = facts
 
         return goals
+    
+    def run_upcoming_plan(
+            self,
+            user_facts: Optional[dict] = None,
+            user_id: Optional[str] = None
+        ) -> dict:
+        """
+        Generate a 2-day upcoming plan from stored SMART goals.
+
+        Args:
+            user_facts: Optional dictionary of updated user facts
+            user_id: Optional user ID to persist plan in backend
+
+        Returns:
+            dict containing "upcoming" schedule
+        """
+
+        facts = self.user_facts.copy()
+
+        if user_id:
+            try:
+                from backend.app.main import get_user_by_id
+                user = get_user_by_id(user_id)
+
+                if user:
+                    stored = user.get("user_facts", {})
+                    facts.update(stored)
+            except Exception as e:
+                print(f"Warning: failed to load user facts for {user_id}: {e}")
+        
+        if user_facts:
+            facts.update(user_facts)
+
+        smart_goals = facts.get("smart_goals", [])
+        
+        # Generate plan via LLM
+        plan = UpcomingPlanTool(
+            facts=facts,
+            smart_goals=smart_goals,
+            model=self.model
+        )
+
+        # Persist generated plan
+        facts["upcoming_plan"] = plan.get("upcoming", {})
+
+        if user_id:
+            try:
+                from backend.app.main import update_user_facts
+                update_user_facts(
+                    user_id=user_id,
+                    user_facts={"upcoming_plan": facts["upcoming_plan"]}
+                )
+            except Exception as e:
+                print(f"Warning: failed to save upcoming plan for user {user_id}: {e}")
+
+        # Update local session
+        self.user_facts = facts
+
+        return plan
     
     
 if __name__ == "__main__":
