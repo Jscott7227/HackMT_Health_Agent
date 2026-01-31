@@ -7,10 +7,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/frontend/css/styles.css">
 </head>
 <body data-page="check-in">
+
+    <!-- keep this root (benji.js can still use it if needed) -->
     <div id="benji-root"></div>
+
     <!-- Animated Background -->
     <div class="background-layers">
         <div class="grain"></div>
@@ -21,8 +24,6 @@
 
     <!-- Main Container -->
     <div class="container">
-
-
 
         <!-- Agent Response Container -->
         <div class="agent-response-container" id="agentResponseContainer">
@@ -49,25 +50,6 @@
                 <span class="tab-icon">💜</span>
                 <span class="tab-label">Spirit</span>
             </button>
-            <button class="nav-tab" data-domain="nutrition">
-                <span class="tab-icon">🍊</span>
-                <span class="tab-label">Nutrition</span>
-            </button>
-            <button class="nav-tab" data-domain="planning">
-                <span class="tab-icon">⏰</span>
-                <span class="tab-label">Planning</span>
-            </button>
-            <button class="nav-tab" data-domain="workload">
-                <span class="tab-icon">📚</span>
-                <span class="tab-label">Workload</span>
-            </button>
-            <button class="nav-tab" data-domain="environment">
-                <span class="tab-icon">🏡</span>
-                <span class="tab-label">Environment</span>
-            </button>
-            <button class="nav-tab" data-domain="progress">
-                <span class="tab-icon">🎯</span>
-                <span class="tab-label">Progress</span>
             </button>
         </nav>
 
@@ -626,9 +608,10 @@
     </div>
 
     <!-- Scripts -->
-    <script src="storage.js"></script>
-    <script src="agent.js"></script>
-    <script src="check-in.js"></script>
-    <script src="../components/benji.js"></script>
+    <script src="/frontend/js/storage.js"></script>
+    <script src="/frontend/js/agent.js"></script>
+    <script src="/frontend/js/check-in.js"></script>
+    <script src="/frontend/components/benji.js"></script>
 </body>
 </html>
+

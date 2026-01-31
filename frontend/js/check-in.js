@@ -1,13 +1,15 @@
 /**
- * Main Application Script
- * Handles all UI interactions and orchestrates the app
+ * Check-in Page Script
+ * Handles domain-based tabbed navigation and form submission
  */
 
 // State management
-const AppState = {
-    currentSection: 'checkin',
+const CheckInState = {
+    currentDomain: 'physical',
+    domains: ['physical', 'mental', 'spiritual', 'nutrition', 'planning', 'workload', 'environment', 'progress'],
+    currentIndex: 0,
     formData: {},
-    isLoading: false
+    completedDomains: new Set()
 };
 
 // =====================================
@@ -15,28 +17,27 @@ const AppState = {
 // =====================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    initializeCheckIn();
 });
 
-function initializeApp() {
+function initializeCheckIn() {
     // Set current date
     updateCurrentDate();
     
-    // Initialize navigation
-    initializeNavigation();
+    // Initialize domain navigation
+    initializeDomainTabs();
     
-    // Initialize form interactions
+    // Initialize form controls
     initializeFormControls();
+    
+    // Initialize navigation buttons
+    initializeNavigationButtons();
     
     // Initialize form submission
     initializeFormSubmission();
     
-    // Initialize settings
-    initializeSettings();
-    
-    // Load existing data
-    loadJournalEntries();
-    loadInsights();
+    // Update progress
+    updateProgress();
     
     // Check for API key
     checkApiKey();
@@ -54,35 +55,122 @@ function updateCurrentDate() {
 }
 
 // =====================================
-// Navigation
+// Domain Navigation
 // =====================================
 
-function initializeNavigation() {
-    const navTabs = document.querySelectorAll('.nav-tab');
-    const contentSections = document.querySelectorAll('.content-section');
+function initializeDomainTabs() {
+    const domainTabs = document.querySelectorAll('.nav-tab[data-domain]');
     
-    navTabs.forEach(tab => {
+    domainTabs.forEach(tab => {
         tab.addEventListener('click', function() {
-            const sectionId = this.dataset.section;
+            const domainId = this.dataset.domain;
+            const index = CheckInState.domains.indexOf(domainId);
             
-            // Update active tab
-            navTabs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Update active section
-            contentSections.forEach(s => s.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
-            
-            AppState.currentSection = sectionId;
-            
-            // Refresh data if needed
-            if (sectionId === 'journal') {
-                loadJournalEntries();
-            } else if (sectionId === 'insights') {
-                loadInsights();
+            if (index !== -1) {
+                navigateToDomain(index);
             }
         });
     });
+}
+
+function navigateToDomain(index) {
+    // Validate index
+    if (index < 0 || index >= CheckInState.domains.length) return;
+    
+    const domainId = CheckInState.domains[index];
+    
+    // Update state
+    CheckInState.currentIndex = index;
+    CheckInState.currentDomain = domainId;
+    
+    // Update active tab
+    document.querySelectorAll('.nav-tab[data-domain]').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`.nav-tab[data-domain="${domainId}"]`).classList.add('active');
+    
+    // Update active section
+    document.querySelectorAll('.domain-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById(`domain-${domainId}`).classList.add('active');
+    
+    // Update navigation buttons
+    updateNavigationButtons();
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function initializeNavigationButtons() {
+    const prevBtn = document.getElementById('prevDomain');
+    const nextBtn = document.getElementById('nextDomain');
+    
+    prevBtn.addEventListener('click', function() {
+        if (CheckInState.currentIndex > 0) {
+            navigateToDomain(CheckInState.currentIndex - 1);
+        }
+    });
+    
+    nextBtn.addEventListener('click', function() {
+        if (CheckInState.currentIndex < CheckInState.domains.length - 1) {
+            markDomainAsVisited();
+            navigateToDomain(CheckInState.currentIndex + 1);
+        }
+    });
+}
+
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prevDomain');
+    const nextBtn = document.getElementById('nextDomain');
+    const submitBtn = document.getElementById('submitCheckin');
+    
+    // Update previous button
+    prevBtn.disabled = CheckInState.currentIndex === 0;
+    
+    // Update next/submit button
+    if (CheckInState.currentIndex === CheckInState.domains.length - 1) {
+        // Last domain - show submit button
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = 'inline-flex';
+    } else {
+        // Not last domain - show next button
+        nextBtn.style.display = 'flex';
+        submitBtn.style.display = 'none';
+    }
+}
+
+function markDomainAsVisited() {
+    CheckInState.completedDomains.add(CheckInState.currentDomain);
+    updateProgress();
+}
+
+function updateProgress() {
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    
+    const totalDomains = CheckInState.domains.length;
+    const currentIndex = CheckInState.currentIndex;
+    
+    // Calculate progress (current position through domains)
+    const progressPercent = ((currentIndex + 1) / totalDomains) * 100;
+    
+    progressFill.style.width = `${progressPercent}%`;
+    
+    // Update text
+    const domainNames = {
+        'physical': 'Physical',
+        'mental': 'Mental & Emotional',
+        'spiritual': 'Spirit & Purpose',
+        'nutrition': 'Nutrition',
+        'planning': 'Time & Planning',
+        'workload': 'Mental Load',
+        'environment': 'Environment',
+        'progress': 'Progress & Growth'
+    };
+    
+    const currentName = domainNames[CheckInState.currentDomain];
+    progressText.textContent = `${currentName} (${currentIndex + 1}/${totalDomains})`;
 }
 
 // =====================================
@@ -147,7 +235,6 @@ function initializeFormControls() {
 // =====================================
 
 function collectFormData() {
-    const form = document.getElementById('checkinForm');
     const formData = {};
     
     // Physical health
@@ -246,19 +333,19 @@ function getActiveHabitStatus(habit) {
 // =====================================
 
 function initializeFormSubmission() {
-    const form = document.getElementById('checkinForm');
+    const submitBtn = document.getElementById('submitCheckin');
     
-    form.addEventListener('submit', async function(e) {
+    submitBtn.addEventListener('click', async function(e) {
         e.preventDefault();
         
-        if (AppState.isLoading) return;
+        // Mark final domain as visited
+        markDomainAsVisited();
         
         // Collect form data
         const formData = collectFormData();
         
         // Show loading
         showLoading();
-        AppState.isLoading = true;
         
         try {
             // Save check-in to storage
@@ -275,15 +362,15 @@ function initializeFormSubmission() {
                 // Display AI response
                 displayAgentMessage(aiResponse.message);
                 
-                // Optionally save the AI response as an insight
+                // Save the AI response as an insight
                 await window.WellnessStorage.saveInsight({
                     type: 'checkin-response',
                     checkInId: savedCheckIn.id,
                     message: aiResponse.message
                 });
                 
-                // Reset form
-                resetForm();
+                // Reset form and state
+                resetCheckIn();
                 
                 // Scroll to top to see response
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -296,12 +383,18 @@ function initializeFormSubmission() {
             displayAgentMessage(`Something went wrong: ${error.message}. Your check-in was saved, but I couldn't generate a response.`);
         } finally {
             hideLoading();
-            AppState.isLoading = false;
         }
     });
 }
 
-function resetForm() {
+function resetCheckIn() {
+    // Reset to first domain
+    navigateToDomain(0);
+    
+    // Clear completed domains
+    CheckInState.completedDomains.clear();
+    
+    // Reset form values
     const form = document.getElementById('checkinForm');
     
     // Reset range sliders to middle value
@@ -339,6 +432,9 @@ function resetForm() {
     document.querySelector('[data-group="location"][data-value="home"]')?.classList.add('active');
     document.querySelector('[data-group="noise"][data-value="quiet"]')?.classList.add('active');
     document.querySelector('[data-group="space"][data-value="lived-in"]')?.classList.add('active');
+    
+    // Update progress
+    updateProgress();
 }
 
 // =====================================
@@ -376,306 +472,16 @@ function hideLoading() {
 }
 
 // =====================================
-// Journal Entries
+// API Key Check
 // =====================================
-
-async function loadJournalEntries() {
-    const container = document.getElementById('journalContainer');
-    
-    try {
-        const checkIns = await window.WellnessStorage.getAllCheckIns();
-        
-        if (checkIns.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">📖</div>
-                    <p>Your journal entries will appear here once you complete check-ins</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = '';
-        
-        checkIns.forEach(checkIn => {
-            const entryElement = createJournalEntry(checkIn);
-            container.appendChild(entryElement);
-        });
-        
-    } catch (error) {
-        console.error('Error loading journal entries:', error);
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">⚠️</div>
-                <p>Error loading journal entries</p>
-            </div>
-        `;
-    }
-}
-
-function createJournalEntry(checkIn) {
-    const entry = document.createElement('div');
-    entry.className = 'journal-entry';
-    
-    const date = new Date(checkIn.timestamp);
-    const dateStr = date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    });
-    
-    // Build summary
-    const summary = [];
-    
-    if (checkIn.spiritual?.intention) {
-        summary.push(`<strong>Intention:</strong> ${checkIn.spiritual.intention}`);
-    }
-    
-    if (checkIn.spiritual?.gratitude) {
-        summary.push(`<strong>Gratitude:</strong> ${checkIn.spiritual.gratitude}`);
-    }
-    
-    if (checkIn.mental?.reflection) {
-        summary.push(`<strong>Reflection:</strong> ${checkIn.mental.reflection}`);
-    }
-    
-    const energyLabels = ['Drained', 'Low', 'Okay', 'Good', 'Vibrant'];
-    if (checkIn.physical?.energyLevel) {
-        summary.push(`<strong>Energy:</strong> ${energyLabels[checkIn.physical.energyLevel - 1]}`);
-    }
-    
-    const moodEmojis = ['😞', '😕', '😐', '🙂', '😊'];
-    if (checkIn.mental?.mood) {
-        summary.push(`<strong>Mood:</strong> ${moodEmojis[checkIn.mental.mood - 1]}`);
-    }
-    
-    entry.innerHTML = `
-        <div class="entry-header">
-            <div class="entry-date">${dateStr}</div>
-        </div>
-        <div class="entry-content">
-            ${summary.join('<br>')}
-        </div>
-    `;
-    
-    return entry;
-}
-
-// =====================================
-// Insights
-// =====================================
-
-async function loadInsights() {
-    const container = document.getElementById('insightsContainer');
-    
-    try {
-        const insights = await window.WellnessStorage.getAllInsights();
-        
-        if (insights.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">🌙</div>
-                    <p>Insights will emerge as patterns develop over time</p>
-                    <button class="secondary-btn" onclick="generateNewInsights()" style="margin-top: 1rem;">
-                        Generate Weekly Insights
-                    </button>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = '';
-        
-        // Add button to generate new insights
-        const buttonDiv = document.createElement('div');
-        buttonDiv.style.marginBottom = 'var(--space-lg)';
-        buttonDiv.innerHTML = `
-            <button class="secondary-btn" onclick="generateNewInsights()">
-                Generate New Insights
-            </button>
-        `;
-        container.appendChild(buttonDiv);
-        
-        insights.forEach(insight => {
-            const insightElement = createInsightCard(insight);
-            container.appendChild(insightElement);
-        });
-        
-    } catch (error) {
-        console.error('Error loading insights:', error);
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">⚠️</div>
-                <p>Error loading insights</p>
-            </div>
-        `;
-    }
-}
-
-function createInsightCard(insight) {
-    const card = document.createElement('div');
-    card.className = 'insight-card';
-    
-    const date = new Date(insight.timestamp);
-    const dateStr = date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    });
-    
-    card.innerHTML = `
-        <div class="insight-title">Insights from ${dateStr}</div>
-        <div class="insight-content">
-            ${insight.message.replace(/\n/g, '<br>')}
-        </div>
-    `;
-    
-    return card;
-}
-
-async function generateNewInsights() {
-    showLoading();
-    
-    try {
-        const result = await window.WellnessAgent.generateWeeklyInsights();
-        
-        if (result.success) {
-            // Save the insights
-            await window.WellnessStorage.saveInsight({
-                type: 'weekly-insights',
-                message: result.insights
-            });
-            
-            // Reload insights display
-            await loadInsights();
-        } else {
-            alert(result.message);
-        }
-    } catch (error) {
-        console.error('Error generating insights:', error);
-        alert('Error generating insights: ' + error.message);
-    } finally {
-        hideLoading();
-    }
-}
-
-// Make generateNewInsights available globally
-window.generateNewInsights = generateNewInsights;
-
-// =====================================
-// Settings
-// =====================================
-
-function initializeSettings() {
-    // Load API key
-    const apiKeyInput = document.getElementById('apiKey');
-    apiKeyInput.value = window.WellnessStorage.getApiKey();
-    
-    // Save API key button
-    document.getElementById('saveApiKey').addEventListener('click', function() {
-        const apiKey = apiKeyInput.value.trim();
-        
-        if (!apiKey) {
-            alert('Please enter an API key');
-            return;
-        }
-        
-        if (window.WellnessStorage.saveApiKey(apiKey)) {
-            alert('API key saved successfully!');
-        } else {
-            alert('Error saving API key');
-        }
-    });
-    
-    // Export data button
-    document.getElementById('exportData').addEventListener('click', async function() {
-        try {
-            const data = await window.WellnessStorage.exportData();
-            
-            if (!data) {
-                alert('Error exporting data');
-                return;
-            }
-            
-            // Create download
-            const dataStr = JSON.stringify(data, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `sanctuary-export-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            
-        } catch (error) {
-            console.error('Error exporting data:', error);
-            alert('Error exporting data: ' + error.message);
-        }
-    });
-    
-    // Clear data button
-    document.getElementById('clearData').addEventListener('click', async function() {
-        const confirmed = confirm(
-            'Are you sure you want to clear all data? This cannot be undone.\n\n' +
-            'Consider exporting your data first.'
-        );
-        
-        if (!confirmed) return;
-        
-        const doubleConfirm = confirm(
-            'This will permanently delete all your check-ins and insights. Are you absolutely sure?'
-        );
-        
-        if (!doubleConfirm) return;
-        
-        showLoading();
-        
-        try {
-            const success = await window.WellnessStorage.clearAllData();
-            
-            if (success) {
-                alert('All data cleared successfully');
-                
-                // Reload the page to reset everything
-                window.location.reload();
-            } else {
-                alert('Error clearing data');
-            }
-        } catch (error) {
-            console.error('Error clearing data:', error);
-            alert('Error clearing data: ' + error.message);
-        } finally {
-            hideLoading();
-        }
-    });
-}
 
 function checkApiKey() {
     const apiKey = window.WellnessStorage.getApiKey();
     
     if (!apiKey) {
         displayAgentMessage(
-            'Welcome to Sanctuary! To get started, please add your Anthropic API key in Settings. ' +
+            'Welcome to Benji! To get started, please add your Anthropic API key in Settings. ' +
             'This allows me to provide personalized, thoughtful responses to your check-ins.'
         );
     }
 }
-
-// =====================================
-// Utility Functions
-// =====================================
-
-// Add smooth scrolling for better UX
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-});

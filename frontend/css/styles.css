@@ -110,6 +110,7 @@ body {
     height: 100%;
     z-index: -1;
     overflow: hidden;
+    pointer-events: none;
 }
 
 .grain {
@@ -1303,63 +1304,75 @@ body {
 /* ====================================
    TOP BAR
    ==================================== */
-@media print {
 
-    .benji-bar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 28px;
-    backdrop-filter: blur(14px);
-    background: rgba(255, 255, 255, 0.75);
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    }
-
-    .benji-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    }
-
-    .benji-brand h1 {
-    font-size: 1.2rem;
-    margin: 0;
-    }
-
-    .benji-brand p {
-    font-size: 0.8rem;
-    opacity: 0.7;
-    margin: 0;
-    }
-
-    .benji-nav {
-    display: flex;
-    gap: 20px;
-    }
-
-    .benji-nav a {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    text-decoration: none;
-    color: inherit;
-    font-weight: 500;
-    }
-
-    .benji-nav a.active {
-    background: rgba(0,0,0,0.08);
-    }
-
-    .benji-date {
-    font-size: 0.85rem;
-    opacity: 0.7;
-    }
+#benji-root {
+  position: relative;
+  z-index: 9999;
 }
+.background-layers {
+  z-index: 0;
+}
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+
+.benji-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.75);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.benji-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.benji-brand h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.benji-brand p {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.benji-nav {
+  display: flex;
+  gap: 20px;
+}
+
+.benji-nav a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  font-weight: 500;
+}
+
+.benji-nav a.active {
+  background: rgba(0,0,0,0.08);
+}
+
+.benji-date {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
 
 
 /* ====================================

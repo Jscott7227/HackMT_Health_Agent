@@ -85,7 +85,7 @@ Recent patterns from the past week:
 - Average stress: ${stats.averageStress}/5
 - Average sleep quality: ${stats.averageSleep}/5` : '';
 
-        return `You are Sanctuary, a gentle, empathetic wellness companion. Your role is to provide supportive, non-judgmental guidance based on the user's check-in.
+        return `You are Benji, a gentle, empathetic wellness companion. Your role is to provide supportive, non-judgmental guidance based on the user's check-in.
 
 ${contextInfo}
 
@@ -185,7 +185,7 @@ Respond in 3-5 short paragraphs.`;
      * Build the prompt for weekly insights
      */
     buildInsightsPrompt(recentCheckIns) {
-        return `You are Sanctuary, a gentle wellness companion. Analyze the following check-ins from the past week and provide thoughtful insights.
+        return `You are Benji, a gentle wellness companion. Analyze the following check-ins from the past week and provide thoughtful insights.
 
 Check-ins (most recent first):
 ${JSON.stringify(recentCheckIns, null, 2)}
@@ -221,7 +221,7 @@ Remember: You're helping someone understand themselves better, not grading their
         }
 
         try {
-            const prompt = `You are Sanctuary, a gentle wellness companion. Based on the following context, provide a single, specific, actionable suggestion.
+            const prompt = `You are Benji, a gentle wellness companion. Based on the following context, provide a single, specific, actionable suggestion.
 
 Context: ${context}
 

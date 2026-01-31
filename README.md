@@ -1,4 +1,4 @@
-# Sanctuary - Your Wellness Companion 🌿
+# Benji - Your Wellness Companion 🌿
 
 A gentle, AI-powered wellness companion that helps you live more intentionally through mindful check-ins and supportive guidance.
 
@@ -155,7 +155,7 @@ Edit the prompt-building functions in `agent.js` to customize how the AI respond
 
 ## Philosophy
 
-Sanctuary is built on these principles:
+Benji is built on these principles:
 
 1. **Kindness First**: The AI never judges, criticizes, or pressures
 2. **Capacity-Aware**: Suggestions respect your current energy and state
