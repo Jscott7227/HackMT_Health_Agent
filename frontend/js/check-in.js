@@ -334,6 +334,11 @@
         localStorage.setItem(key, JSON.stringify(arr));
       }
 
+      // Close the modal if we're inside one (home page)
+      if (window.BenjiCheckinModal) {
+        window.BenjiCheckinModal.close();
+      }
+
       const agentMsg = $("#agentMessage");
       if (agentMsg) {
         agentMsg.innerHTML = `<p>Saved! Want to review your data?</p>`;

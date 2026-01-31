@@ -48,7 +48,7 @@
         <strong>Complete your daily check-in</strong>
         <span>Track your progress and let Benji help you stay on course.</span>
       </div>
-      <a href="check-in.html" class="banner-cta">Check in now</a>
+      <button type="button" class="banner-cta" id="openCheckinBtn">Check in now</button>
     </div>
 
     <!-- ===== RECOVERY DAY MESSAGE ===== -->
@@ -109,10 +109,411 @@
 
   </div>
 
+  <!-- ===== CHECK-IN MODAL ===== -->
+  <div class="checkin-modal-overlay" id="checkinModal">
+    <div class="checkin-modal-body">
+      <button type="button" class="checkin-modal-close" id="closeCheckinBtn">&times;</button>
+
+      <!-- Domain Navigation Tabs -->
+      <nav class="Benji-nav" id="checkinTabs">
+        <button class="nav-tab active" data-domain="day">
+          <span class="tab-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1l2.1-2.1M17 7l2.1-2.1"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="tab-label">Overall Day</span>
+        </button>
+        <button class="nav-tab" data-domain="fitness">
+          <span class="tab-icon">
+            <svg width="20" height="20" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+              <path d="M272 96c26.51 0 48-21.49 48-48S298.51 0 272 0s-48 21.49-48 48 21.49 48 48 48zM113.69 317.47l-14.8 34.52H32c-17.67 0-32 14.33-32 32s14.33 32 32 32h77.45c19.25 0 36.58-11.44 44.11-29.09l8.79-20.52-10.67-6.3c-17.32-10.23-30.06-25.37-37.99-42.61zM384 224h-44.03l-26.06-53.25c-12.5-25.55-35.45-44.23-61.78-50.94l-71.08-21.14c-28.3-6.8-57.77-.55-80.84 17.14l-39.67 30.41c-14.03 10.75-16.69 30.83-5.92 44.86s30.84 16.66 44.86 5.92l39.69-30.41c7.67-5.89 17.44-8 25.27-6.14l14.7 4.37-37.46 87.39c-12.62 29.48-1.31 64.01 26.3 80.31l84.98 50.17-27.47 87.73c-5.28 16.86 4.11 34.81 20.97 40.09 3.19 1 6.41 1.48 9.58 1.48 13.61 0 26.23-8.77 30.52-22.45l31.64-101.06c5.91-20.77-2.89-43.08-21.64-54.39l-61.24-36.14 31.31-78.28c8.88-22.2 32.47-32.4 54.66-23.52 2.16.86 4.21 1.93 6.17 3.18z"/>
+            </svg>
+          </span>
+          <span class="tab-label">Fitness</span>
+        </button>
+        <button class="nav-tab" data-domain="wellness">
+          <span class="tab-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1l1.7 1.7L12 21l7.1-6.6 1.7-1.7a5 5 0 0 0 0-7.1Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="tab-label">Wellness</span>
+        </button>
+      </nav>
+
+      <!-- Progress Indicator -->
+      <div class="progress-indicator">
+        <div class="progress-text"><span id="progressText">Overall Day</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+
+      <!-- Content Wrapper -->
+      <div class="content-wrapper">
+        <form class="checkin-form" id="checkinForm">
+
+          <!-- TAB 1: Overall Day -->
+          <div class="domain-section active" id="domain-day">
+            <div class="section-intro">
+              <h2 class="section-title">Overall Day</h2>
+              <p class="section-description">How did today feel overall?</p>
+            </div>
+            <div class="form-domain">
+              <div class="form-group">
+                <label class="form-label">Day rating overall (1-10)</label>
+                <div class="scale-input">
+                  <input type="range" min="1" max="10" value="7" id="dayScore" class="range-slider">
+                  <div class="scale-labels"><span>1</span><span>3</span><span>5</span><span>7</span><span>10</span></div>
+                </div>
+                <div class="value-readout"><span id="dayScoreValue">7</span>/10</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Optional description</label>
+                <textarea id="dayNotes" class="text-area" placeholder="How was your day? A sentence or two..." rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Relevant tags</label>
+                <div class="checkbox-group" id="tagGroup">
+                  <label class="checkbox-label"><input type="checkbox" name="tags" value="Relationship"><span class="checkbox-custom"></span><span>Relationship</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="tags" value="Academics"><span class="checkbox-custom"></span><span>Academics</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="tags" value="Work"><span class="checkbox-custom"></span><span>Work</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="tags" value="Family"><span class="checkbox-custom"></span><span>Family</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="tags" value="Friends"><span class="checkbox-custom"></span><span>Friends</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="tags" value="Health"><span class="checkbox-custom"></span><span>Health</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="tags" value="Money"><span class="checkbox-custom"></span><span>Money</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="tags" value="Other"><span class="checkbox-custom"></span><span>Other</span></label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">How balanced were your meals? (1-5)</label>
+                <div class="scale-input">
+                  <input type="range" min="1" max="5" value="3" id="eatScore" class="range-slider">
+                  <div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+                </div>
+                <div class="value-readout"><span id="eatScoreValue">3</span>/5</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">How much water did you drink? (1-5)</label>
+                <div class="scale-input">
+                  <input type="range" min="1" max="5" value="3" id="drinkScore" class="range-slider">
+                  <div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+                </div>
+                <div class="value-readout"><span id="drinkScoreValue">3</span>/5</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">How was your sleep? (1-5)</label>
+                <div class="scale-input">
+                  <input type="range" min="1" max="5" value="3" id="sleepScore" class="range-slider">
+                  <div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+                </div>
+                <div class="value-readout"><span id="sleepScoreValue">3</span>/5</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Fitness -->
+          <div class="domain-section" id="domain-fitness">
+            <div class="section-intro">
+              <h2 class="section-title">Fitness</h2>
+              <p class="section-description">Movement + body check.</p>
+            </div>
+            <div class="form-domain">
+              <div class="form-group">
+                <label class="form-label">Overall fitness check-in (1-5)</label>
+                <div class="scale-input">
+                  <input type="range" min="1" max="5" value="3" id="fitnessScore" class="range-slider">
+                  <div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+                </div>
+                <div class="value-readout"><span id="fitnessScoreValue">3</span>/5</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Optional description</label>
+                <textarea id="fitnessNotes" class="text-area" placeholder="Workout, run, soreness, energy..." rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Daily fitness goal target reached (1-5)</label>
+                <div class="scale-input">
+                  <input type="range" min="1" max="5" value="3" id="fitnessGoalScore" class="range-slider">
+                  <div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+                </div>
+                <div class="value-readout"><span id="fitnessGoalScoreValue">3</span>/5</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Recovery Day?</label>
+                <div class="button-group">
+                  <button type="button" class="option-btn" data-group="recoveryDay" data-value="yes">Yes</button>
+                  <button type="button" class="option-btn active" data-group="recoveryDay" data-value="no">No</button>
+                </div>
+                <p class="checkin-hint" id="recoveryHint" style="display:none;">Rest up! Fitness goal details are hidden for recovery days.</p>
+              </div>
+            </div>
+
+            <!-- Fitness Goal Sub-Tabs -->
+            <div id="fitnessGoalSection">
+              <div class="form-domain" style="margin-top: var(--space-md);">
+                <label class="form-label" style="margin-bottom: var(--space-sm);">Active fitness goal tabs</label>
+                <p class="checkin-hint">Select the goals relevant to your check-in today.</p>
+                <div class="fitness-goal-tabs" id="fitnessGoalTabs">
+                  <button type="button" class="goal-tab" data-goal="weight-loss">Weight Loss</button>
+                  <button type="button" class="goal-tab" data-goal="weight-gain">Weight Gain</button>
+                  <button type="button" class="goal-tab" data-goal="body-recomp">Body Recomp</button>
+                  <button type="button" class="goal-tab" data-goal="strength">Muscle / Strength</button>
+                  <button type="button" class="goal-tab" data-goal="cardio">Cardio / Endurance</button>
+                  <button type="button" class="goal-tab" data-goal="general">General Maintenance</button>
+                  <button type="button" class="goal-tab" data-goal="mobility">Mobility / Flexibility</button>
+                  <button type="button" class="goal-tab" data-goal="injury">Injury / Recovery</button>
+                  <button type="button" class="goal-tab" data-goal="rehab">Rehab Adherence</button>
+                  <button type="button" class="goal-tab" data-goal="performance">Performance / Sport</button>
+                </div>
+              </div>
+
+              <!-- WEIGHT LOSS -->
+              <div class="goal-panel" id="goal-weight-loss" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">Weight Loss</h3></div>
+                  <div class="form-group"><label class="form-label">Caloric intake today</label><input type="number" id="wl-calories" class="text-input" placeholder="e.g. 1800"></div>
+                  <div class="form-group"><label class="form-label">Training type</label>
+                    <div class="button-group">
+                      <button type="button" class="option-btn" data-group="wl-training" data-value="muscle">Muscle Training</button>
+                      <button type="button" class="option-btn" data-group="wl-training" data-value="recomp">Body Recomp</button>
+                      <button type="button" class="option-btn" data-group="wl-training" data-value="cardio">Cardio</button>
+                      <button type="button" class="option-btn" data-group="wl-training" data-value="general">General</button>
+                    </div>
+                  </div>
+                  <div class="form-group"><label class="form-label">Today's weight (lbs)</label><input type="number" step="0.1" id="wl-weight" class="text-input" placeholder="e.g. 165.5"></div>
+                </div>
+              </div>
+
+              <!-- WEIGHT GAIN -->
+              <div class="goal-panel" id="goal-weight-gain" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">Weight Gain</h3></div>
+                  <div class="form-group"><label class="form-label">Caloric intake today (above target)</label><input type="number" id="wg-calories" class="text-input" placeholder="e.g. 3000"></div>
+                  <div class="form-group"><label class="form-label">Today's weight (lbs)</label><input type="number" step="0.1" id="wg-weight" class="text-input" placeholder="e.g. 155.0"></div>
+                </div>
+              </div>
+
+              <!-- BODY RECOMPOSITION -->
+              <div class="goal-panel" id="goal-body-recomp" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">Body Recomposition</h3></div>
+                  <div class="form-group"><label class="form-label">Caloric intake (deficit while maintaining protein)</label><input type="number" id="br-calories" class="text-input" placeholder="e.g. 2000"></div>
+                  <div class="form-group"><label class="form-label">Protein (grams)</label><input type="number" id="br-protein" class="text-input" placeholder="e.g. 100"></div>
+                  <div class="form-group"><label class="form-label">Hydration (glasses of water)</label><input type="number" id="br-hydration" class="text-input" placeholder="e.g. 8"></div>
+                  <div class="form-group"><label class="form-label">Carbs (grams)</label><input type="number" id="br-carbs" class="text-input" placeholder="e.g. 200"></div>
+                  <div class="form-group"><label class="form-label">Fats (grams)</label><input type="number" id="br-fats" class="text-input" placeholder="e.g. 65"></div>
+                  <div class="form-group"><label class="form-label">Fiber (grams)</label><input type="number" id="br-fiber" class="text-input" placeholder="e.g. 30"></div>
+                  <div class="form-group"><label class="form-label">Today's weight (lbs)</label><input type="number" step="0.1" id="br-weight" class="text-input" placeholder="e.g. 170.0"></div>
+                </div>
+              </div>
+
+              <!-- MUSCLE / STRENGTH -->
+              <div class="goal-panel" id="goal-strength" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">Muscle / Strength Training</h3></div>
+                  <div class="form-group"><label class="form-label">Calories</label><input type="number" id="st-calories" class="text-input" placeholder="e.g. 2500"></div>
+                  <div class="form-group"><label class="form-label">Protein (grams)</label><input type="number" id="st-protein" class="text-input" placeholder="e.g. 140"></div>
+                  <div class="form-group"><label class="form-label">Carbs (grams)</label><input type="number" id="st-carbs" class="text-input" placeholder="e.g. 250"></div>
+                  <div class="form-group"><label class="form-label">Fat (grams)</label><input type="number" id="st-fat" class="text-input" placeholder="e.g. 70"></div>
+                  <div class="form-group"><label class="form-label">Hydration (glasses of water)</label><input type="number" id="st-hydration" class="text-input" placeholder="e.g. 10"></div>
+                  <div class="form-group"><label class="form-label">Today's weight (lbs)</label><input type="number" step="0.1" id="st-weight" class="text-input" placeholder="e.g. 180.0"></div>
+                </div>
+              </div>
+
+              <!-- CARDIO / ENDURANCE -->
+              <div class="goal-panel" id="goal-cardio" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">Cardio / Endurance</h3></div>
+                  <div class="form-group"><label class="form-label">Activity type</label>
+                    <div class="button-group">
+                      <button type="button" class="option-btn" data-group="cardio-type" data-value="walking">Walking</button>
+                      <button type="button" class="option-btn" data-group="cardio-type" data-value="running">Running</button>
+                      <button type="button" class="option-btn" data-group="cardio-type" data-value="biking">Biking</button>
+                    </div>
+                  </div>
+                  <div class="form-group"><label class="form-label">Volume (minutes)</label><input type="number" id="cardio-volume" class="text-input" placeholder="e.g. 45"></div>
+                  <div class="form-group"><label class="form-label">Distance (miles)</label><input type="number" step="0.1" id="cardio-distance" class="text-input" placeholder="e.g. 3.5"></div>
+                  <div class="form-group"><label class="form-label">Pace / Speed</label><input type="text" id="cardio-pace" class="text-input" placeholder="e.g. 9:30 min/mi or 15 mph"></div>
+                  <div class="form-group">
+                    <label class="form-label">Intensity (1-5)</label>
+                    <div class="scale-input">
+                      <input type="range" min="1" max="5" value="3" id="cardioIntensity" class="range-slider">
+                      <div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+                    </div>
+                    <div class="value-readout"><span id="cardioIntensityValue">3</span>/5</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GENERAL MAINTENANCE -->
+              <div class="goal-panel" id="goal-general" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">General Body Maintenance</h3></div>
+                  <div class="form-group"><label class="form-label">Activity methods</label><textarea id="general-activity" class="text-area" placeholder="What activities did you do today?" rows="2"></textarea></div>
+                  <div class="form-group"><label class="form-label">Training method</label>
+                    <div class="button-group">
+                      <button type="button" class="option-btn" data-group="general-method" data-value="strength">Strength</button>
+                      <button type="button" class="option-btn" data-group="general-method" data-value="cardio">Cardio</button>
+                    </div>
+                  </div>
+                  <div class="form-group"><label class="form-label">Today's weight (lbs)</label><input type="number" step="0.1" id="general-weight" class="text-input" placeholder="e.g. 170.0"></div>
+                </div>
+              </div>
+
+              <!-- MOBILITY / FLEXIBILITY -->
+              <div class="goal-panel" id="goal-mobility" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">Mobility / Flexibility</h3></div>
+                  <div class="form-group"><label class="form-label">Mobility sessions completed</label><input type="number" id="mob-sessions" class="text-input" placeholder="e.g. 2"></div>
+                  <div class="form-group"><label class="form-label">Tightness level afterwards (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="mobTightness" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="mobTightnessValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Stiffness level afterwards (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="mobStiffness" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="mobStiffnessValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Soreness level afterwards (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="mobSoreness" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="mobSorenessValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Looseness level afterwards (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="mobLooseness" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="mobLoosenessValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Pain level (1-10)</label><div class="scale-input"><input type="range" min="1" max="10" value="1" id="mobPainLevel" class="range-slider stress"><div class="scale-labels"><span>1</span><span>3</span><span>5</span><span>7</span><span>10</span></div></div><div class="value-readout"><span id="mobPainLevelValue">1</span>/10</div></div>
+                  <div class="form-group"><label class="form-label">Pain location</label><input type="text" id="mob-pain-location" class="text-input" placeholder="e.g. Lower back, right shoulder"></div>
+                  <div class="form-group"><label class="form-label">Range of motion progress notes</label><textarea id="mob-rom-notes" class="text-area" placeholder="Any improvements or areas needing work?" rows="2"></textarea></div>
+                </div>
+              </div>
+
+              <!-- INJURY / RECOVERY -->
+              <div class="goal-panel" id="goal-injury" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">Injury / Recovery</h3></div>
+                  <div class="form-group"><label class="form-label">Pain intensity (1-10)</label><div class="scale-input"><input type="range" min="1" max="10" value="3" id="injPainIntensity" class="range-slider stress"><div class="scale-labels"><span>1</span><span>3</span><span>5</span><span>7</span><span>10</span></div></div><div class="value-readout"><span id="injPainIntensityValue">3</span>/10</div></div>
+                  <div class="form-group"><label class="form-label">Pain location</label><input type="text" id="inj-pain-location" class="text-input" placeholder="e.g. Left knee"></div>
+                  <div class="form-group"><label class="form-label">Pain type</label>
+                    <div class="button-group">
+                      <button type="button" class="option-btn" data-group="inj-pain-type" data-value="sharp">Sharp</button>
+                      <button type="button" class="option-btn" data-group="inj-pain-type" data-value="burning">Burning</button>
+                      <button type="button" class="option-btn" data-group="inj-pain-type" data-value="aching">Aching</button>
+                      <button type="button" class="option-btn" data-group="inj-pain-type" data-value="stiff">Stiff</button>
+                    </div>
+                  </div>
+                  <div class="form-group"><label class="form-label">Pain frequency</label>
+                    <div class="button-group">
+                      <button type="button" class="option-btn" data-group="inj-pain-freq" data-value="irregular">Irregular</button>
+                      <button type="button" class="option-btn" data-group="inj-pain-freq" data-value="constant">Constant</button>
+                    </div>
+                  </div>
+                  <div class="form-group"><label class="form-label">Stiffness (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="injStiffness" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="injStiffnessValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Daily function score (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="injFunctionScore" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="injFunctionScoreValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Activity tolerance (minutes before pain)</label><input type="number" id="inj-tolerance" class="text-input" placeholder="e.g. 20"></div>
+                </div>
+              </div>
+
+              <!-- REHAB ADHERENCE -->
+              <div class="goal-panel" id="goal-rehab" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">Rehab Adherence</h3></div>
+                  <div class="form-group"><label class="form-label">Training minutes</label><input type="number" id="rehab-minutes" class="text-input" placeholder="e.g. 30"></div>
+                  <div class="form-group"><label class="form-label">Rehab sessions completed</label><input type="number" id="rehab-sessions" class="text-input" placeholder="e.g. 2"></div>
+                  <div class="form-group"><label class="form-label">After effects (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="rehabAfterEffects" class="range-slider"><div class="scale-labels"><span>1 Worse</span><span>2</span><span>3 Same</span><span>4</span><span>5 Better</span></div></div><div class="value-readout"><span id="rehabAfterEffectsValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Any flare-up events?</label>
+                    <div class="button-group">
+                      <button type="button" class="option-btn" data-group="rehab-flareup" data-value="yes">Yes</button>
+                      <button type="button" class="option-btn active" data-group="rehab-flareup" data-value="no">No</button>
+                    </div>
+                  </div>
+                  <div id="flareupDetails" style="display:none;">
+                    <div class="form-group"><label class="form-label">What triggered the flare-up?</label>
+                      <div class="checkbox-group">
+                        <label class="checkbox-label"><input type="checkbox" name="flareup-trigger" value="long-sitting"><span class="checkbox-custom"></span><span>Long sitting</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="flareup-trigger" value="heavy-lifting"><span class="checkbox-custom"></span><span>Heavy lifting</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="flareup-trigger" value="fast-movements"><span class="checkbox-custom"></span><span>Fast movements</span></label>
+                      </div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Describe what caused it</label><textarea id="flareupDesc" class="text-area" placeholder="Describe the event that caused the flare-up..." rows="2"></textarea></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PERFORMANCE / SPORT -->
+              <div class="goal-panel" id="goal-performance" style="display:none;">
+                <div class="form-domain">
+                  <div class="domain-header"><h3 class="domain-title">Performance / Sport Specific</h3></div>
+                  <div class="form-group"><label class="form-label">Minutes trained today</label><input type="number" id="perf-minutes" class="text-input" placeholder="e.g. 90"></div>
+                  <div class="form-group"><label class="form-label">Intensity (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="perfIntensity" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="perfIntensityValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Difficulty (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="perfDifficulty" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="perfDifficultyValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Soreness (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="perfSoreness" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="perfSorenessValue">3</span>/5</div></div>
+                  <div class="form-group"><label class="form-label">Fatigue (1-5)</label><div class="scale-input"><input type="range" min="1" max="5" value="3" id="perfFatigue" class="range-slider"><div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div><div class="value-readout"><span id="perfFatigueValue">3</span>/5</div></div>
+                </div>
+              </div>
+
+            </div><!-- /fitnessGoalSection -->
+          </div><!-- /domain-fitness -->
+
+          <!-- TAB 3: Wellness -->
+          <div class="domain-section" id="domain-wellness">
+            <div class="section-intro">
+              <h2 class="section-title">Wellness</h2>
+              <p class="section-description">Mind + basics check.</p>
+            </div>
+            <div class="form-domain">
+              <div class="form-group">
+                <label class="form-label">Overall wellness check-in (1-5)</label>
+                <div class="scale-input">
+                  <input type="range" min="1" max="5" value="3" id="wellnessScore" class="range-slider">
+                  <div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+                </div>
+                <div class="value-readout"><span id="wellnessScoreValue">3</span>/5</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Optional description of day</label>
+                <textarea id="wellnessNotes" class="text-area" placeholder="Anything you want to note..." rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">How much stress? (1-5)</label>
+                <div class="scale-input">
+                  <input type="range" min="1" max="5" value="3" id="stressScore" class="range-slider stress">
+                  <div class="scale-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+                </div>
+                <div class="value-readout"><span id="stressScoreValue">3</span>/5</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Good mood? (1-5)</label>
+                <div class="emoji-scale" id="moodGroup">
+                  <button type="button" class="emoji-btn active" data-group="mood" data-value="1">1</button>
+                  <button type="button" class="emoji-btn" data-group="mood" data-value="2">2</button>
+                  <button type="button" class="emoji-btn" data-group="mood" data-value="3">3</button>
+                  <button type="button" class="emoji-btn" data-group="mood" data-value="4">4</button>
+                  <button type="button" class="emoji-btn" data-group="mood" data-value="5">5</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="domain-navigation">
+        <button class="nav-arrow-btn" id="prevDomain" disabled><span>&larr; Previous</span></button>
+        <button class="nav-arrow-btn primary" id="nextDomain"><span>Next &rarr;</span></button>
+        <button class="submit-btn" id="submitCheckin" style="display: none;">
+          <span class="btn-icon">&#10024;</span>
+          <span class="btn-text">Complete Check-in</span>
+        </button>
+      </div>
+
+    </div><!-- /checkin-modal-body -->
+  </div><!-- /checkin-modal-overlay -->
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Reflecting on your check-in...</p>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="../components/topbar.js"></script>
   <script src="../js/index.js"></script>
   <script src="../js/home-dashboard.js"></script>
+  <script src="../js/check-in.js"></script>
 
 </body>
 
