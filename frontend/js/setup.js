@@ -99,7 +99,11 @@ function goTo(n) {
     for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
 
     var target = document.getElementById('screen-' + n);
-    if (target) target.classList.add('active');
+    if (target) {
+        // Force animation restart by reflowing before adding class
+        void target.offsetWidth;
+        target.classList.add('active');
+    }
 
     // progress bar
     var idx = ROUTE.indexOf(n);
@@ -305,43 +309,43 @@ function buildReview() {
     var items = [];
 
     if (state.goal)
-        items.push({ icon:'🎯', key:'Goal', value: GOAL_LABELS[state.goal] || state.goal });
+        items.push({ icon:'<i class="fa-solid fa-bullseye"></i>', key:'Goal', value: GOAL_LABELS[state.goal] || state.goal });
     if (state.experience)
-        items.push({ icon:'📊', key:'Experience', value: EXP_LABELS[state.experience] });
+        items.push({ icon:'<i class="fa-solid fa-chart-simple"></i>', key:'Experience', value: EXP_LABELS[state.experience] });
 
     if (state.mentalConsent === 'yes') {
-        if (state.mood)   items.push({ icon:'😊', key:'Mood',   value: GENERIC_SCALE[state.mood] });
-        if (state.stress) items.push({ icon:'🧘', key:'Stress', value: GENERIC_SCALE[state.stress] });
+        if (state.mood)   items.push({ icon:'<i class="fa-solid fa-face-smile"></i>', key:'Mood',   value: GENERIC_SCALE[state.mood] });
+        if (state.stress) items.push({ icon:'<i class="fa-solid fa-spa"></i>', key:'Stress', value: GENERIC_SCALE[state.stress] });
     }
 
     if (state.height)
-        items.push({ icon:'📏', key:'Height', value: state.height });
+        items.push({ icon:'<i class="fa-solid fa-ruler-vertical"></i>', key:'Height', value: state.height });
     if (state.weightSkipped)
-        items.push({ icon:'⚖️', key:'Weight', value: 'Not provided' });
+        items.push({ icon:'<i class="fa-solid fa-weight-scale"></i>', key:'Weight', value: 'Not provided' });
     else if (state.weight)
-        items.push({ icon:'⚖️', key:'Weight', value: state.weight });
+        items.push({ icon:'<i class="fa-solid fa-weight-scale"></i>', key:'Weight', value: state.weight });
 
-    items.push({ icon:'🏃', key:'Activity', value: ACTIVITY_LABELS[state.activity] });
-    if (state.energy) items.push({ icon:'⚡', key:'Energy', value: GENERIC_SCALE[state.energy] });
-    if (state.sleep)  items.push({ icon:'🌙', key:'Sleep',  value: SLEEP_LABELS[state.sleep] });
+    items.push({ icon:'<i class="fa-solid fa-person-running"></i>', key:'Activity', value: ACTIVITY_LABELS[state.activity] });
+    if (state.energy) items.push({ icon:'<i class="fa-solid fa-bolt"></i>', key:'Energy', value: GENERIC_SCALE[state.energy] });
+    if (state.sleep)  items.push({ icon:'<i class="fa-solid fa-moon"></i>', key:'Sleep',  value: SLEEP_LABELS[state.sleep] });
 
     var cCards = document.querySelectorAll('#constraintList .ob-multi-card.selected');
     if (cCards.length) {
         var cL = [];
         for (var i = 0; i < cCards.length; i++) cL.push(cCards[i].querySelector('span:last-child').textContent.trim());
-        items.push({ icon:'⏱️', key:'Lifestyle', value: cL.join(', ') });
+        items.push({ icon:'<i class="fa-solid fa-clock"></i>', key:'Lifestyle', value: cL.join(', ') });
     }
 
     var hCards = document.querySelectorAll('#healthList .ob-multi-card.selected');
     if (hCards.length) {
         var hL = [];
         for (var i = 0; i < hCards.length; i++) hL.push(hCards[i].querySelector('span:last-child').textContent.trim());
-        items.push({ icon:'❤️', key:'Health', value: hL.join(', ') });
+        items.push({ icon:'<i class="fa-solid fa-heart-pulse"></i>', key:'Health', value: hL.join(', ') });
     }
 
     var confMap = { 'not-confident':'Not confident', 'somewhat':'Somewhat confident', 'very':'Very confident' };
     if (state.confidence)
-        items.push({ icon:'💬', key:'Confidence', value: confMap[state.confidence] });
+        items.push({ icon:'<i class="fa-solid fa-comment"></i>', key:'Confidence', value: confMap[state.confidence] });
 
     for (var i = 0; i < items.length; i++) {
         var it = items[i];
