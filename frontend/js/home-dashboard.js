@@ -287,6 +287,39 @@
     }
   }
 
+  /* ---------- CHECK-IN MODAL ---------- */
+  function initCheckinModal() {
+    var modal = document.getElementById("checkinModal");
+    var openBtn = document.getElementById("openCheckinBtn");
+    var closeBtn = document.getElementById("closeCheckinBtn");
+    if (!modal) return;
+
+    function openModal() {
+      modal.classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+    function closeModal() {
+      modal.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+
+    if (openBtn) openBtn.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+
+    // Close on backdrop click
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal) closeModal();
+    });
+
+    // Close on Escape key
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && modal.classList.contains("active")) closeModal();
+    });
+
+    // Expose for check-in.js to call after successful submit
+    window.BenjiCheckinModal = { close: closeModal };
+  }
+
   /* ---------- INIT ---------- */
   function initDashboard() {
     renderBanner();
@@ -297,6 +330,7 @@
     renderPreview();
     renderTimeline();
     renderTrend();
+    initCheckinModal();
   }
 
   if (document.readyState === "loading") {

@@ -67,16 +67,25 @@ class UpdateUserFacts(BaseModel):
             "weight": 180,
             "height": "5'10\"",
             "fitness_level": "intermediate",
-            "goal": "build muscle"
+            "goal": "build muscle",
+            "medications": []
         },
         example={
             "age": 30,
             "weight": 180,
             "height": "5'10\"",
             "fitness_level": "intermediate",
-            "goal": "build muscle"
+            "goal": "build muscle",
+            "medications": [
+                {
+                    "id": "med_123",
+                    "name": "Lisinopril",
+                    "strength": "10 mg",
+                    "frequency": "once daily in morning"
+                }
+            ]
         },
-        description="Optional structured facts about the user. Used by tools like BodyStatsTool."
+        description="Optional structured facts about the user. Used by tools like BodyStatsTool and MedicationScheduleTool."
     )
 
 class RunRequest(BaseModel):
@@ -88,16 +97,18 @@ class RunRequest(BaseModel):
             "weight": 180,
             "height": "5'10\"",
             "fitness_level": "intermediate",
-            "goal": "build muscle"
+            "goal": "build muscle",
+            "medications": []
         },
         example={
             "age": 30,
             "weight": 180,
             "height": "5'10\"",
             "fitness_level": "intermediate",
-            "goal": "build muscle"
+            "goal": "build muscle",
+            "medications": []
         },
-        description="Optional structured facts about the user. Used by tools like BodyStatsTool."
+        description="Optional structured facts about the user. Used by tools like BodyStatsTool and MedicationScheduleTool."
     )
 
 
