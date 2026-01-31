@@ -52,6 +52,14 @@ class RunGoalsRequest(BaseModel):
     user_goal: str
     user_facts: Optional[Dict] = None
     user_id: Optional[str] = None
+    
+class RunUpcomingRequest(BaseModel):
+    user_facts: Optional[Dict[str, Any]] = None
+    user_id: Optional[str] = None
+
+
+class RunUpcomingResponse(BaseModel):
+    upcoming: Dict[str, Any]
 
 class SMARTGoal(BaseModel):
     Specific: str
@@ -267,6 +275,16 @@ def run_agent(payload: RunRequest):
     return {"response": output}
 
 
+#STARTING USER DATA PULLS
+
+@app.get("/firebase/health")
+def firebase_health():
+    ref = db.collection("debug").document("api_health")
+    ref.set({"ok": True})
+    doc = ref.get()
+    return {"firestore": "ok", "db": "benji", "doc": doc.to_dict()}
+
+
 @app.post("/goals", response_model=RunGoalsResponse)
 def run_goals_endpoint(payload: RunGoalsRequest):
     """
@@ -284,18 +302,25 @@ def run_goals_endpoint(payload: RunGoalsRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
+##TODO Create a route to update user facts adding goals
 
-
-#STARTING USER DATA PULLS
-
-@app.get("/firebase/health")
-def firebase_health():
+@app.post("/upcoming", response_model=RunUpcomingResponse)
+def run_upcoming_endpoint(payload: RunUpcomingRequest):
     """
-    Test Firestore connectivity.
+    Generate a 2-day upcoming plan using stored SMART goals
+    and optionally persist it to user facts.
     """
-    ref = db.collection("debug").document("api_health")
-    ref.set({"ok": True})
-    doc = ref.get()
-    return {"firestore": "ok", "db": "benji", "doc": doc.to_dict()}
 
+    try:
+        result = benji.run_upcoming_plan(
+            user_facts=payload.user_facts,
+            user_id=payload.user_id
+        )
 
+        upcoming = result.get("upcoming", {})
+        return {"upcoming": upcoming}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -224,6 +224,90 @@ def WellnessEmotionEvalTool(history: List[Dict]) -> Dict:
         "mood_trend": "down" if avg < 3 else "stable",
         "avg_mood": round(avg, 2)
     }
+    
+    
+def UpcomingPlanTool(facts: Dict, smart_goals: list, model) -> Dict:
+    """
+    Generate a 2-day actionable preview plan based on SMART goals and user facts.
+
+    Returns structured JSON schedule.
+    """
+
+    prompt = (
+        "You are a professional fitness coach creating a short actionable schedule.\n\n"
+
+        "The schedule MUST directly support the user's SMART goals.\n"
+        "Every activity must clearly move the user closer to those goals.\n"
+        "Do NOT include generic filler tasks.\n\n"
+
+        "Using the SMART goals and user context below, generate a focused plan for:\n"
+        "- Today\n"
+        "- Tomorrow\n\n"
+
+        "Each day should include 2-4 short actionable activities.\n"
+        "Activities must:\n"
+        "- Be directly tied to the SMART goals\n"
+        "- Match the user's fitness level and situation\n"
+        "- Be realistic and safe\n"
+        "- Include training, recovery, or nutrition if relevant\n\n"
+
+        "IMPORTANT RULES:\n"
+        "- Speak as a coach giving instructions\n"
+        "- Keep activities concise (checklist style)\n"
+        "- Avoid vague advice\n"
+        "- Prioritize goal-driven actions over general wellness\n\n"
+
+        "USER CONTEXT:\n"
+        f"{json.dumps(facts, indent=2)}\n\n"
+
+        "SMART GOALS:\n"
+        f"{json.dumps(smart_goals, indent=2)}\n\n"
+
+        "Return STRICT JSON in this format:\n\n"
+
+        "{\n"
+        '  "upcoming": {\n'
+        '    "today": ["activity 1", "activity 2"],\n'
+        '    "tomorrow": ["activity 1", "activity 2"]\n'
+        "  }\n"
+        "}\n\n"
+
+        "Do not include explanations.\n"
+        "Do not include markdown.\n"
+        "Only output JSON.\n"
+    )
+
+    
+    print(prompt)
+
+    messages = [
+        SystemMessage(content="You are a smart fitness planning agent that outputs only valid JSON."),
+        HumanMessage(content=prompt)
+    ]
+
+    response = model.invoke(messages)
+    raw = response.content.strip()
+
+    # Strip markdown if model adds it
+    if raw.startswith("```"):
+        lines = raw.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines[-1].startswith("```"):
+            lines = lines[:-1]
+        raw = "\n".join(lines)
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        data = {
+            "upcoming": {
+                "today": [],
+                "tomorrow": []
+            }
+        }
+
+    return data
 
 def BenjiGoalsTool(facts: Dict, user_goal: str, model) -> Dict:
     """
