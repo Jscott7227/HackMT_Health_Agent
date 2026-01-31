@@ -417,35 +417,35 @@ function buildReview() {
     var consentLabel = state.mentalConsent === 'yes' ? 'Yes' : state.mentalConsent === 'no' ? 'No' : 'N/A';
 
     function addItem(icon, key, value, editId) {
-        items.push({ icon: icon, key: key, value: value || 'N/A', editId: editId });
+        items.push({ icon: icon, key: key, value: value || '--', editId: editId });
     }
 
-    addItem('<i class="fa-solid fa-bullseye"></i>', 'Goal', state.goal ? (GOAL_LABELS[state.goal] || state.goal) : 'N/A', 2);
+    addItem('<i class="fa-solid fa-bullseye"></i>', 'Goal', state.goal ? (GOAL_LABELS[state.goal] || state.goal) : '--', 2);
     addItem('<i class="fa-solid fa-brain"></i>', 'Mental health consent', consentLabel, 3);
-    addItem('<i class="fa-solid fa-chart-simple"></i>', 'Experience', state.experience ? EXP_LABELS[state.experience] : 'N/A', 4);
+    addItem('<i class="fa-solid fa-chart-simple"></i>', 'Experience', state.experience ? EXP_LABELS[state.experience] : '--', 4);
 
     if (state.mentalConsent === 'yes') {
-        addItem('<i class="fa-solid fa-face-smile"></i>', 'Mood', state.mood ? GENERIC_SCALE[state.mood] : 'N/A', 5);
-        addItem('<i class="fa-solid fa-spa"></i>', 'Stress', state.stress ? GENERIC_SCALE[state.stress] : 'N/A', 5);
+        addItem('<i class="fa-solid fa-face-smile"></i>', 'Mood', state.mood ? GENERIC_SCALE[state.mood] : '--', 5);
+        addItem('<i class="fa-solid fa-spa"></i>', 'Stress', state.stress ? GENERIC_SCALE[state.stress] : '--', 5);
     } else {
-        addItem('<i class="fa-solid fa-face-smile"></i>', 'Mood', 'N/A', 5);
-        addItem('<i class="fa-solid fa-spa"></i>', 'Stress', 'N/A', 5);
+        addItem('<i class="fa-solid fa-face-smile"></i>', 'Mood', '--', 5);
+        addItem('<i class="fa-solid fa-spa"></i>', 'Stress', '--', 5);
     }
 
-    addItem('<i class="fa-solid fa-ruler-vertical"></i>', 'Height', state.height || 'N/A', 6);
+    addItem('<i class="fa-solid fa-ruler-vertical"></i>', 'Height', state.height || '--', 6);
     if (state.weightSkipped) {
         addItem('<i class="fa-solid fa-weight-scale"></i>', 'Weight', 'Not provided', 7);
     } else {
-        addItem('<i class="fa-solid fa-weight-scale"></i>', 'Weight', state.weight || 'N/A', 7);
+        addItem('<i class="fa-solid fa-weight-scale"></i>', 'Weight', state.weight || '--', 7);
     }
 
-    addItem('<i class="fa-solid fa-person-running"></i>', 'Activity', state.activityTouched ? ACTIVITY_LABELS[state.activity] : 'N/A', 8);
-    addItem('<i class="fa-solid fa-bolt"></i>', 'Energy', state.energy ? GENERIC_SCALE[state.energy] : 'N/A', 8);
-    addItem('<i class="fa-solid fa-moon"></i>', 'Sleep', state.sleep ? SLEEP_LABELS[state.sleep] : 'N/A', 8);
+    addItem('<i class="fa-solid fa-person-running"></i>', 'Activity', state.activityTouched ? ACTIVITY_LABELS[state.activity] : '--', 8);
+    addItem('<i class="fa-solid fa-bolt"></i>', 'Energy', state.energy ? GENERIC_SCALE[state.energy] : '--', 8);
+    addItem('<i class="fa-solid fa-moon"></i>', 'Sleep', state.sleep ? SLEEP_LABELS[state.sleep] : '--', 8);
 
-    addItem('<i class="fa-solid fa-clock"></i>', 'Lifestyle', state.constraints && state.constraints.length ? state.constraints.join(', ') : 'N/A', 9);
-    addItem('<i class="fa-solid fa-heart-pulse"></i>', 'Health', state.health && state.health.length ? state.health.join(', ') : 'N/A', 10);
-    addItem('<i class="fa-solid fa-comment"></i>', 'Confidence', state.confidence ? confMap[state.confidence] : 'N/A', 11);
+    addItem('<i class="fa-solid fa-clock"></i>', 'Lifestyle', state.constraints && state.constraints.length ? state.constraints.join(', ') : '--', 9);
+    addItem('<i class="fa-solid fa-heart-pulse"></i>', 'Health', state.health && state.health.length ? state.health.join(', ') : '--', 10);
+    addItem('<i class="fa-solid fa-comment"></i>', 'Confidence', state.confidence ? confMap[state.confidence] : '--', 11);
 
     for (var i = 0; i < items.length; i++) {
         var it = items[i];
@@ -456,7 +456,7 @@ function buildReview() {
                     '<span class="ob-review-key">'  + it.key  + '</span>' +
                 '</div>' +
                 '<span class="ob-review-value">' + it.value + '</span>' +
-                (it.editId ? ('<button class="ob-review-edit" type="button" onclick="goToEdit(' + it.editId + ')">Edit</button>') : '') +
+                (it.editId ? ('<button class="ob-review-edit" type="button" onclick="goToEdit(' + it.editId + ')" aria-label="Edit"><i class="fa-solid fa-pencil"></i></button>') : '') +
             '</div>';
     }
 }

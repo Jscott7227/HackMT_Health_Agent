@@ -63,40 +63,60 @@
 document.querySelector('#loginForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const email = (document.querySelector('#login-email').value || '').trim();
-  const pwd = (document.querySelector('#login-password').value || '').trim();
+  const emailEl = document.querySelector('#login-email');
+  const passEl = document.querySelector('#login-password');
+  const emailErr = document.querySelector('#login-emailError');
+  const passErr = document.querySelector('#login-passwordError');
 
-  const response = await fetch("http://localhost:8000/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password: pwd })   // ✅ FIX
-  });
+  setErr(emailErr, false);
+  setErr(passErr, false);
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    alert(data.detail || "Login failed");
+  const email = (emailEl.value || '').trim();
+  const pwd = (passEl.value || '').trim();
+
+  let ok = true;
+  if (!validEmail(email)) {
+    emailErr.textContent = "Please enter a valid email address.";
+    setErr(emailErr, true);
+    ok = false;
+  }
+  if (!pwd) {
+    passErr.textContent = "Password cannot be empty.";
+    setErr(passErr, true);
+    ok = false;
+  }
+  if (!ok) return;
+
+  let response;
+  try {
+    response = await fetch("http://localhost:8000/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: pwd })
+    });
+  } catch (_) {
+    passErr.textContent = "Server connection failed.";
+    setErr(passErr, true);
     return;
   }
 
-  const remember = document.querySelector('#login-rememberMe').checked;
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    passErr.textContent = data.detail || "Invalid email or password.";
+    setErr(passErr, true);
+    return;
+  }
 
   const session = {
     user_id: data.user_id,
     email,
     loggedIn: true,
-    remember,
+    remember: true,
     timestamp: new Date().toISOString()
   };
 
-  // keep your existing key if you already use it
-  const key = 'sanctuary_session';
-  if (remember) {
-    localStorage.setItem(key, JSON.stringify(session));
-    sessionStorage.removeItem(key);
-  } else {
-    sessionStorage.setItem(key, JSON.stringify(session));
-    localStorage.removeItem(key);
-  }
+  localStorage.setItem('sanctuary_session', JSON.stringify(session));
+  sessionStorage.removeItem('sanctuary_session');
 
   window.location.href = './index.html';
 });
@@ -116,26 +136,70 @@ document.querySelector('#loginForm')?.addEventListener('submit', async (e) => {
     const confirm   = (document.querySelector('#signup-confirm').value || '').trim();
     const agree     = !!document.querySelector('#signup-agree').checked;
 
-    if (!firstName || !lastName) { alert("Both names are required"); return; }
-    if (!validEmail(email)) { alert("Please enter a valid email address"); return; }
-    if (pwd.length < 8) { alert("Password must be at least 8 characters"); return; }
-    if (pwd !== confirm) { alert("Passwords do not match"); return; }
-    if (!agree) { alert("Please accept Terms & Privacy"); return; }
+    const nameErr = document.querySelector('#signup-nameError');
+    const emailErr = document.querySelector('#signup-emailError');
+    const passErr = document.querySelector('#signup-passwordError');
+    const confirmErr = document.querySelector('#signup-confirmError');
+    const agreeErr = document.querySelector('#signup-agreeError');
 
-    const response = await fetch("http://localhost:8000/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        password: pwd
-        }) // ✅ FIX
-    });
+    [nameErr, emailErr, passErr, confirmErr, agreeErr].forEach((el) => setErr(el, false));
+
+    let ok = true;
+    if (!firstName || !lastName) {
+      nameErr.textContent = !firstName && !lastName ? "First and last name are required."
+        : !firstName ? "First name is required." : "Last name is required.";
+      setErr(nameErr, true);
+      ok = false;
+    }
+    if (!validEmail(email)) {
+      emailErr.textContent = "Please enter a valid email address.";
+      setErr(emailErr, true);
+      ok = false;
+    }
+    if (pwd.length < 8) {
+      passErr.textContent = "Password must be at least 8 characters.";
+      setErr(passErr, true);
+      ok = false;
+    }
+    if (pwd !== confirm || !confirm) {
+      confirmErr.textContent = "Passwords do not match.";
+      setErr(confirmErr, true);
+      ok = false;
+    }
+    if (!agree) {
+      setErr(agreeErr, true);
+      ok = false;
+    }
+    if (!ok) return;
+
+    let response;
+    try {
+      response = await fetch("http://localhost:8000/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          password: pwd
+          })
+      });
+    } catch (_) {
+      emailErr.textContent = "Server connection failed.";
+      setErr(emailErr, true);
+      return;
+    }
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-        alert(data.detail || "Signup failed");
+        const msg = data.detail || "Signup failed";
+        if (msg.toLowerCase().includes("email")) {
+          emailErr.textContent = msg;
+          setErr(emailErr, true);
+        } else {
+          passErr.textContent = msg;
+          setErr(passErr, true);
+        }
         return;
     }
 
