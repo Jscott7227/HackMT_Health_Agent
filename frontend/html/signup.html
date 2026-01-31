@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account • Sanctuary</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- IMPORTANT: relative path -->
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+
+<body data-page="signup">
+  <div id="benji-root"></div>
+
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <div class="container" style="max-width: 560px; padding-top: var(--space-md);">
+
+    <!-- Header -->
+    <header class="Benji-header" style="margin-bottom: var(--space-sm);">
+      <div class="header-content">
+        <h1 class="Benji-title" style="flex-direction: column; gap: 4px; margin-bottom: 0;">
+          <img
+            src="../assets/img/benji_logo.png"
+            alt="Benji logo"
+            style="
+              width: 56px;
+              height: 56px;
+              object-fit: contain;
+              filter: drop-shadow(0 3px 8px rgba(79, 62, 47, 0.14));
+            "
+          />
+          <span style="font-size: 2.3rem; line-height: 1;">Benji</span>
+        </h1>
+        <p class="Benji-subtitle" style="margin-top: 2px;">
+          Create your account to get started.
+        </p>
+      </div>
+    </header>
+
+    <!-- Signup Card -->
+    <div class="form-domain" style="padding: var(--space-md);">
+
+      <div class="domain-header" style="margin-bottom: var(--space-md); padding-bottom: var(--space-sm);">
+        <h2 class="domain-title" style="font-size: 1.5rem;">Create Account</h2>
+      </div>
+
+      <form id="signupForm" novalidate>
+
+        <div class="form-group" style="margin-bottom: var(--space-md);">
+          <label class="form-label" for="name">Name</label>
+          <input class="text-input" id="name" name="name" autocomplete="name" placeholder="Your name" required />
+          <div class="help-text" id="nameError" style="display:none; color: var(--terracotta); font-weight: 600;">
+            Name is required.
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: var(--space-md);">
+          <label class="form-label" for="email">Email</label>
+          <input class="text-input" type="email" id="email" name="email" autocomplete="email" placeholder="you@example.com" required />
+          <div class="help-text" id="emailError" style="display:none; color: var(--terracotta); font-weight: 600;">
+            Please enter a valid email.
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: var(--space-md);">
+          <label class="form-label" for="password">Password</label>
+
+          <div style="display:flex; gap: var(--space-xs); align-items: stretch;">
+            <input
+              class="text-input"
+              type="password"
+              id="password"
+              name="password"
+              autocomplete="new-password"
+              placeholder="Create a password"
+              required
+              style="flex: 1;"
+            />
+            <button
+              type="button"
+              class="option-btn"
+              id="togglePassword"
+              aria-label="Show password"
+              style="
+                flex: 0 0 44px;
+                min-width: 44px;
+                padding: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                   xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path id="eyeSlash" d="M4 4l16 16"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      style="display:none;"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="help-text" id="passwordError" style="display:none; color: var(--terracotta); font-weight: 600;">
+            Password must be at least 8 characters.
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: var(--space-sm);">
+          <label class="checkbox-label" style="padding: 0;">
+            <input type="checkbox" id="agree" />
+            <span class="checkbox-custom"></span>
+            <span>
+              I agree to the
+              <a href="./terms.html" style="color: var(--sage-dark); font-weight: 700; text-decoration: none;">Terms</a>
+              and
+              <a href="./privacy.html" style="color: var(--sage-dark); font-weight: 700; text-decoration: none;">Privacy Policy</a>.
+            </span>
+          </label>
+          <div class="help-text" id="agreeError" style="display:none; color: var(--terracotta); font-weight: 600;">
+            Please accept the Terms and Privacy Policy.
+          </div>
+        </div>
+
+        <div class="form-actions" style="margin-top: var(--space-md); display:flex; flex-direction: column; gap: var(--space-sm); align-items: stretch;">
+          <button type="submit" class="secondary-btn" id="createBtn" style="width:100%; margin-right:0; margin-bottom:0;">
+            Create account
+          </button>
+
+          <button type="button" class="secondary-btn" id="goLogin" style="width:100%; margin-right:0; margin-bottom:0;">
+            Back to login
+          </button>
+
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Creating your account...</p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const $ = (sel) => document.querySelector(sel);
+
+      const form = $("#signupForm");
+      const nameEl = $("#name");
+      const emailEl = $("#email");
+      const passEl = $("#password");
+      const agreeEl = $("#agree");
+
+      const nameError = $("#nameError");
+      const emailError = $("#emailError");
+      const passwordError = $("#passwordError");
+      const agreeError = $("#agreeError");
+
+      const toggleBtn = $("#togglePassword");
+      const eyeSlash = $("#eyeSlash");
+      const overlay = $("#loadingOverlay");
+      const goLogin = $("#goLogin");
+
+      const show = (el) => { if (el) el.style.display = "block"; };
+      const hide = (el) => { if (el) el.style.display = "none"; };
+
+      const validEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+      toggleBtn?.addEventListener("click", () => {
+        const isHidden = passEl.type === "password";
+        passEl.type = isHidden ? "text" : "password";
+        if (eyeSlash) eyeSlash.style.display = isHidden ? "block" : "none";
+        toggleBtn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+      });
+
+      goLogin?.addEventListener("click", () => {
+        window.location.href = "./login.html";
+      });
+
+      const setOverlay = (on) => {
+        if (!overlay) return;
+        overlay.classList.toggle("active", on);
+      };
+
+      form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        [nameError, emailError, passwordError, agreeError].forEach(hide);
+
+        const name = (nameEl?.value || "").trim();
+        const email = (emailEl?.value || "").trim();
+        const pwd = (passEl?.value || "").trim();
+        const agree = !!agreeEl?.checked;
+
+        let ok = true;
+        if (!name) { show(nameError); ok = false; }
+        if (!validEmail(email)) { show(emailError); ok = false; }
+        if (pwd.length < 8) { show(passwordError); ok = false; }
+        if (!agree) { show(agreeError); ok = false; }
+        if (!ok) return;
+
+        setOverlay(true);
+        try {
+          await new Promise(r => setTimeout(r, 450));
+
+          const user = { name, email, createdAt: new Date().toISOString() };
+          localStorage.setItem("sanctuary_user", JSON.stringify(user));
+
+          // Log them in immediately (prototype)
+          const session = { email, loggedIn: true, remember: true, timestamp: new Date().toISOString() };
+          localStorage.setItem("sanctuary_session", JSON.stringify(session));
+          sessionStorage.removeItem("sanctuary_session");
+
+          window.location.href = "./index.html";
+        } finally {
+          setOverlay(false);
+        }
+      });
+    })();
+  </script>
+
+  <script src="../components/topbar.js"></script>
+</body>
+</html>

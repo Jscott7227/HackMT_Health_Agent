@@ -34,15 +34,17 @@ The frontend collects your input; the backend orchestrates calls to Gemini 2.5 P
 
 The system flows from you to the agent and back: you share personal data through the frontend; the frontend sends it to the backend; the backend calls Gemini 2.5 Pro as the agentic wrapper; Gemini interprets your context and produces a personalized response; the backend returns that response to the frontend so you see recommendations, encouragement, and support. Gemini 2.5 Pro is the core brain that turns your context into responses made for you.
 
-```mermaid
-flowchart LR
-    User -->|"personal data"| Frontend
-    Frontend -->|"request"| Backend
-    Backend -->|"context + prompt"| Gemini_2_5_Pro
-    Gemini_2_5_Pro -->|"recommendations, support"| Backend
-    Backend -->|"response"| Frontend
-    Frontend -->|"recommendations, encouragement"| User
-```
+### Backend Setup
+
+1. Create a .env file with this format in the base directory
+   ```
+   GEMINI_API_KEY={Insert Gemini API key}
+   GEMINI_MODEL=gemini-2.5-pro
+   ```
+2. Run ```pip install -r requirements.txt```
+3. Start the service with python -m uvicorn backend.app.main:app --reload
+4. Access the backend docs at http://127.0.0.1:8000/docs#/default/run_agent_run_post
+
 
 ## Features
 
