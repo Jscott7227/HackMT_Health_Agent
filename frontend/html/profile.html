@@ -10,15 +10,248 @@
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    :root {
+      --clay-50: #faf8f5;
+      --clay-200: #e8dcc8;
+      --clay-600: #8b6f53;
+      --clay-800: #4f3e2f;
+      --sage: #016844;
+      --sage-light: #4fc193;
+      --cream: #fff9f0;
+      --border: rgba(139, 111, 83, 0.15);
+      --shadow-sm: 0 2px 8px rgba(79, 62, 47, 0.08);
+      --radius-lg: 18px;
+      --font-display: 'Crimson Pro', serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--cream);
+      color: var(--clay-800);
+      min-height: 100vh;
+    }
+
+    .profile-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    .profile-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--sage-light), var(--sage));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-family: var(--font-display);
+      margin: 0 auto 12px;
+      font-size: 28px;
+    }
+
+    .profile-name {
+      font-family: var(--font-display);
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+
+    .profile-email {
+      color: var(--clay-600);
+      font-size: 14px;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--clay-600);
+    }
+
+    .meta-row span strong {
+      display: block;
+      color: var(--sage);
+      font-size: 15px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-size: 13px;
+      color: var(--clay-600);
+    }
+
+    .form-input,
+    textarea.form-input {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: var(--font-body);
+      background: white;
+    }
+
+    .form-input[readonly] {
+      background: var(--clay-50);
+      color: var(--clay-600);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--sage-light), var(--sage));
+      color: white;
+      border: none;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--clay-600);
+      font-size: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      top: 90px;
+      right: 24px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: var(--shadow-sm);
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 720px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body data-page="profile">
 
   <div id="benji-root"></div>
 
-  <div class="container">
-    <!-- Profile content goes here -->
+  <div class="profile-wrap">
+    <div id="profileLoading" class="loading">
+      Loading profile...
+    </div>
+
+    <div id="profileContent" style="display:none;">
+      <div class="profile-header">
+        <div class="profile-avatar" id="avatarInitials">--</div>
+        <div class="profile-name" id="displayName">--</div>
+        <div class="profile-email" id="displayEmail">--</div>
+        <div class="meta-row">
+          <span>Height<strong id="metaHeight">--</strong></span>
+          <span>Weight<strong id="metaWeight">--</strong></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Account Information</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">First Name</label>
+            <input id="firstName" class="form-input" type="text" readonly />
+          </div>
+          <div class="form-field">
+            <label class="form-label">Last Name</label>
+            <input id="lastName" class="form-input" type="text" readonly />
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Email</label>
+            <input id="email" class="form-input" type="email" readonly />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Health Basics</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Height</label>
+            <input id="height" class="form-input" type="text" placeholder="e.g. 5'10&quot; or 178 cm" />
+          </div>
+          <div class="form-field">
+            <label class="form-label">Weight</label>
+            <input id="weight" class="form-input" type="text" placeholder="e.g. 165 lb or 75 kg" />
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Notes for Benji</label>
+            <textarea id="benjiFacts" class="form-input" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="saveBtn">Save Profile</button>
+          <button class="btn" id="resetBtn">Reset</button>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <div class="toast" id="toast"></div>
   <script src="../components/topbar.js"></script>
+  <script src="../js/profile.js"></script>
 </body>
 </html>
