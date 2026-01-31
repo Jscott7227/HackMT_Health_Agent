@@ -228,6 +228,8 @@ def WellnessEmotionEvalTool(history: List[Dict]) -> Dict:
 # TOOL REGISTRIES
 # -----------------------------
 
+#Adjust to be based on front end splits
+
 MANDATORY_TOOLS = {
     "goal_type": FitnessGoalTypeTool,
     "body_stats": BodyStatsTool,

@@ -1167,11 +1167,29 @@
 
         setOverlay(true, 'Signing you in...');
         try {
-          await new Promise(r => setTimeout(r, 400));
+          const response = await fetch("http://localhost:8000/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              username: email,  // email used as username
+              password: pwd
+            })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            alert(data.detail || "Login failed");
+            return;
+          }
 
           const remember = $('#login-rememberMe').checked;
+
           const session = {
-            email,
+            user_id: data.user_id,   // ✅ IMPORTANT
+            username: email,
             loggedIn: true,
             remember,
             timestamp: new Date().toISOString()
@@ -1186,6 +1204,10 @@
           }
 
           window.location.href = '../html/index.html';
+
+        } catch (err) {
+          console.error(err);
+          alert("Server connection failed");
         } finally {
           setOverlay(false);
         }

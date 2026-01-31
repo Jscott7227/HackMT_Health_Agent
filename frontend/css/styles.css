@@ -2383,3 +2383,112 @@ textarea:focus-visible {
         font-size: 0.75rem;
     }
 }
+
+
+/* ===== LLM SECTION ===== */
+
+.benji-llm-section {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 24px;
+
+  backdrop-filter: blur(14px);
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 18px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+/* Input */
+#llmInput {
+  width: 100%;
+  min-height: 120px;
+  padding: 16px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+
+  font-size: 15px;
+  resize: vertical;
+
+  outline: none;
+  transition: 0.2s;
+}
+
+#llmInput:focus {
+  border-color: rgba(0,0,0,0.2);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+}
+
+/* Button */
+#sendBtn {
+  margin-top: 14px;
+  padding: 12px 22px;
+
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  background: linear-gradient(
+    135deg,
+    #4CAF50,
+    #66BB6A
+  );
+  color: white;
+
+  transition: 0.2s;
+}
+
+#sendBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(76,175,80,0.25);
+}
+
+/* Response box */
+#llmResponse {
+  margin-top: 22px;
+  padding: 18px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.06);
+
+  background: rgba(255,255,255,0.9);
+
+  line-height: 1.5;
+  font-size: 15px;
+
+  white-space: pre-wrap;
+}
+
+/* Thinking state */
+#llmResponse.loading {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+#llmResponse {
+  display: none;   /* hidden by default */
+}
+
+/* when visible */
+#llmResponse.active {
+  display: block;
+}
+
+#llmResponse h1,
+#llmResponse h2,
+#llmResponse h3 {
+  margin-top: 10px;
+}
+
+#llmResponse ul {
+  padding-left: 18px;
+}
+
+#llmResponse p {
+  margin: 6px 0;
+}
