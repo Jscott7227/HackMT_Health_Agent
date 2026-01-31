@@ -25,7 +25,6 @@ class BenjiLLM:
         Returns a list of tool names to call.
         """
         if not self.optional_tools:
-            print("?")
             return []
         prompt = (
             "Given the user's input and available facts, decide which optional tools "
@@ -91,19 +90,21 @@ class BenjiLLM:
                         "fitness_level": None, "goal": None}
             return facts
     
-    def ask_for_missing_facts(self):
-        """
-        Ask the user for any facts that are missing.
-        Users can skip a fact by pressing Enter.
-        """
-        required = ["age", "weight", "height", "fitness_level", "goal"]
-        for fact in required:
-            if fact not in self.user_facts or not self.user_facts[fact]:
-                value = input(f"Please enter your {fact} (press Enter to skip): ")
-                if value.strip() == "":
-                    self.user_facts[fact] = "unknown"
-                else:
-                    self.user_facts[fact] = value
+    def safe_call_tool(self, name, tool, goal_type=None):
+        try:
+            if name == "fitness_plan":
+                return tool(self.user_facts, goal_type)
+
+            elif name == "goal_progress":
+                goal = self.user_facts.get("goal_meta", {})
+                history = self.user_facts.get("history", [])
+                return tool(goal, history)
+
+            else:
+                return tool(self.user_facts)
+
+        except TypeError:
+            return {"skipped": True}  
 
     def run(self, user_input: str, user_facts: dict | None = None) -> str:
         """
@@ -114,25 +115,44 @@ class BenjiLLM:
             for key, value in user_facts.items():
                 if value is not None:
                     self.user_facts[key] = value
+                    
+                    
         extracted_facts = self.extract_facts_from_input(user_input)
         for key, value in extracted_facts.items():
             if key not in self.user_facts and value:
                 self.user_facts[key] = value
-        print(self.user_facts)
         
         tool_outputs = {}
+        
+        goal_type = None
+        if "goal_type" in self.mandatory_tools:
+            goal_result = self.mandatory_tools["goal_type"](self.user_facts)
+            tool_outputs["goal_type"] = goal_result
+            goal_type = goal_result.get("goal_type")
+        
+        
         for name, tool in self.mandatory_tools.items():
-            tool_outputs[name] = tool(self.user_facts)
+            if name == "goal_type":
+                continue
+
+            tool_outputs[name] = self.safe_call_tool(name, tool, goal_type)
+
+        # ---- Optional tools ----
         optional_to_run = self.select_optional_tools(user_input)
         for name in optional_to_run:
-            tool_outputs[name] = self.optional_tools[name](self.user_facts)
-        combined_content = f"User input: {user_input}\n"
-        for name, output in tool_outputs.items():
-            combined_content += f"{name} output: {output}\n"
-
+            tool_outputs[name] = self.safe_call_tool(
+                name, self.optional_tools[name], goal_type
+            )
+            
+        combined = f"User input: {user_input}\n"
+        for name, out in tool_outputs.items():
+            combined += f"{name}: {out}\n"
+            
         messages = [
-            SystemMessage(content="You are a smart fitness coach. Use the tools outputs to provide personalized advice."),
-            HumanMessage(content=combined_content)
+            SystemMessage(
+                content="You are a smart fitness coach. Use tool outputs for advice."
+            ),
+            HumanMessage(content=combined)
         ]
 
         response = self.model.invoke(messages)

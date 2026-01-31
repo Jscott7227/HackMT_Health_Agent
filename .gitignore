@@ -1,5 +1,6 @@
 .env
 .healthvenv
 *.json
-__pycache__/
+*__pycache__/*
 *.py[cod]
+llm/__pycache__/
