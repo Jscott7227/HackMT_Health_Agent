@@ -1,5 +1,7 @@
 from typing import Dict, List
 from datetime import datetime
+from langchain_core.messages import SystemMessage, HumanMessage
+import json
 
 
 # -----------------------------
@@ -223,6 +225,64 @@ def WellnessEmotionEvalTool(history: List[Dict]) -> Dict:
         "avg_mood": round(avg, 2)
     }
 
+def BenjiGoalsTool(facts: Dict, user_goal: str, model) -> Dict:
+    """
+    Generate SMART goals using the LLM based on user facts + goal.
+    
+    model = ChatGoogleGenerativeAI instance
+    """
+
+    prompt = (
+        "You are a professional fitness coach.\n\n"
+        "Given the user's goal and known facts, generate 1-3 SMART goals.\n\n"
+        "SMART = Specific, Measurable, Attainable, Relevant, Time-bound.\n\n"
+        "IMPORTANT: The Measurable field must contain a numeric/quantifiable target "
+        "Return STRICT JSON in this format:\n\n"
+        "{\n"
+        '  "smart_goals": [\n'
+        "    {\n"
+        '      "Specific": \"...\",\n'
+        '      "Measurable": \"...\",\n'
+        '      "Attainable": \"...\",\n'
+        '      "Relevant": \"...\",\n'
+        '      "Time_Bound": \"...\"\n'
+        "    }\n"
+        "  ]\n"
+        "}\n\n"
+        "Do not include explanations.\n"
+        "Do not include markdown.\n"
+        "Only output JSON.\n\n"
+        f"USER GOAL:\n{user_goal}\n\n"
+        f"USER FACTS:\n{json.dumps(facts, indent=2)}"
+    )
+
+    messages = [
+        SystemMessage(content="You are a smart fitness agent that outputs only valid JSON."),
+        HumanMessage(content=prompt)
+    ]
+
+    response = model.invoke(messages)
+    raw = response.content.strip()
+
+    # Strip markdown code blocks if model adds them
+    if raw.startswith("```"):
+        lines = raw.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines[-1].startswith("```"):
+            lines = lines[:-1]
+        raw = "\n".join(lines)
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        # Safe fallback
+        data = {
+            "smart_goals": []
+        }
+
+    return data
+    
 
 # -----------------------------
 # TOOL REGISTRIES

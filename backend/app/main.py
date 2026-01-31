@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 from hashlib import sha256
 from uuid import uuid4
@@ -25,6 +25,21 @@ app.add_middleware(
 )
 
 benji = BenjiLLM()
+
+class RunGoalsRequest(BaseModel):
+    user_goal: str
+    user_facts: Optional[Dict] = None
+    user_id: Optional[str] = None
+
+class SMARTGoal(BaseModel):
+    Specific: str
+    Measurable: str
+    Attainable: str
+    Relevant: str
+    Time_Bound: str
+
+class RunGoalsResponse(BaseModel):
+    smart_goals: List[SMARTGoal]
 
 USERS_DB_FILE = os.path.join("backend", "users.json")
 if not os.path.exists(USERS_DB_FILE):
@@ -182,5 +197,24 @@ def run_agent(payload: RunRequest):
         user_input=payload.user_input,
         user_facts=user_facts
     )
-
+    
     return {"response": output}
+
+
+@app.post("/goals", response_model=RunGoalsResponse)
+def run_goals_endpoint(payload: RunGoalsRequest):
+    """
+    Generate SMART goals for a user's input goal and optionally persist to user facts.
+    """
+    try:
+        result = benji.run_goals(
+            user_goal=payload.user_goal,
+            user_facts=payload.user_facts,
+            user_id=payload.user_id
+        )
+        # Return only the smart_goals list
+        smart_goals = result.get("smart_goals", [])
+        return {"smart_goals": smart_goals}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
