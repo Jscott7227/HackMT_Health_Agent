@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from hashlib import sha256
 from uuid import uuid4
 from fastapi.middleware.cors import CORSMiddleware
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 import json
 import os
@@ -47,6 +48,18 @@ app.add_middleware(
 )
 
 benji = BenjiLLM()
+
+class ChatMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+
+class ChatRequest(BaseModel):
+    user_input: str
+    user_id: Optional[str] = None
+    history: Optional[List[ChatMessage]] = []
+
+class ChatResponse(BaseModel):
+    response: str
 
 class RunGoalsRequest(BaseModel):
     user_goal: str
@@ -324,3 +337,16 @@ def run_upcoming_endpoint(payload: RunUpcomingRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/chat", response_model=ChatResponse)
+def chat_endpoint(req: ChatRequest):
+    # Convert frontend history to LangChain messages
+    history_msgs = [
+        HumanMessage(content=msg.content) if msg.role == "user" else AIMessage(content=msg.content)
+        for msg in (req.history or [])
+    ]
+
+    # Call chat function, passing LangChain message objects
+    reply = benji.chat(req.user_input, history=history_msgs)
+    return ChatResponse(response=reply)
+

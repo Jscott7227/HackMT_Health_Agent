@@ -5,10 +5,35 @@ from typing import Optional
 load_dotenv()
 
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 
 from backend.llm.tools import MANDATORY_TOOLS, OPTIONAL_TOOLS, BenjiGoalsTool, UpcomingPlanTool
+
+SYSTEM_PROMPT = """
+You are a professional fitness and wellness coach named Benji.
+
+Your role:
+- Answer the user's question clearly and directly
+- Use the provided background facts as context, not as the main topic
+- Personalize advice when relevant
+- Avoid making medical diagnoses
+- Encourage professional guidance for medical concerns
+
+Guidelines:
+- Focus primarily on the user's question
+- Use facts only when they improve relevance
+- Be practical, actionable, and supportive
+- Keep responses structured and easy to follow
+"""
+
+def format_user_facts(user_facts: dict) -> str:
+    if not user_facts:
+        return "No background facts provided."
+
+    lines = [f"- {k}: {v}" for k, v in user_facts.items()]
+    return "User background facts:\n" + "\n".join(lines)
+
 
 class BenjiLLM:
     def __init__(self):
@@ -20,6 +45,7 @@ class BenjiLLM:
         self.user_facts = {}
         self.mandatory_tools = MANDATORY_TOOLS
         self.optional_tools = OPTIONAL_TOOLS
+        self.history = []
     
     def select_optional_tools(self, user_input: str) -> list:
         """
@@ -281,6 +307,27 @@ Provide clear, actionable guidance while emphasizing the importance of professio
 
         return plan
     
+    def chat(self, user_input: str, history: list = None):
+        history = history or []
+
+        facts_context = format_user_facts(self.user_facts)
+
+        messages = [
+            SystemMessage(content=SYSTEM_PROMPT),
+            SystemMessage(content=facts_context),
+            *history,
+            HumanMessage(content=user_input),
+        ]
+
+        response = self.model.invoke(messages)
+
+        # Save to internal memory if needed
+        self.history.append(HumanMessage(content=user_input))
+        self.history.append(AIMessage(content=response.content))
+
+        return response.content
+
+
     
 if __name__ == "__main__":
     benji = BenjiLLM()
