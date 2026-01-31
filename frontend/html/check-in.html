@@ -3,35 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Check-in • Benji</title>
+    <title>Check-in • Sanctuary</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/frontend/css/styles.css">
 </head>
 <body data-page="check-in">
-
-    <!-- ✅ TOP BAR (hardcoded so it always shows) -->
-    <header class="benji-bar">
-        <div class="benji-brand">
-            <img src="Benji Logo.png" alt="Benji" style="width:36px;height:36px;border-radius:10px;object-fit:cover;">
-            <div>
-                <h1>Benji</h1>
-                <p>Your gentle companion for mindful living</p>
-            </div>
-        </div>
-
-        <nav class="benji-nav">
-            <a href="check-in.html" class="active">🌅 Check-in</a>
-            <a href="journal.html">📖 Journal</a>
-            <a href="insights.html">🌙 Insights</a>
-            <a href="chat.html">💬 Chat</a>
-            <a href="profile.html">👤 Profile</a>
-            <a href="settings.html">⚙️ Settings</a>
-        </nav>
-
-        <div class="benji-date" id="benji-date"></div>
-    </header>
 
     <!-- keep this root (benji.js can still use it if needed) -->
     <div id="benji-root"></div>
@@ -59,7 +37,7 @@
         </div>
 
         <!-- Domain Navigation (Sub-tabs for Check-in) -->
-        <nav class="Benji-nav">
+        <nav class="sanctuary-nav">
             <button class="nav-tab active" data-domain="physical">
                 <span class="tab-icon">💚</span>
                 <span class="tab-label">Physical</span>
@@ -72,25 +50,6 @@
                 <span class="tab-icon">💜</span>
                 <span class="tab-label">Spirit</span>
             </button>
-            <button class="nav-tab" data-domain="nutrition">
-                <span class="tab-icon">🍊</span>
-                <span class="tab-label">Nutrition</span>
-            </button>
-            <button class="nav-tab" data-domain="planning">
-                <span class="tab-icon">⏰</span>
-                <span class="tab-label">Planning</span>
-            </button>
-            <button class="nav-tab" data-domain="workload">
-                <span class="tab-icon">📚</span>
-                <span class="tab-label">Workload</span>
-            </button>
-            <button class="nav-tab" data-domain="environment">
-                <span class="tab-icon">🏡</span>
-                <span class="tab-label">Environment</span>
-            </button>
-            <button class="nav-tab" data-domain="progress">
-                <span class="tab-icon">🎯</span>
-                <span class="tab-label">Progress</span>
             </button>
         </nav>
 
@@ -649,9 +608,10 @@
     </div>
 
     <!-- Scripts -->
-    <script src="storage.js"></script>
-    <script src="agent.js"></script>
-    <script src="check-in.js"></script>
-    <script src="../components/benji.js"></script>
+    <script src="/frontend/js/storage.js"></script>
+    <script src="/frontend/js/agent.js"></script>
+    <script src="/frontend/js/check-in.js"></script>
+    <script src="/frontend/components/benji.js"></script>
 </body>
 </html>
+

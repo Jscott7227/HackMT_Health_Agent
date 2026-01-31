@@ -110,6 +110,7 @@ body {
     height: 100%;
     z-index: -1;
     overflow: hidden;
+    pointer-events: none;
 }
 
 .grain {
@@ -195,7 +196,7 @@ body {
 /* ====================================
    Header
    ==================================== */
-.Benji-header {
+.sanctuary-header {
     text-align: center;
     margin-bottom: var(--space-lg);
     animation: fadeInDown 0.8s cubic-bezier(0.4, 0, 0.2, 1);
@@ -216,7 +217,7 @@ body {
     margin-bottom: var(--space-sm);
 }
 
-.Benji-title {
+.sanctuary-title {
     font-family: var(--font-display);
     font-size: 3.5rem;
     font-weight: 300;
@@ -239,7 +240,7 @@ body {
     50% { transform: rotate(5deg); }
 }
 
-.Benji-subtitle {
+.sanctuary-subtitle {
     font-size: 1.125rem;
     color: var(--text-secondary);
     font-weight: 400;
@@ -395,7 +396,7 @@ body {
 /* ====================================
    Navigation Tabs (Domain Sub-tabs)
    ==================================== */
-.Benji-nav {
+.sanctuary-nav {
     display: flex;
     gap: var(--space-xs);
     background: white;
@@ -1225,7 +1226,7 @@ body {
         padding: var(--space-md) var(--space-sm);
     }
 
-    .Benji-title {
+    .sanctuary-title {
         font-size: 2.5rem;
     }
 
@@ -1243,7 +1244,7 @@ body {
         text-align: center;
     }
 
-    .Benji-nav {
+    .sanctuary-nav {
         flex-wrap: nowrap;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -1303,6 +1304,19 @@ body {
 /* ====================================
    TOP BAR
    ==================================== */
+
+#benji-root {
+  position: relative;
+  z-index: 9999;
+}
+.background-layers {
+  z-index: 0;
+}
+.container {
+  position: relative;
+  z-index: 1;
+}
+
 
 .benji-bar {
   position: sticky;
@@ -1366,7 +1380,7 @@ body {
    ==================================== */
 @media print {
     .background-layers,
-    .Benji-nav,
+    .sanctuary-nav,
     .form-actions,
     .loading-overlay {
         display: none !important;
