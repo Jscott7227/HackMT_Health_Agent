@@ -19,15 +19,29 @@ btn.addEventListener("click", async () => {
 
   const userId = session.user_id || null;
 
+  // Load onboarding profile + any stored user facts
+  const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+  const userFacts = {
+    goal: userProfile.goal || undefined,
+    experience: userProfile.experience || undefined,
+    height: userProfile.height || undefined,
+    weight: userProfile.weight || undefined,
+    activity: userProfile.activity !== undefined ? userProfile.activity : undefined,
+    energy: userProfile.energy || undefined,
+    sleep: userProfile.sleep || undefined,
+    confidence: userProfile.confidence || undefined
+  };
+
   try {
-    const res = await fetch("http://localhost:8000/run", {
+    const res = await fetch("http://127.0.0.1:8000/run", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
         user_input: text,
-        user_id: userId
+        user_id: userId,
+        user_facts: userFacts
       })
     });
 

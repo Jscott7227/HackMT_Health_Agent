@@ -12,6 +12,7 @@
     href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap"
     rel="stylesheet">
 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 
@@ -39,10 +40,7 @@
     <!-- ===== CHECK-IN BANNER (shown when not completed today) ===== -->
     <div class="home-banner" id="checkinBanner" style="display:none;">
       <div class="banner-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-          <path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <i class="fa-solid fa-clock" aria-hidden="true"></i>
       </div>
       <div class="banner-text">
         <strong>Complete your daily check-in</strong>
@@ -55,10 +53,7 @@
     <div class="home-recovery-card" id="recoveryCard" style="display:none;">
       <div class="recovery-header">
         <span class="recovery-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9Z" stroke="currentColor" stroke-width="2"/>
-            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
         </span>
         <h3>Recovery Day</h3>
       </div>
@@ -69,9 +64,7 @@
     <!-- ===== INJURY / SORENESS WARNINGS (only when relevant) ===== -->
     <div class="home-warning-card" id="injuryWarning" style="display:none;">
       <div class="warning-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
       </div>
       <div class="warning-text" id="injuryWarningText"></div>
     </div>
@@ -117,41 +110,19 @@
       <!-- Domain Navigation Tabs -->
       <nav class="Benji-nav" id="checkinTabs">
         <button class="nav-tab active" data-domain="day">
-          <span class="tab-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1l2.1-2.1M17 7l2.1-2.1"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </span>
+          <span class="tab-icon"><i class="fa-solid fa-sun" aria-hidden="true"></i></span>
           <span class="tab-label">Overall Day</span>
         </button>
         <button class="nav-tab" data-domain="fitness">
-          <span class="tab-icon">
-            <svg width="20" height="20" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-              <path d="M272 96c26.51 0 48-21.49 48-48S298.51 0 272 0s-48 21.49-48 48 21.49 48 48 48zM113.69 317.47l-14.8 34.52H32c-17.67 0-32 14.33-32 32s14.33 32 32 32h77.45c19.25 0 36.58-11.44 44.11-29.09l8.79-20.52-10.67-6.3c-17.32-10.23-30.06-25.37-37.99-42.61zM384 224h-44.03l-26.06-53.25c-12.5-25.55-35.45-44.23-61.78-50.94l-71.08-21.14c-28.3-6.8-57.77-.55-80.84 17.14l-39.67 30.41c-14.03 10.75-16.69 30.83-5.92 44.86s30.84 16.66 44.86 5.92l39.69-30.41c7.67-5.89 17.44-8 25.27-6.14l14.7 4.37-37.46 87.39c-12.62 29.48-1.31 64.01 26.3 80.31l84.98 50.17-27.47 87.73c-5.28 16.86 4.11 34.81 20.97 40.09 3.19 1 6.41 1.48 9.58 1.48 13.61 0 26.23-8.77 30.52-22.45l31.64-101.06c5.91-20.77-2.89-43.08-21.64-54.39l-61.24-36.14 31.31-78.28c8.88-22.2 32.47-32.4 54.66-23.52 2.16.86 4.21 1.93 6.17 3.18z"/>
-            </svg>
-          </span>
+          <span class="tab-icon"><i class="fa-solid fa-dumbbell" aria-hidden="true"></i></span>
           <span class="tab-label">Fitness</span>
         </button>
         <button class="nav-tab" data-domain="wellness">
-          <span class="tab-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1l1.7 1.7L12 21l7.1-6.6 1.7-1.7a5 5 0 0 0 0-7.1Z"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
+          <span class="tab-icon"><i class="fa-solid fa-heart" aria-hidden="true"></i></span>
           <span class="tab-label">Wellness</span>
         </button>
         <button class="nav-tab" data-domain="menstrual">
-        <span class="tab-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2a7 7 0 1 0 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <path d="M12 9a5 5 0 1 0 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
-            <path d="M12 12c1.5 0 3 1.1 3 2.8 0 2.2-2.2 3.7-3 4.2-.8-.5-3-2-3-4.2 0-1.7 1.5-2.8 3-2.8Z"
-                  stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          </svg>
-        </span>
+        <span class="tab-icon"><i class="fa-solid fa-droplet" aria-hidden="true"></i></span>
         <span class="tab-label">Menstrual</span>
       </button>
 
