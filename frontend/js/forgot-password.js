@@ -10,7 +10,7 @@
   const hide = (el) => { if (el) el.style.display = "none"; };
   const validEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  backLogin?.addEventListener("click", () => window.location.href = "./login.html");
+  backLogin?.addEventListener("click", () => window.location.href = "./landing.html");
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
