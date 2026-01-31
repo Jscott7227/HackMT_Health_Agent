@@ -256,6 +256,7 @@
       backdrop-filter: blur(14px);
       background: rgba(255, 255, 255, 0.78);
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      transition: background var(--transition-base), box-shadow var(--transition-base);
     }
 
     .landing-bar-brand {
@@ -264,6 +265,7 @@
       gap: 12px;
       text-decoration: none;
       color: var(--text-primary);
+      transition: transform var(--transition-base);
     }
 
     .landing-bar-brand img {
@@ -271,6 +273,7 @@
       height: 38px;
       object-fit: contain;
       filter: drop-shadow(0 2px 5px rgba(79, 62, 47, .14));
+      transition: transform var(--transition-base), filter var(--transition-base);
     }
 
     .landing-bar-brand span {
@@ -323,19 +326,25 @@
       min-height: 0;
       position: relative;
       align-items: stretch;
-      gap: 1.5vw;
+      gap: 0;
       padding: 0;
     }
 
-    /* ── LEFT: pillars column – much bigger fonts, less whitespace ── */
+    /* ── LEFT: pillars column ── */
     .col-left {
-      flex: 0 0 47%;
+      flex: 0 0 52%;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 0 2.5vw 1.2vh;
-      gap: 1.2vh;
+      padding: 0 0.2vw 0.6vh 5.0vw;
+      gap: 3.2vh;
       min-height: 0;
+      transition: transform var(--transition-base);
+    }
+
+    .col-left .pillar:first-child {
+      margin-top: 0.2vh;
+      margin-bottom: 1.2vh;
     }
 
     .pillar {
@@ -343,7 +352,7 @@
       align-items: center;
       gap: 1.5rem;
       padding: 0.3vh 0.6rem;
-      transition: transform var(--transition-base);
+      transition: transform var(--transition-base), color var(--transition-base);
     }
 
     .pillar:hover {
@@ -362,6 +371,7 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      transition: transform var(--transition-base), box-shadow var(--transition-base);
     }
 
     .pillar-icon-wrap svg {
@@ -394,32 +404,32 @@
       font-weight: 600;
       color: var(--clay-800);
       margin-bottom: 0.25rem;
+      transition: color var(--transition-base);
     }
 
     .pillar-desc {
       font-size: clamp(1.05rem, 1.85vh, 1.25rem);
       color: var(--text-secondary);
       line-height: 1.45;
+      transition: color var(--transition-base);
     }
 
     /* staggered entrance */
     .pillar {
       opacity: 0;
       transform: translateX(-18px);
-      animation: pillarIn .6s cubic-bezier(.4, 0, .2, 1) forwards
+      animation: pillarIn .75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
-    .pillar:nth-child(1) {
-      animation-delay: .15s
+    .pillar--intro {
+      opacity: 1;
+      transform: none;
+      animation: none;
     }
 
-    .pillar:nth-child(2) {
-      animation-delay: .3s
-    }
-
-    .pillar:nth-child(3) {
-      animation-delay: .45s
-    }
+    .pillar:nth-of-type(2) { animation-delay: .12s; }
+    .pillar:nth-of-type(3) { animation-delay: .28s; }
+    .pillar:nth-of-type(4) { animation-delay: .44s; }
 
     @keyframes pillarIn {
       to {
@@ -428,24 +438,42 @@
       }
     }
 
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     /* ── RIGHT: hero + auth – tighter spacing to fit on page ── */
     .col-right {
-      flex: 1 1 0%;
+      flex: 0 0 48%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 0 2vw 0vh;
+      padding: 0 1vw 0 0.8vw;
+      margin-top: -3vh;
       min-height: 0;
+      transition: transform var(--transition-base);
     }
 
     /* hero block */
     .hero-block {
       text-align: center;
-      max-width: 460px;
-      margin-bottom: 0.6vh;
+      max-width: 600px;
+      margin-bottom: -2.0vh;
       flex-shrink: 1;
       min-height: 0;
+      animation: fadeInUp .6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .intro-float {
+      animation: fadeInUp .7s cubic-bezier(0.22, 1, 0.36, 1) .05s both;
     }
 
     .hero-logo {
@@ -454,6 +482,7 @@
       aspect-ratio: 1;
       object-fit: contain;
       filter: drop-shadow(0 4px 16px rgba(79, 62, 47, .18));
+      transition: transform var(--transition-base), filter var(--transition-base);
     }
 
     @keyframes sway {
@@ -476,20 +505,22 @@
       z-index: 2;
       margin-top: clamp(-70px, -7vh, -20px);
       margin-bottom: 0.5rem;
+      transition: color var(--transition-base), transform var(--transition-base);
     }
 
     .hero-subtitle {
       font-size: clamp(0.85rem, 1.5vh, 1rem);
       color: var(--text-secondary);
       line-height: 1.45;
-      max-width: 420px;
+      max-width: 600px;
       margin: 0 auto 0.6rem;
+      transition: color var(--transition-base);
     }
 
     /* ── auth card ── */
     .auth-card {
       width: 100%;
-      max-width: 400px;
+      max-width: 520px;
       background: rgba(255, 255, 255, .9);
       backdrop-filter: blur(12px);
       border: 1px solid var(--border-color);
@@ -497,6 +528,8 @@
       box-shadow: var(--shadow-md);
       overflow: hidden;
       margin-top: var(--space-sm);
+      animation: fadeInUp .7s cubic-bezier(0.22, 1, 0.36, 1) .1s both;
+      transition: box-shadow var(--transition-base), transform var(--transition-base), background var(--transition-base);
     }
 
     .auth-tabs {
@@ -516,7 +549,7 @@
       border: none;
       cursor: pointer;
       position: relative;
-      transition: color var(--transition-base);
+      transition: color var(--transition-base), transform var(--transition-base);
     }
 
     .auth-tab:hover {
@@ -569,6 +602,30 @@
       margin-bottom: 0.35rem;
     }
 
+    .label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 0.35rem;
+    }
+
+    .label-row .form-label {
+      margin-bottom: 0;
+    }
+
+    .error-inline {
+      font-size: .78rem;
+      color: #d32f2f;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .error-inline.visible {
+      opacity: 1;
+    }
+
     .input-box {
       position: relative
     }
@@ -607,7 +664,7 @@
       padding: 4px;
       display: flex;
       align-items: center;
-      transition: color var(--transition-fast);
+      transition: color var(--transition-fast), transform var(--transition-fast);
     }
 
     .pw-toggle:hover {
@@ -699,17 +756,35 @@
       color: var(--sage-dark);
       text-decoration: none;
       font-weight: 600;
+      transition: color var(--transition-base);
     }
 
     .error-text {
       font-size: .78rem;
       color: #d32f2f;
       margin-top: 0.3rem;
-      display: none;
+      visibility: hidden;
+      min-height: 1em;
     }
 
     .error-text.visible {
-      display: block
+      visibility: visible;
+    }
+
+    .error-text.below-gap {
+      margin-top: 0.6rem;
+    }
+
+    .name-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .name-row {
+        grid-template-columns: 1fr;
+      }
     }
 
     .terms-text {
@@ -726,6 +801,53 @@
 
     .terms-text a:hover {
       text-decoration: underline
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 24px;
+      text-align: center;
+      animation: fadeInUp .4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .modal-text {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin-bottom: 18px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
     }
 
     /* ── loading overlay ── */
@@ -894,12 +1016,21 @@
           style="width:48px;height:48px;border-radius:10px;object-fit:cover;" />
         <span>Benji</span>
       </div>
-      <a href="#about" class="landing-bar-link">About Us</a>
+      <a href="./about.html" class="landing-bar-link">About Us</a>
     </nav>
 
     <main class="split">
       <!-- LEFT COLUMN: Feature pillars -->
       <aside class="col-left">
+        <div class="pillar pillar--intro intro-float">
+          <div class="pillar-content">
+            <p class="pillar-desc">
+              Your AI-powered daily life partner. A personal trainer, advocate, and support system that learns from your
+              check-ins and guides you toward the goals that matter most — no matter your circumstances.
+            </p>
+          </div>
+        </div>
+
         <div class="pillar">
           <div class="pillar-icon-wrap icon-fitness">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -954,10 +1085,6 @@
         <div class="hero-block">
           <img src="../assets/img/benji_logo.png" alt="" class="hero-logo" aria-hidden="true" />
           <h1 class="hero-title">Meet Benji</h1>
-          <p class="hero-subtitle">
-            Your AI-powered daily life partner. A personal trainer, advocate, and support system that learns from your
-            check-ins and guides you toward the goals that matter most — no matter your circumstances.
-          </p>
         </div>
 
         <!-- Auth Card -->
@@ -972,14 +1099,19 @@
             <div class="auth-panel active" id="panel-login">
               <form id="loginForm" novalidate>
                 <div class="form-group">
-                  <label class="form-label" for="login-email">Email</label>
+                  <div class="label-row">
+                    <label class="form-label" for="login-email">Email</label>
+                    <span class="error-inline" id="login-emailError">Please enter a valid email address.</span>
+                  </div>
                   <input type="email" id="login-email" class="form-input" placeholder="you@example.com"
                     autocomplete="email" required />
-                  <div class="error-text" id="login-emailError">Please enter a valid email address.</div>
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label" for="login-password">Password</label>
+                  <div class="label-row">
+                    <label class="form-label" for="login-password">Password</label>
+                    <span class="error-inline" id="login-passwordError">Password cannot be empty.</span>
+                  </div>
                   <div class="input-box">
                     <input type="password" id="login-password" class="form-input" placeholder="Your password"
                       autocomplete="current-password" required />
@@ -994,7 +1126,6 @@
                       </svg>
                     </button>
                   </div>
-                  <div class="error-text" id="login-passwordError">Password cannot be empty.</div>
                 </div>
 
                 <div class="row-between">
@@ -1002,7 +1133,7 @@
                     <input type="checkbox" id="login-rememberMe" />
                     <label for="login-rememberMe">Remember me</label>
                   </div>
-                  <a href="../html/forgot-password.html" class="forgot-link">Forgot?</a>
+                  <a href="../html/forgot-password.html" class="forgot-link">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="submit-btn">Log In</button>
@@ -1018,21 +1149,32 @@
             <div class="auth-panel" id="panel-signup">
               <form id="signupForm" novalidate>
                 <div class="form-group">
-                  <label class="form-label" for="signup-name">Full Name</label>
-                  <input type="text" id="signup-name" class="form-input" placeholder="Jane Doe" autocomplete="name"
-                    required />
-                  <div class="error-text" id="signup-nameError">Name is required.</div>
+                  <div class="label-row">
+                    <label class="form-label" for="signup-firstName">First &amp; last name</label>
+                    <span class="error-inline" id="signup-nameError">Both names are required.</span>
+                  </div>
+                  <div class="name-row">
+                    <input type="text" id="signup-firstName" class="form-input" placeholder="First name"
+                      autocomplete="given-name" required />
+                    <input type="text" id="signup-lastName" class="form-input" placeholder="Last name"
+                      autocomplete="family-name" required />
+                  </div>
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label" for="signup-email">Email</label>
+                  <div class="label-row">
+                    <label class="form-label" for="signup-email">Email</label>
+                    <span class="error-inline" id="signup-emailError">Please enter a valid email address.</span>
+                  </div>
                   <input type="email" id="signup-email" class="form-input" placeholder="you@example.com"
                     autocomplete="email" required />
-                  <div class="error-text" id="signup-emailError">Please enter a valid email address.</div>
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label" for="signup-password">Password</label>
+                  <div class="label-row">
+                    <label class="form-label" for="signup-password">Password</label>
+                    <span class="error-inline" id="signup-passwordError">Password must be at least 8 characters.</span>
+                  </div>
                   <div class="input-box">
                     <input type="password" id="signup-password" class="form-input" placeholder="Create a password"
                       autocomplete="new-password" required />
@@ -1047,7 +1189,27 @@
                       </svg>
                     </button>
                   </div>
-                  <div class="error-text" id="signup-passwordError">Password must be at least 8 characters.</div>
+                </div>
+
+                <div class="form-group">
+                  <div class="label-row">
+                    <label class="form-label" for="signup-confirm">Confirm password</label>
+                    <span class="error-inline" id="signup-confirmError">Passwords do not match.</span>
+                  </div>
+                  <div class="input-box">
+                    <input type="password" id="signup-confirm" class="form-input" placeholder="Re-enter your password"
+                      autocomplete="new-password" required />
+                    <button type="button" class="pw-toggle" id="signup-confirmToggle" aria-label="Show password">
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" />
+                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        <path id="signup-confirmSlash" d="M4 4l16 16" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" style="display:none" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Agree checkbox -->
@@ -1059,8 +1221,7 @@
                     <a href="../html/privacy.html">Privacy Policy</a>.
                   </label>
                 </div>
-                <div class="error-text" id="signup-agreeError"
-                  style="margin-top:-8px;margin-bottom:var(--space-xs)">Please accept the Terms and Privacy Policy.</div>
+                <div class="error-text below-gap" id="signup-agreeError">Please accept the Terms and Privacy Policy.</div>
 
                 <button type="submit" class="submit-btn">Create Account</button>
               </form>
@@ -1080,8 +1241,18 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="forgotModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
+      <div class="modal-title" id="forgotTitle">Too bad!</div>
+      <div class="modal-text">Feature coming soon.</div>
+      <div class="modal-actions">
+        <button class="submit-btn" id="forgotClose" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============================================================
-     JAVASCRIPT – faithfully ported logic from login.html & signup.html
+     JAVASCRIPT – faithfully ported logic from landing.html & signup.html
      ============================================================ -->
   <script>
     (function () {
@@ -1089,13 +1260,26 @@
       const $$ = sel => document.querySelectorAll(sel);
 
       /* ── helpers ── */
-      const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+      const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
       const overlay = $('#loadingOverlay');
       const loadingText = $('#loadingText');
       const setOverlay = (on, msg) => {
         if (msg) loadingText.textContent = msg;
         overlay.classList.toggle('active', on);
       };
+
+      const modal = document.getElementById('forgotModal');
+      const modalClose = document.getElementById('forgotClose');
+
+      function openModal() {
+        if (!modal) return;
+        modal.classList.add('active');
+      }
+
+      function closeModal() {
+        if (!modal) return;
+        modal.classList.remove('active');
+      }
 
       /* ── tab / panel switching ── */
       const tabs = $$('.auth-tab');
@@ -1124,6 +1308,21 @@
         });
       });
 
+      const forgotLink = $('.forgot-link');
+      if (forgotLink) {
+        forgotLink.addEventListener('click', e => {
+          e.preventDefault();
+          openModal();
+        });
+      }
+
+      if (modalClose) modalClose.addEventListener('click', closeModal);
+      if (modal) {
+        modal.addEventListener('click', e => {
+          if (e.target === modal) closeModal();
+        });
+      }
+
       /* ── eye toggle factory ── */
       function wireEye(btnId, inputId, slashId) {
         const btn = $(btnId);
@@ -1139,6 +1338,7 @@
       }
       wireEye('#login-togglePw', '#login-password', '#login-eyeSlash');
       wireEye('#signup-togglePw', '#signup-password', '#signup-eyeSlash');
+      wireEye('#signup-confirmToggle', '#signup-confirm', '#signup-confirmSlash');
 
       /* ── show / hide error helper ── */
       function setErr(el, visible) {
@@ -1146,7 +1346,7 @@
       }
 
       /* ═══════════════════════════════════════════════
-         LOGIN SUBMIT – exact logic from login.html
+         LOGIN SUBMIT – exact logic from landing.html
          ═══════════════════════════════════════════════ */
       $('#loginForm').addEventListener('submit', async e => {
         e.preventDefault();
@@ -1219,27 +1419,44 @@
       $('#signupForm').addEventListener('submit', async e => {
         e.preventDefault();
 
-        const nameEl = $('#signup-name');
+        const firstEl = $('#signup-firstName');
+        const lastEl = $('#signup-lastName');
         const emailEl = $('#signup-email');
         const passEl = $('#signup-password');
+        const confirmEl = $('#signup-confirm');
         const agreeEl = $('#signup-agree');
 
         const nameErr = $('#signup-nameError');
         const emailErr = $('#signup-emailError');
         const passErr = $('#signup-passwordError');
+        const confirmErr = $('#signup-confirmError');
         const agreeErr = $('#signup-agreeError');
 
-        [nameErr, emailErr, passErr, agreeErr].forEach(el => setErr(el, false));
+        [nameErr, emailErr, passErr, confirmErr, agreeErr].forEach(el => setErr(el, false));
 
-        const name = (nameEl.value || '').trim();
+        const first = (firstEl.value || '').trim();
+        const last = (lastEl.value || '').trim();
+        const name = `${first} ${last}`.trim();
         const email = (emailEl.value || '').trim();
         const pwd = (passEl.value || '').trim();
+        const confirmPwd = (confirmEl.value || '').trim();
         const agree = !!agreeEl.checked;
 
         let ok = true;
-        if (!name) { setErr(nameErr, true); ok = false; }
+        if (!first || !last) {
+          if (!first && !last) {
+            nameErr.textContent = 'First and last name are required.';
+          } else if (!first) {
+            nameErr.textContent = 'First name is required.';
+          } else {
+            nameErr.textContent = 'Last name is required.';
+          }
+          setErr(nameErr, true);
+          ok = false;
+        }
         if (!validEmail(email)) { setErr(emailErr, true); ok = false; }
         if (pwd.length < 8) { setErr(passErr, true); ok = false; }
+        if (!confirmPwd || confirmPwd !== pwd) { setErr(confirmErr, true); ok = false; }
         if (!agree) { setErr(agreeErr, true); ok = false; }
         if (!ok) return;
 

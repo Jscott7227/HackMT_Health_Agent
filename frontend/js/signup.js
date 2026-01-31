@@ -30,7 +30,7 @@
   });
 
   goLogin?.addEventListener("click", () => {
-    window.location.href = "./login.html";
+    window.location.href = "./landing.html";
   });
 
   const setOverlay = (on) => {

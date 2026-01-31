@@ -37,7 +37,7 @@
   $("#logoutBtn")?.addEventListener("click", () => {
     localStorage.removeItem("sanctuary_session");
     sessionStorage.removeItem("sanctuary_session");
-    window.location.href = "./login.html";
+    window.location.href = "./landing.html";
   });
 
   // --- mental health consent gating ---
