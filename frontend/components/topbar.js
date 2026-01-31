@@ -27,9 +27,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // You are visiting:
-  // http://127.0.0.1:5500/frontend/html/check-in.html
+  // http://127.0.0.1:5500../html/check-in.html
   // So this MUST be absolute:
-  const HEADER_URL = "/frontend/components/topbar.html";
+  const HEADER_URL = "../components/topbar.html";
 
   try {
     const res = await fetch(HEADER_URL, { cache: "no-store" });
