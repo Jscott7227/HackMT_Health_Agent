@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Benji – Your Daily Life Partner</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS – mirrors styles.css
+       ============================================================ */
+    :root {
+      --forest-50:#e6f5ef; --forest-100:#c2e8d9; --forest-200:#99dac0;
+      --forest-300:#6fcca6; --forest-400:#4fc193; --forest-500:#016844;
+      --forest-600:#015d3d; --forest-700:#014f33; --forest-800:#01412a;
+      --forest-900:#002b1b;
+      --clay-50:#faf8f5; --clay-100:#f3ede3; --clay-200:#e8dcc8;
+      --clay-300:#d4c0a3; --clay-400:#bfa582; --clay-500:#a88b68;
+      --clay-600:#8b6f53; --clay-700:#6d5642; --clay-800:#4f3e2f;
+      --clay-900:#3a2e23;
+      --sage:#016844; --sage-dark:#014f33; --sage-light:#4fc193;
+      --terracotta:#c77e5d; --terracotta-light:#d89e87;
+      --moss:#5a6c52; --sunset:#e8a87c; --lavender:#b4a5c4;
+      --cream:#fff9f0; --mint:#99dac0;
+      --bg-primary:var(--cream);
+      --text-primary:var(--clay-800); --text-secondary:var(--clay-600);
+      --text-muted:var(--clay-400);
+      --border-color:rgba(139,111,83,.15);
+      --shadow-sm:0 2px 8px rgba(79,62,47,.08);
+      --shadow-md:0 4px 16px rgba(79,62,47,.12);
+      --shadow-lg:0 8px 32px rgba(79,62,47,.16);
+      --font-display:'Crimson Pro',serif;
+      --font-body:'DM Sans',sans-serif;
+      --space-xs:.5rem; --space-sm:1rem; --space-md:1.5rem;
+      --space-lg:2rem; --space-xl:3rem; --space-2xl:4rem;
+      --radius-sm:8px; --radius-md:12px; --radius-lg:20px; --radius-xl:28px;
+      --transition-fast:150ms cubic-bezier(.4,0,.2,1);
+      --transition-base:250ms cubic-bezier(.4,0,.2,1);
+      --transition-breathing:3s cubic-bezier(.4,0,.6,1);
+    }
+
+    /* ============================================================
+       RESET
+       ============================================================ */
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;scroll-behavior:smooth}
+    body{
+      font-family:var(--font-body); color:var(--text-primary);
+      background:var(--bg-primary); line-height:1.6;
+      -webkit-font-smoothing:antialiased; overflow-x:hidden;
+      min-height:100vh;
+    }
+
+    /* ============================================================
+       ANIMATED BACKGROUND
+       ============================================================ */
+    .background-layers{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .grain{
+      position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity:.03;animation:grain-shift 8s steps(10) infinite;
+    }
+    @keyframes grain-shift{
+      0%,100%{transform:translate(0,0)} 10%{transform:translate(-5%,-10%)}
+      20%{transform:translate(-15%,5%)} 30%{transform:translate(7%,-25%)}
+      40%{transform:translate(-5%,25%)} 50%{transform:translate(-15%,10%)}
+      60%{transform:translate(15%,0%)} 70%{transform:translate(0%,15%)}
+      80%{transform:translate(3%,10%)} 90%{transform:translate(-10%,5%)}
+    }
+    .gradient-orb{
+      position:absolute;border-radius:50%;filter:blur(80px);opacity:.6;
+      animation:float var(--transition-breathing) ease-in-out infinite;
+    }
+    .orb-1{width:600px;height:600px;background:radial-gradient(circle,rgba(1,104,68,.15) 0%,transparent 70%);top:-200px;right:-200px}
+    .orb-2{width:500px;height:500px;background:radial-gradient(circle,rgba(79,193,147,.2) 0%,transparent 70%);bottom:-150px;left:-150px;animation-delay:1s}
+    .orb-3{width:400px;height:400px;background:radial-gradient(circle,rgba(153,218,192,.15) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:2s}
+    @keyframes float{
+      0%,100%{transform:translate(0,0) scale(1)}
+      50%{transform:translate(30px,-30px) scale(1.1)}
+    }
+
+    /* ============================================================
+       TOP BAR
+       ============================================================ */
+    .landing-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:18px 32px;
+      background:rgba(255,249,240,.78);backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--border-color);
+      position:sticky;top:0;z-index:100;
+    }
+    .landing-bar-brand{
+      display:flex;align-items:center;gap:10px;
+      text-decoration:none;color:var(--text-primary);
+    }
+    .landing-bar-brand img{
+      width:32px;height:32px;object-fit:contain;
+      filter:drop-shadow(0 2px 5px rgba(79,62,47,.14));
+    }
+    .landing-bar-brand span{
+      font-family:var(--font-display);font-size:1.35rem;
+      font-weight:300;letter-spacing:-.02em;
+    }
+    .landing-bar-link{
+      font-size:.875rem;font-weight:600;color:var(--sage-dark);
+      text-decoration:none;padding:8px 16px;border-radius:999px;
+      transition:background var(--transition-base);
+    }
+    .landing-bar-link:hover{background:var(--forest-50)}
+
+    /* ============================================================
+       PAGE SHELL – two-column split
+       ============================================================ */
+    .page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+
+    .split{
+      flex:1;
+      display:grid;
+      grid-template-columns:420px 1fr;
+      min-height:calc(100vh - 62px); /* subtract bar height */
+    }
+
+    /* ── LEFT: pillars column ── */
+    .col-left{
+      display:flex;flex-direction:column;justify-content:center;
+      padding:var(--space-2xl) var(--space-lg) var(--space-2xl) var(--space-xl);
+      gap:0;
+    }
+
+    .pillar{
+      position:relative;
+      padding:var(--space-lg) var(--space-md);
+      /* intentionally no border-radius box — transparent */
+    }
+    /* Stagger offsets for the organic/unaligned feel */
+    .pillar:nth-child(1){ margin-left:0; margin-top:0; }
+    .pillar:nth-child(2){ margin-left:32px; margin-top:-8px; }
+    .pillar:nth-child(3){ margin-left:12px; margin-top:-4px; }
+
+    /* very subtle background tint — almost invisible, gives depth without a "card" */
+    .pillar::before{
+      content:'';position:absolute;inset:0;
+      border-radius:var(--radius-lg);
+      background:rgba(255,255,255,.28);
+      backdrop-filter:blur(2px);
+      border:1px solid rgba(255,255,255,.45);
+      transition:background var(--transition-base), border-color var(--transition-base);
+      z-index:0;
+    }
+    .pillar:hover::before{
+      background:rgba(255,255,255,.42);
+      border-color:rgba(255,255,255,.7);
+    }
+    .pillar > *{position:relative;z-index:1}
+
+    .pillar-icon-wrap{
+      width:48px;height:48px;border-radius:var(--radius-md);
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:var(--space-sm);
+    }
+    .pillar-icon-wrap svg{width:22px;height:22px}
+    .icon-fitness{background:var(--forest-50);color:var(--sage)}
+    .icon-wellness{background:rgba(199,126,93,.1);color:var(--terracotta)}
+    .icon-habits{background:rgba(180,165,196,.15);color:var(--lavender)}
+
+    .pillar-title{
+      font-family:var(--font-display);font-size:1.3rem;font-weight:600;
+      color:var(--clay-800);margin-bottom:4px;
+    }
+    .pillar-desc{
+      font-size:.88rem;color:var(--text-secondary);line-height:1.6;
+      max-width:280px;
+    }
+
+    /* staggered entrance */
+    .pillar{opacity:0;transform:translateX(-18px);animation:pillarIn .6s cubic-bezier(.4,0,.2,1) forwards}
+    .pillar:nth-child(1){animation-delay:.15s}
+    .pillar:nth-child(2){animation-delay:.3s}
+    .pillar:nth-child(3){animation-delay:.45s}
+    @keyframes pillarIn{to{opacity:1;transform:translateX(0)}}
+
+    /* ── RIGHT: hero + auth ── */
+    .col-right{
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      padding:var(--space-2xl) var(--space-xl) var(--space-2xl) var(--space-lg);
+      gap:var(--space-lg);
+    }
+
+    /* hero block */
+    .hero-block{text-align:center;max-width:460px}
+    .hero-logo{
+      width:82px;height:82px;object-fit:contain;
+      filter:drop-shadow(0 4px 12px rgba(79,62,47,.16));
+      margin-bottom:var(--space-sm);
+      animation:sway 6s ease-in-out infinite;
+    }
+    @keyframes sway{0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)}}
+    .hero-title{
+      font-family:var(--font-display);font-size:3.2rem;font-weight:300;
+      color:var(--clay-800);letter-spacing:-.02em;line-height:1.1;
+      margin-bottom:var(--space-sm);
+    }
+    .hero-subtitle{
+      font-size:1.05rem;color:var(--text-secondary);line-height:1.7;
+    }
+    .hero-block{
+      opacity:0;animation:heroIn .7s cubic-bezier(.4,0,.2,1) .1s forwards;
+    }
+    @keyframes heroIn{to{opacity:1;transform:translateY(0)}}
+
+    /* ── AUTH BOX ── */
+    .auth-box{
+      width:100%;max-width:400px;
+      background:white;border-radius:var(--radius-xl);
+      box-shadow:var(--shadow-lg);border:1px solid var(--border-color);
+      overflow:hidden;
+      opacity:0;animation:heroIn .7s cubic-bezier(.4,0,.2,1) .28s forwards;
+    }
+
+    /* mode tabs across the top */
+    .auth-tabs{
+      display:flex;border-bottom:1px solid var(--border-color);
+    }
+    .auth-tab{
+      flex:1;padding:var(--space-sm) var(--space-xs);
+      font-family:var(--font-body);font-size:.9rem;font-weight:600;
+      color:var(--text-muted);background:var(--clay-50);
+      border:none;cursor:pointer;
+      transition:color var(--transition-base),background var(--transition-base),
+                 border-bottom var(--transition-base);
+      border-bottom:2.5px solid transparent;
+    }
+    .auth-tab.active{
+      color:var(--sage-dark);background:white;
+      border-bottom-color:var(--sage);
+    }
+    .auth-tab:hover:not(.active){color:var(--text-secondary);background:var(--clay-100)}
+
+    /* panels swap */
+    .auth-panel{display:none;padding:var(--space-lg) var(--space-md) var(--space-md);animation:fadeIn .3s cubic-bezier(.4,0,.2,1)}
+    .auth-panel.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ─── shared form primitives (match styles.css patterns) ─── */
+    .form-label{
+      display:block;font-size:.85rem;font-weight:600;
+      color:var(--text-secondary);margin-bottom:6px;
+    }
+    .text-input{
+      width:100%;padding:var(--space-sm) var(--space-md);
+      font-family:var(--font-body);font-size:.9375rem;
+      color:var(--text-primary);background:var(--clay-50);
+      border:2px solid transparent;border-radius:var(--radius-md);
+      outline:none;transition:all var(--transition-base);
+    }
+    .text-input:focus{
+      background:white;border-color:var(--sage);
+      box-shadow:0 0 0 3px rgba(1,104,68,.1);
+    }
+    .text-input::placeholder{color:var(--clay-300)}
+
+    .form-group{margin-bottom:var(--space-md)}
+    .pw-row{display:flex;gap:var(--space-xs);align-items:stretch}
+    .pw-row .text-input{flex:1}
+
+    .eye-btn{
+      flex:0 0 44px;min-width:44px;padding:0;
+      display:inline-flex;align-items:center;justify-content:center;
+      background:var(--clay-50);border:2px solid transparent;
+      border-radius:var(--radius-md);cursor:pointer;color:var(--text-muted);
+      transition:all var(--transition-base);
+    }
+    .eye-btn:hover{background:var(--clay-100);color:var(--text-secondary)}
+
+    .error-text{
+      display:none;font-size:.8rem;font-weight:500;
+      color:var(--terracotta);margin-top:6px;line-height:1.4;
+    }
+    .error-text.visible{display:block}
+
+    /* checkbox row */
+    .checkbox-row{
+      display:flex;align-items:flex-start;gap:10px;
+      margin-bottom:var(--space-sm);
+    }
+    .checkbox-row input[type=checkbox]{
+      width:18px;height:18px;margin-top:2px;flex-shrink:0;
+      accent-color:var(--sage);cursor:pointer;
+    }
+    .checkbox-row label{font-size:.82rem;color:var(--text-secondary);line-height:1.5;cursor:pointer}
+    .checkbox-row label a{color:var(--sage-dark);font-weight:600;text-decoration:none}
+    .checkbox-row label a:hover{text-decoration:underline}
+
+    /* remember + forgot row */
+    .remember-row{
+      display:flex;justify-content:space-between;align-items:center;
+      margin-bottom:var(--space-sm);
+    }
+    .remember-row label{
+      display:flex;align-items:center;gap:8px;
+      font-size:.82rem;color:var(--text-secondary);cursor:pointer;
+    }
+    .remember-row label input{accent-color:var(--sage);cursor:pointer}
+    .forgot-link{
+      font-size:.82rem;font-weight:600;color:var(--sage-dark);
+      text-decoration:none;
+    }
+    .forgot-link:hover{text-decoration:underline}
+
+    /* submit button */
+    .submit-btn{
+      width:100%;padding:var(--space-sm) var(--space-md);
+      font-family:var(--font-body);font-size:.95rem;font-weight:600;
+      color:white;background:linear-gradient(135deg,var(--sage-light),var(--sage));
+      border:none;border-radius:var(--radius-lg);cursor:pointer;
+      box-shadow:0 4px 14px rgba(1,104,68,.3);
+      transition:transform var(--transition-base),box-shadow var(--transition-base);
+      margin-top:var(--space-xs);
+    }
+    .submit-btn:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(1,104,68,.4)}
+    .submit-btn:active{transform:translateY(0);box-shadow:0 2px 8px rgba(1,104,68,.25)}
+
+    /* switch-mode link inside panel */
+    .switch-link{
+      display:block;text-align:center;margin-top:var(--space-sm);
+      font-size:.82rem;color:var(--text-muted);
+    }
+    .switch-link a{
+      color:var(--sage-dark);font-weight:600;text-decoration:none;
+    }
+    .switch-link a:hover{text-decoration:underline}
+
+    /* terms micro-copy */
+    .terms-copy{
+      font-size:.75rem;color:var(--text-muted);text-align:center;
+      margin-top:var(--space-sm);line-height:1.5;
+    }
+    .terms-copy a{color:var(--sage-dark);font-weight:600;text-decoration:none}
+    .terms-copy a:hover{text-decoration:underline}
+
+    /* ============================================================
+       LOADING OVERLAY (same pattern as login/signup)
+       ============================================================ */
+    .loading-overlay{
+      position:fixed;inset:0;
+      background:rgba(255,249,240,.95);backdrop-filter:blur(8px);
+      display:none;align-items:center;justify-content:center;z-index:1000;
+    }
+    .loading-overlay.active{display:flex}
+    .loading-content{text-align:center}
+    .loading-spinner{
+      width:60px;height:60px;margin:0 auto var(--space-md);
+      border:4px solid var(--clay-200);border-top-color:var(--sage);
+      border-radius:50%;animation:spin 1s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{font-size:1.125rem;color:var(--text-secondary);font-weight:500}
+
+    /* ============================================================
+       RESPONSIVE – stack below 900 px
+       ============================================================ */
+    @media(max-width:900px){
+      .split{
+        grid-template-columns:1fr;
+        min-height:auto;
+      }
+      .col-left{
+        padding:var(--space-xl) var(--space-md) 0;
+        flex-direction:row;flex-wrap:wrap;gap:var(--space-sm);
+        justify-content:center;
+      }
+      .pillar{margin-left:0 !important;margin-top:0 !important;flex:1 1 200px;max-width:240px}
+      .col-right{
+        padding:var(--space-lg) var(--space-md) var(--space-xl);
+      }
+      .hero-title{font-size:2.6rem}
+    }
+    @media(max-width:560px){
+      .col-left{flex-direction:column;align-items:flex-start;padding-top:var(--space-lg)}
+      .pillar{flex:none;width:100%;max-width:none}
+      .landing-bar{padding:14px 18px}
+    }
+
+    /* ============================================================
+       ACCESSIBILITY
+       ============================================================ */
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+        transition-duration:.01ms !important;
+      }
+    }
+    a:focus-visible,button:focus-visible{outline:3px solid var(--sage);outline-offset:2px}
+  </style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="background-layers">
+  <div class="grain"></div>
+  <div class="gradient-orb orb-1"></div>
+  <div class="gradient-orb orb-2"></div>
+  <div class="gradient-orb orb-3"></div>
+</div>
+
+<div class="page">
+
+  <!-- ── Top bar ── -->
+  <header class="landing-bar">
+    <a href="#" class="landing-bar-brand">
+      <img src="../assets/img/benji_logo.png" alt="Benji" />
+      <span>Benji</span>
+    </a>
+    <a href="../html/about.html" class="landing-bar-link">About Us</a>
+  </header>
+
+  <!-- ── Two-column split ── -->
+  <div class="split">
+
+    <!-- LEFT – transparent, staggered pillars -->
+    <aside class="col-left">
+
+      <article class="pillar">
+        <div class="pillar-icon-wrap icon-fitness">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="4" r="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 21l2-7 2 3 2-5 2 2V8M6 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="pillar-title">Fitness</h2>
+        <p class="pillar-desc">Personalized movement guidance that adapts to your body, energy, and schedule — whether you're training hard or just getting started.</p>
+      </article>
+
+      <article class="pillar">
+        <div class="pillar-icon-wrap icon-wellness">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1l1.7 1.7L12 21l7.1-6.6 1.7-1.7a5 5 0 0 0 0-7.1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="pillar-title">Wellness</h2>
+        <p class="pillar-desc">Track stress, mood, sleep, and the small daily habits that quietly shape how you feel. Benji notices patterns so you don't have to.</p>
+      </article>
+
+      <article class="pillar">
+        <div class="pillar-icon-wrap icon-habits">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="pillar-title">Habits & Goals</h2>
+        <p class="pillar-desc">Set goals that fit your life and let Benji keep you accountable with gentle encouragement, tailored recommendations, and real progress.</p>
+      </article>
+
+    </aside>
+
+    <!-- RIGHT – hero copy + auth box -->
+    <main class="col-right">
+
+      <!-- Hero text -->
+      <div class="hero-block">
+        <img src="../assets/img/benji_logo.png" alt="" class="hero-logo" aria-hidden="true" />
+        <h1 class="hero-title">Meet Benji</h1>
+        <p class="hero-subtitle">
+          Your AI-powered daily life partner. A personal trainer, advocate, and
+          support system that learns from your check-ins and guides you toward
+          the goals that matter most — no matter your circumstances.
+        </p>
+      </div>
+
+      <!-- Auth box -->
+      <div class="auth-box">
+
+        <!-- Tab switcher -->
+        <div class="auth-tabs" role="tablist">
+          <button class="auth-tab active" data-mode="login" role="tab" aria-selected="true">Log In</button>
+          <button class="auth-tab"        data-mode="signup" role="tab" aria-selected="false">Create Account</button>
+        </div>
+
+        <!-- ═══ LOGIN PANEL ═══ -->
+        <div class="auth-panel active" id="panel-login" role="tabpanel">
+          <form id="loginForm" novalidate>
+
+            <div class="form-group">
+              <label class="form-label" for="login-email">Email</label>
+              <input class="text-input" type="email" id="login-email" name="email" autocomplete="email" placeholder="you@example.com" required />
+              <div class="error-text" id="login-emailError">Please enter a valid email.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="login-password">Password</label>
+              <div class="pw-row">
+                <input class="text-input" type="password" id="login-password" name="password" autocomplete="current-password" placeholder="Your password" required />
+                <button type="button" class="eye-btn" id="login-togglePw" aria-label="Show password">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path id="login-eyeSlash" d="M4 4l16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="error-text" id="login-passwordError">Password is required.</div>
+            </div>
+
+            <!-- Remember me + Forgot -->
+            <div class="remember-row">
+              <label><input type="checkbox" id="login-rememberMe" /> Remember me</label>
+              <a href="../html/forgot-password.html" class="forgot-link">Forgot?</a>
+            </div>
+
+            <button type="submit" class="submit-btn">Log In</button>
+
+            <p class="terms-copy">
+              By continuing, you agree to our
+              <a href="../html/terms.html">Terms</a> and
+              <a href="../html/privacy.html">Privacy Policy</a>.
+            </p>
+          </form>
+
+          <div class="switch-link">Already have an account? <a href="#" data-switch="signup">Create one</a> →</div>
+        </div>
+
+        <!-- ═══ SIGNUP PANEL ═══ -->
+        <div class="auth-panel" id="panel-signup" role="tabpanel">
+          <form id="signupForm" novalidate>
+
+            <div class="form-group">
+              <label class="form-label" for="signup-name">Name</label>
+              <input class="text-input" type="text" id="signup-name" name="name" autocomplete="name" placeholder="Your name" required />
+              <div class="error-text" id="signup-nameError">Name is required.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="signup-email">Email</label>
+              <input class="text-input" type="email" id="signup-email" name="email" autocomplete="email" placeholder="you@example.com" required />
+              <div class="error-text" id="signup-emailError">Please enter a valid email.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="signup-password">Password</label>
+              <div class="pw-row">
+                <input class="text-input" type="password" id="signup-password" name="password" autocomplete="new-password" placeholder="Create a password" required />
+                <button type="button" class="eye-btn" id="signup-togglePw" aria-label="Show password">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path id="signup-eyeSlash" d="M4 4l16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="error-text" id="signup-passwordError">Password must be at least 8 characters.</div>
+            </div>
+
+            <!-- Agree checkbox -->
+            <div class="checkbox-row">
+              <input type="checkbox" id="signup-agree" />
+              <label for="signup-agree">
+                I agree to the
+                <a href="../html/terms.html">Terms</a> and
+                <a href="../html/privacy.html">Privacy Policy</a>.
+              </label>
+            </div>
+            <div class="error-text" id="signup-agreeError" style="margin-top:-8px;margin-bottom:var(--space-xs)">Please accept the Terms and Privacy Policy.</div>
+
+            <button type="submit" class="submit-btn">Create Account</button>
+          </form>
+
+          <div class="switch-link">Already have an account? <a href="#" data-switch="login">Log in</a></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Loading overlay (shared) -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-content">
+    <div class="loading-spinner"></div>
+    <p class="loading-text" id="loadingText">Signing you in...</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT – faithfully ported logic from login.html & signup.html
+     ============================================================ -->
+<script>
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => document.querySelectorAll(sel);
+
+  /* ── helpers ── */
+  const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  const overlay = $('#loadingOverlay');
+  const loadingText = $('#loadingText');
+  const setOverlay = (on, msg) => {
+    if(msg) loadingText.textContent = msg;
+    overlay.classList.toggle('active', on);
+  };
+
+  /* ── tab / panel switching ── */
+  const tabs = $$('.auth-tab');
+  const panels = { login: $('#panel-login'), signup: $('#panel-signup') };
+
+  function switchMode(mode){
+    tabs.forEach(t => {
+      const active = t.dataset.mode === mode;
+      t.classList.toggle('active', active);
+      t.setAttribute('aria-selected', active);
+    });
+    Object.keys(panels).forEach(k => {
+      panels[k].classList.toggle('active', k === mode);
+    });
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchMode(tab.dataset.mode));
+  });
+
+  // "Create one" / "Log in" links inside panels
+  $$('[data-switch]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      switchMode(link.dataset.switch);
+    });
+  });
+
+  /* ── eye toggle factory ── */
+  function wireEye(btnId, inputId, slashId){
+    const btn  = $(btnId);
+    const inp  = $(inputId);
+    const slash = $(slashId);
+    if(!btn || !inp) return;
+    btn.addEventListener('click', () => {
+      const hidden = inp.type === 'password';
+      inp.type = hidden ? 'text' : 'password';
+      if(slash) slash.style.display = hidden ? 'block' : 'none';
+      btn.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+    });
+  }
+  wireEye('#login-togglePw',  '#login-password',  '#login-eyeSlash');
+  wireEye('#signup-togglePw', '#signup-password', '#signup-eyeSlash');
+
+  /* ── show / hide error helper ── */
+  function setErr(el, visible){
+    if(el) el.classList.toggle('visible', visible);
+  }
+
+  /* ═══════════════════════════════════════════════
+     LOGIN SUBMIT – exact logic from login.html
+     ═══════════════════════════════════════════════ */
+  $('#loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const emailEl    = $('#login-email');
+    const passEl     = $('#login-password');
+    const emailErr   = $('#login-emailError');
+    const passErr    = $('#login-passwordError');
+
+    setErr(emailErr, false);
+    setErr(passErr,  false);
+
+    const email = (emailEl.value || '').trim();
+    const pwd   = (passEl.value  || '').trim();
+
+    let ok = true;
+    if(!validEmail(email)){ setErr(emailErr, true); ok = false; }
+    if(!pwd)               { setErr(passErr,  true); ok = false; }
+    if(!ok) return;
+
+    setOverlay(true, 'Signing you in...');
+    try {
+      await new Promise(r => setTimeout(r, 400));
+
+      const remember = $('#login-rememberMe').checked;
+      const session = {
+        email,
+        loggedIn: true,
+        remember,
+        timestamp: new Date().toISOString()
+      };
+
+      if(remember){
+        localStorage.setItem('sanctuary_session', JSON.stringify(session));
+        sessionStorage.removeItem('sanctuary_session');
+      } else {
+        sessionStorage.setItem('sanctuary_session', JSON.stringify(session));
+        localStorage.removeItem('sanctuary_session');
+      }
+
+      window.location.href = '../html/index.html';
+    } finally {
+      setOverlay(false);
+    }
+  });
+
+  /* ═══════════════════════════════════════════════
+     SIGNUP SUBMIT – exact logic from signup.html
+     ═══════════════════════════════════════════════ */
+  $('#signupForm').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const nameEl      = $('#signup-name');
+    const emailEl     = $('#signup-email');
+    const passEl      = $('#signup-password');
+    const agreeEl     = $('#signup-agree');
+
+    const nameErr     = $('#signup-nameError');
+    const emailErr    = $('#signup-emailError');
+    const passErr     = $('#signup-passwordError');
+    const agreeErr    = $('#signup-agreeError');
+
+    [nameErr, emailErr, passErr, agreeErr].forEach(el => setErr(el, false));
+
+    const name  = (nameEl.value  || '').trim();
+    const email = (emailEl.value || '').trim();
+    const pwd   = (passEl.value  || '').trim();
+    const agree = !!agreeEl.checked;
+
+    let ok = true;
+    if(!name)              { setErr(nameErr,  true); ok = false; }
+    if(!validEmail(email)) { setErr(emailErr, true); ok = false; }
+    if(pwd.length < 8)     { setErr(passErr,  true); ok = false; }
+    if(!agree)             { setErr(agreeErr, true); ok = false; }
+    if(!ok) return;
+
+    setOverlay(true, 'Creating your account...');
+    try {
+      await new Promise(r => setTimeout(r, 450));
+
+      const user = { name, email, createdAt: new Date().toISOString() };
+      localStorage.setItem('sanctuary_user', JSON.stringify(user));
+
+      // Log them in immediately (prototype behaviour from signup.html)
+      const session = { email, loggedIn: true, remember: true, timestamp: new Date().toISOString() };
+      localStorage.setItem('sanctuary_session', JSON.stringify(session));
+      sessionStorage.removeItem('sanctuary_session');
+
+      window.location.href = '../html/index.html';
+    } finally {
+      setOverlay(false);
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
