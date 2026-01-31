@@ -10,6 +10,28 @@ import os
 
 from backend.llm.client import BenjiLLM
 
+import firebase_admin
+from firebase_admin import credentials, firestore
+from dotenv import load_dotenv
+
+FIREBASE_PROJECT_ID = "gen-lang-client-0263033980"
+FIRESTORE_DB_ID = "benji"
+
+creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+if not creds_path:
+    raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS not set (check .env load)")
+
+if firebase_admin._apps:
+    firebase_admin.delete_app(firebase_admin.get_app())
+
+cred = credentials.Certificate(creds_path)
+firebase_admin.initialize_app(cred, {"projectId": FIREBASE_PROJECT_ID})
+
+db = firestore.client(database_id="benji")
+
+ROOT_ENV = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".env"))
+load_dotenv(ROOT_ENV, override=True)
+
 app = FastAPI(
     title="BenjiLLM API",
     description="Agentic fitness recommendation system",
@@ -182,5 +204,15 @@ def run_agent(payload: RunRequest):
         user_input=payload.user_input,
         user_facts=user_facts
     )
+
+
+#STARTING USER DATA PULLS
+
+@app.get("/firebase/health")
+def firebase_health():
+    ref = db.collection("debug").document("api_health")
+    ref.set({"ok": True})
+    doc = ref.get()
+    return {"firestore": "ok", "db": "benji", "doc": doc.to_dict()}
 
     return {"response": output}
