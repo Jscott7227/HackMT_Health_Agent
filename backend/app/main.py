@@ -208,7 +208,6 @@ def update_facts(update: UpdateUserFacts):
     return {"message": "User facts updated successfully", "user_facts": user["user_facts"]}
 
 
-
 @app.post("/run", response_model=RunResponse)
 def run_agent(payload: RunRequest):
     """
@@ -234,16 +233,6 @@ def run_agent(payload: RunRequest):
     return {"response": output}
 
 
-#STARTING USER DATA PULLS
-
-@app.get("/firebase/health")
-def firebase_health():
-    ref = db.collection("debug").document("api_health")
-    ref.set({"ok": True})
-    doc = ref.get()
-    return {"firestore": "ok", "db": "benji", "doc": doc.to_dict()}
-
-    return {"response": output}
 @app.post("/goals", response_model=RunGoalsResponse)
 def run_goals_endpoint(payload: RunGoalsRequest):
     """
@@ -261,3 +250,18 @@ def run_goals_endpoint(payload: RunGoalsRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+#STARTING USER DATA PULLS
+
+@app.get("/firebase/health")
+def firebase_health():
+    """
+    Test Firestore connectivity.
+    """
+    ref = db.collection("debug").document("api_health")
+    ref.set({"ok": True})
+    doc = ref.get()
+    return {"firestore": "ok", "db": "benji", "doc": doc.to_dict()}
+
+
