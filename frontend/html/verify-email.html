@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verify Email • Benji</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+
+<body data-page="verify-email">
+  <div id="benji-root"></div>
+
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <div class="onboarding-shell">
+    <div class="onboarding-card" style="text-align: center;">
+      <div class="ob-screen active" style="display: block;">
+        <div class="ob-welcome-icon" style="font-size: 3rem; margin-bottom: var(--space-md);">
+          ✉️
+        </div>
+        <h1 class="ob-headline">Check your email</h1>
+        <p class="ob-subtext">
+          We've sent a verification link to your email address. Click the link to verify your account.
+        </p>
+        
+        <div style="margin-top: var(--space-lg);">
+          <p class="ob-microcopy" style="margin-bottom: var(--space-sm);">
+            Didn't receive the email?
+          </p>
+          <button class="ob-cta-secondary" id="resendBtn">
+            Resend verification email
+          </button>
+        </div>
+
+        <p class="ob-microcopy" style="margin-top: var(--space-lg);">
+          <a href="./login.html" style="color: var(--sage); text-decoration: underline;">Back to login</a>
+        </p>
+
+        <p class="ob-disclaimer" style="margin-top: var(--space-md);">
+          If you continue to have issues, please contact support.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

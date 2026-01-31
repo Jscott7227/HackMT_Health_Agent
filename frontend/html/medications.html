@@ -6,7 +6,7 @@
     <title>Medications • Benji</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 
@@ -37,8 +37,8 @@
       <div class="form-domain" style="margin-bottom: var(--space-lg);">
         <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center;">
           <h3 class="domain-title">Your Medications</h3>
-          <button class="btn btn-primary" id="addMedBtn">
-            <span>+ Add Medication</span>
+          <button class="ob-cta" id="addMedBtn" style="width: auto; padding: var(--space-sm) var(--space-md);">
+            + Add Medication
           </button>
         </div>
 
@@ -76,11 +76,11 @@
           <input type="text" id="medFrequency" class="text-input" placeholder="e.g., once daily in morning, twice daily with meals" required>
         </div>
 
-        <div class="button-group" style="margin-top: var(--space-md);">
-          <button class="btn btn-primary" id="saveMedBtn">
+        <div class="button-group" style="margin-top: var(--space-md); display: flex; gap: var(--space-sm);">
+          <button class="ob-cta" id="saveMedBtn" style="flex: 1;">
             <span id="saveBtnText">Save Medication</span>
           </button>
-          <button class="btn" id="cancelMedBtn">Cancel</button>
+          <button class="ob-cta-secondary" id="cancelMedBtn" style="flex: 1;">Cancel</button>
         </div>
       </div>
 
@@ -88,8 +88,8 @@
       <div class="form-domain">
         <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center;">
           <h3 class="domain-title">Medication Schedule</h3>
-          <button class="btn btn-primary" id="generateScheduleBtn">
-            <span>Generate Schedule</span>
+          <button class="ob-cta" id="generateScheduleBtn" style="width: auto; padding: var(--space-sm) var(--space-md);">
+            Generate Schedule
           </button>
         </div>
 

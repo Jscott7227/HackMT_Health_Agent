@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Goals • Benji</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+
+<body data-page="goals">
+  <div id="benji-root"></div>
+
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <div class="container">
+    <div class="content-wrapper">
+      
+      <!-- Page Header -->
+      <div class="section-intro" style="text-align: center; margin-bottom: var(--space-lg);">
+        <h2 class="ob-headline">Your Goals</h2>
+        <p class="ob-subtext">
+          Set fitness and wellness goals, track your progress, and let Benji help you stay on course.
+        </p>
+      </div>
+
+      <!-- Goals List Section -->
+      <div class="form-domain" style="margin-bottom: var(--space-lg);">
+        <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="domain-title">Active Goals</h3>
+          <button class="ob-cta" id="addGoalBtn" style="width: auto; padding: var(--space-sm) var(--space-md);">
+            + New Goal
+          </button>
+        </div>
+
+        <!-- Goals will be rendered here -->
+        <div id="goalsList" class="goals-list">
+          <p class="ob-microcopy" style="padding: var(--space-lg); text-align: center;">
+            No goals yet. Click "New Goal" to get started with your first goal.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../components/topbar.js"></script>
+</body>
+</html>
