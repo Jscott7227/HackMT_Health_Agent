@@ -537,6 +537,7 @@
         document.getElementById('progressFill').style.width = pct + '%';
 
         // re-trigger ring on analysis screen
+        /*
         if (n === 13) {
             var ring = target.querySelector('.ob-ring-fill');
             if (ring) {
@@ -544,6 +545,19 @@
                 void ring.offsetWidth;
                 ring.style.animation = '';
             }
+        }
+        */
+        if (n === 13) {
+            var ring = target.querySelector('.ob-ring-fill');
+            if (ring) {
+                ring.style.animation = 'none';
+                void ring.offsetWidth;
+                ring.style.animation = '';
+            }
+            // Auto-complete after 3 seconds of "analyzing"
+            setTimeout(function() {
+                completeSetup();
+            }, 3000);
         }
 
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -779,6 +793,27 @@
     document.getElementById('weightMetric').style.display  = 'none';
     document.getElementById('weightImperial').style.display = 'flex';
     updateStepLabels();
+
+    /* --------------------------------------------------------
+    COMPLETE SETUP - Redirect to main app
+    -------------------------------------------------------- */
+    function completeSetup() {
+        // Save onboarding data to localStorage
+        localStorage.setItem('onboardingComplete', 'true');
+        localStorage.setItem('userProfile', JSON.stringify(state));
+        
+        // Add a small delay for user feedback (optional)
+        var btn = document.querySelector('#screen-12 .ob-cta');
+        btn.textContent = 'Redirecting...';
+        btn.disabled = true;
+        
+        // Redirect to main chat page after brief delay
+        setTimeout(function() {
+            window.location.href = 'index.html';
+        }, 800);
+    }
+
     </script>
+    <!-- Scripts -->
 </body>
 </html>
