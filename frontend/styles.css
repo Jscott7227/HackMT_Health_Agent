@@ -195,7 +195,7 @@ body {
 /* ====================================
    Header
    ==================================== */
-.sanctuary-header {
+.Benji-header {
     text-align: center;
     margin-bottom: var(--space-lg);
     animation: fadeInDown 0.8s cubic-bezier(0.4, 0, 0.2, 1);
@@ -216,7 +216,7 @@ body {
     margin-bottom: var(--space-sm);
 }
 
-.sanctuary-title {
+.Benji-title {
     font-family: var(--font-display);
     font-size: 3.5rem;
     font-weight: 300;
@@ -239,7 +239,7 @@ body {
     50% { transform: rotate(5deg); }
 }
 
-.sanctuary-subtitle {
+.Benji-subtitle {
     font-size: 1.125rem;
     color: var(--text-secondary);
     font-weight: 400;
@@ -395,7 +395,7 @@ body {
 /* ====================================
    Navigation Tabs (Domain Sub-tabs)
    ==================================== */
-.sanctuary-nav {
+.Benji-nav {
     display: flex;
     gap: var(--space-xs);
     background: white;
@@ -1225,7 +1225,7 @@ body {
         padding: var(--space-md) var(--space-sm);
     }
 
-    .sanctuary-title {
+    .Benji-title {
         font-size: 2.5rem;
     }
 
@@ -1243,7 +1243,7 @@ body {
         text-align: center;
     }
 
-    .sanctuary-nav {
+    .Benji-nav {
         flex-wrap: nowrap;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -1303,63 +1303,62 @@ body {
 /* ====================================
    TOP BAR
    ==================================== */
-@media print {
 
-    .benji-bar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 28px;
-    backdrop-filter: blur(14px);
-    background: rgba(255, 255, 255, 0.75);
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    }
-
-    .benji-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    }
-
-    .benji-brand h1 {
-    font-size: 1.2rem;
-    margin: 0;
-    }
-
-    .benji-brand p {
-    font-size: 0.8rem;
-    opacity: 0.7;
-    margin: 0;
-    }
-
-    .benji-nav {
-    display: flex;
-    gap: 20px;
-    }
-
-    .benji-nav a {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    text-decoration: none;
-    color: inherit;
-    font-weight: 500;
-    }
-
-    .benji-nav a.active {
-    background: rgba(0,0,0,0.08);
-    }
-
-    .benji-date {
-    font-size: 0.85rem;
-    opacity: 0.7;
-    }
+.benji-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.75);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
+
+.benji-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.benji-brand h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.benji-brand p {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.benji-nav {
+  display: flex;
+  gap: 20px;
+}
+
+.benji-nav a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  font-weight: 500;
+}
+
+.benji-nav a.active {
+  background: rgba(0,0,0,0.08);
+}
+
+.benji-date {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
 
 
 /* ====================================
@@ -1367,7 +1366,7 @@ body {
    ==================================== */
 @media print {
     .background-layers,
-    .sanctuary-nav,
+    .Benji-nav,
     .form-actions,
     .loading-overlay {
         display: none !important;

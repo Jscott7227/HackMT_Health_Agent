@@ -480,7 +480,7 @@ function checkApiKey() {
     
     if (!apiKey) {
         displayAgentMessage(
-            'Welcome to Sanctuary! To get started, please add your Anthropic API key in Settings. ' +
+            'Welcome to Benji! To get started, please add your Anthropic API key in Settings. ' +
             'This allows me to provide personalized, thoughtful responses to your check-ins.'
         );
     }

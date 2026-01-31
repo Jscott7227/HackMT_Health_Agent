@@ -605,7 +605,7 @@ function initializeSettings() {
             
             const link = document.createElement('a');
             link.href = url;
-            link.download = `sanctuary-export-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `Benji-export-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -659,7 +659,7 @@ function checkApiKey() {
     
     if (!apiKey) {
         displayAgentMessage(
-            'Welcome to Sanctuary! To get started, please add your Anthropic API key in Settings. ' +
+            'Welcome to Benji! To get started, please add your Anthropic API key in Settings. ' +
             'This allows me to provide personalized, thoughtful responses to your check-ins.'
         );
     }
