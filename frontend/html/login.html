@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/frontend/css/styles.css" />
+  <link rel="stylesheet" href="../css/styles.css" />
 </head>
 
 <body data-page="login">
@@ -30,7 +30,7 @@
       <div class="header-content">
         <h1 class="Benji-title" style="flex-direction: column; gap: 4px; margin-bottom: 0;">
           <img
-            src="/frontend/assets/img/benji_logo.png"
+            src="../assets/img/benji_logo.png"
             alt="Benji logo"
             style="
               width: 56px;
@@ -135,7 +135,7 @@
             </label>
 
             <a
-              href="/frontend/html/forgot-password.html"
+              href="../html/forgot-password.html"
               style="color: var(--sage-dark); text-decoration: none; font-weight: 600; font-size: 0.9rem;"
             >
               Forgot?
@@ -156,9 +156,9 @@
 
           <p class="help-text" style="margin-top: 0; font-size: 0.8rem;">
             By continuing, you agree to our
-            <a href="/frontend/html/terms.html" style="color: var(--sage-dark); font-weight: 600;">Terms</a>
+            <a href="../html/terms.html" style="color: var(--sage-dark); font-weight: 600;">Terms</a>
             and
-            <a href="/frontend/html/privacy.html" style="color: var(--sage-dark); font-weight: 600;">Privacy Policy</a>.
+            <a href="../html/privacy.html" style="color: var(--sage-dark); font-weight: 600;">Privacy Policy</a>.
           </p>
         </div>
 
@@ -203,7 +203,7 @@
       });
 
       goSignup?.addEventListener("click", () => {
-        window.location.href = "/frontend/html/signup.html";
+        window.location.href = "../html/signup.html";
       });
 
       const setOverlay = (on) => {
@@ -246,7 +246,7 @@
             localStorage.removeItem("sanctuary_session");
           }
 
-          window.location.href = "/frontend/html/index.html";
+          window.location.href = "../html/index.html";
         } finally {
           setOverlay(false);
         }
@@ -254,6 +254,6 @@
     })();
   </script>
 
-  <script src="/frontend/components/topbar.js"></script>
+  <script src="../components/topbar.js"></script>
 </body>
 </html>
