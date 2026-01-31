@@ -762,7 +762,7 @@
    ==================================== */
 .ob-welcome-icon {
   width: 256px;
-  height: 256px;
+  height: 180px;
   border-radius: 10px;
   animation: sway 6s ease-in-out infinite;
 
