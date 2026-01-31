@@ -3,245 +3,1899 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Settings • Sanctuary</title>
-
+  <title>Health Settings • Sanctuary</title>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  <link rel="stylesheet" href="../css/styles.css" />
+    :root {
+      /* Forest Green Theme - matching styles.css */
+      --forest-50: #e6f5ef;
+      --forest-100: #c2e8d9;
+      --forest-200: #99dac0;
+      --forest-300: #6fcca6;
+      --forest-400: #4fc193;
+      --forest-500: #016844;
+      --forest-600: #015d3d;
+      --forest-700: #014f33;
+      --forest-800: #01412a;
+      --forest-900: #002b1b;
+
+      /* Earthy tones */
+      --clay-50: #faf8f5;
+      --clay-100: #f3ede3;
+      --clay-200: #e8dcc8;
+      --clay-300: #d4c0a3;
+      --clay-400: #bfa582;
+      --clay-500: #a88b68;
+      --clay-600: #8b6f53;
+      --clay-700: #6d5642;
+      --clay-800: #4f3e2f;
+      --clay-900: #3a2e23;
+
+      /* Accent colors */
+      --sage: #016844;
+      --sage-dark: #014f33;
+      --sage-light: #4fc193;
+      --terracotta: #c77e5d;
+      --terracotta-light: #d89e87;
+      --moss: #5a6c52;
+      --sunset: #e8a87c;
+      --lavender: #b4a5c4;
+      --cream: #fff9f0;
+      --mint: #99dac0;
+
+      /* Semantic colors */
+      --bg-primary: var(--cream);
+      --bg-secondary: var(--clay-50);
+      --bg-panel: var(--clay-50);
+      --bg-elevated: white;
+      --border: rgba(139, 111, 83, 0.15);
+      --text-primary: var(--clay-800);
+      --text-secondary: var(--clay-600);
+      --text-muted: var(--clay-400);
+      --accent-green: var(--sage);
+      --accent-blue: var(--sage-light);
+      --accent-red: var(--terracotta);
+      --accent-orange: var(--sunset);
+      --accent-purple: var(--lavender);
+      --shadow-sm: 0 2px 8px rgba(79, 62, 47, 0.08);
+      --shadow-md: 0 4px 16px rgba(79, 62, 47, 0.12);
+      --shadow-lg: 0 8px 32px rgba(79, 62, 47, 0.16);
+      
+      /* Typography */
+      --font-display: 'Crimson Pro', serif;
+      --font-body: 'DM Sans', sans-serif;
+      
+      /* Spacing */
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 2rem;
+      --space-xl: 3rem;
+      
+      /* Borders */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      
+      /* Transitions */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--cream);
+      color: var(--text-primary);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* Main Layout */
+    .app-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 60px 1fr 50px;
+      height: 100vh;
+      gap: 0;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      grid-column: 1 / -1;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      transition: color 0.2s;
+    }
+
+    .back-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* Navigation Panel */
+    .nav-panel {
+      grid-column: 1;
+      grid-row: 2;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 24px 0;
+    }
+
+    .nav-section {
+      margin-bottom: 32px;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      padding: 0 24px 12px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      position: relative;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: rgba(1, 104, 68, 0.08);
+      color: var(--sage);
+      border-left-color: var(--sage);
+    }
+
+    .nav-icon {
+      font-size: 18px;
+      width: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--terracotta);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    /* Content Panel */
+    .content-panel {
+      grid-column: 2;
+      grid-row: 2;
+      background: var(--bg-primary);
+      overflow-y: auto;
+      padding: 40px 48px;
+    }
+
+    .content-header {
+      margin-bottom: 32px;
+    }
+
+    .content-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      color: var(--clay-800);
+    }
+
+    .content-subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .content-meta {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .meta-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .meta-value {
+      font-size: 16px;
+      font-weight: 600;
+      font-family: var(--font-body);
+      color: var(--sage-dark);
+    }
+
+    /* Settings Groups */
+    .settings-group {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow var(--transition-base);
+    }
+
+    .settings-group:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .settings-group-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .setting-row:first-child {
+      padding-top: 0;
+    }
+
+    .setting-info {
+      flex: 1;
+    }
+
+    .setting-label {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+
+    .setting-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.3s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--sage);
+      border-color: var(--sage);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+      background: white;
+    }
+
+    /* Input Fields */
+    .input-field {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      width: 200px;
+      transition: all 0.2s;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--sage);
+      box-shadow: 0 0 0 3px rgba(1, 104, 68, 0.1);
+    }
+
+    /* Buttons */
+    .btn {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--bg-panel);
+      border-color: var(--text-muted);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--sage-light), var(--sage));
+      border-color: var(--sage);
+      color: white;
+      box-shadow: 0 2px 8px rgba(1, 104, 68, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--sage), var(--sage-dark));
+      border-color: var(--sage-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(1, 104, 68, 0.25);
+    }
+
+    .btn-danger {
+      background: transparent;
+      border-color: var(--terracotta);
+      color: var(--terracotta);
+    }
+
+    .btn-danger:hover {
+      background: rgba(199, 126, 93, 0.1);
+      border-color: var(--terracotta);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .status-indicators {
+      display: flex;
+      gap: 24px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--sage);
+    }
+
+    .status-dot.warning {
+      background: var(--sunset);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* Alert Badge */
+    .alert-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 69, 58, 0.1);
+      border: 1px solid var(--accent-red);
+      color: var(--accent-red);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 12px;
+    }
+
+    /* Grid layouts for forms */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .form-input {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--sage);
+      box-shadow: 0 0 0 3px rgba(1, 104, 68, 0.1);
+    }
+
+    /* Checkbox group */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--sage);
+    }
+
+    .checkbox-label {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Mood Slider Styling */
+    .mood-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--sage);
+      cursor: pointer;
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .mood-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--sage);
+      cursor: pointer;
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Select Styling */
+    select.form-input {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b6f53' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    /* Textarea Styling */
+    textarea.form-input {
+      font-family: var(--font-body);
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
-<body data-page="settings">
-  <div id="benji-root"></div>
+<body>
+  <div class="app-container">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <button class="back-btn" onclick="window.history.back()">←</button>
+        <h1 class="page-title">Health Settings</h1>
+      </div>
+      <div class="top-bar-right">
+        <div class="user-info">
+          <span id="userName">John Doe</span>
+          <div class="user-avatar">JD</div>
+        </div>
+      </div>
+    </div>
 
-  <div class="background-layers">
-    <div class="grain"></div>
-    <div class="gradient-orb orb-1"></div>
-    <div class="gradient-orb orb-2"></div>
-    <div class="gradient-orb orb-3"></div>
+    <!-- Navigation Panel -->
+    <div class="nav-panel">
+      <div class="nav-section">
+        <div class="nav-section-title">Health</div>
+        <a class="nav-item active" data-content="profile">
+          <span class="nav-icon">🧾</span>
+          <span>Profile</span>
+        </a>
+        <a class="nav-item" data-content="fitness">
+          <span class="nav-icon">🏋️</span>
+          <span>Fitness</span>
+        </a>
+        <a class="nav-item" data-content="wellness">
+          <span class="nav-icon">🌿</span>
+          <span>Wellness</span>
+        </a>
+        <a class="nav-item" data-content="nutrition">
+          <span class="nav-icon">🥗</span>
+          <span>Nutrition</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">System</div>
+        <a class="nav-item" data-content="notifications">
+          <span class="nav-icon">🔔</span>
+          <span>Notifications</span>
+          <span class="nav-badge">2</span>
+        </a>
+        <a class="nav-item" data-content="privacy">
+          <span class="nav-icon">🔒</span>
+          <span>Privacy</span>
+        </a>
+        <a class="nav-item" data-content="devices">
+          <span class="nav-icon">⌚</span>
+          <span>Devices</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Account</div>
+        <a class="nav-item" data-content="account">
+          <span class="nav-icon">👤</span>
+          <span>Account Info</span>
+        </a>
+        <a class="nav-item" data-content="subscription">
+          <span class="nav-icon">💳</span>
+          <span>Subscription</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Content Panel -->
+    <div class="content-panel" id="contentPanel">
+      <!-- Profile Content (Default) -->
+      <div class="content-section" id="profile-content">
+        <div class="content-header">
+          <h2 class="content-title">Hello Jun</h2>
+          <p class="content-subtitle">Manage your personal information and health metrics that help us personalize your experience.</p>
+          
+          <div class="content-meta">
+            <div class="meta-item">
+              <span class="meta-label">User ID</span>
+              <span class="meta-value">5YJ3E1E</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Last Updated</span>
+              <span class="meta-value">Jan 31, 2026</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Current Status</span>
+              <span class="meta-value" style="color: var(--sage);">Active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>👤</span>
+            Basic Information
+          </h3>
+          
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-input" placeholder="John Doe" value="John Doe" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Gender</label>
+              <input type="text" class="form-input" placeholder="Optional" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Height</label>
+              <input type="text" class="form-input" placeholder="5'10&quot; or 178 cm" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Weight</label>
+              <input type="text" class="form-input" placeholder="165 lb or 75 kg" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+          <button class="btn" onclick="resetForm()">Reset</button>
+          <!-- <button class="btn btn-danger" style="margin-left: auto;">Delete Profile</button> -->
+        </div>
+      </div>
+
+      <!-- Fitness Content -->
+      <div class="content-section" id="fitness-content" style="display: none;">
+        <div class="content-header">
+          <h2 class="content-title">Fitness Settings</h2>
+          <p class="content-subtitle">Track your physical health metrics, activity levels, and fitness goals.</p>
+          
+          <div class="content-meta">
+            <div class="meta-item">
+              <span class="meta-label">Current BMI</span>
+              <span class="meta-value" id="bmiDisplay">22.4</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Weekly Activity</span>
+              <span class="meta-value">4.2 sessions</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Goal Progress</span>
+              <span class="meta-value" style="color: var(--sage);">78%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Body Metrics -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>📊</span>
+            Body Metrics
+          </h3>
+          
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Height</label>
+              <input type="text" class="form-input" id="fitness-height" placeholder="5'10&quot; or 178 cm" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Current Weight</label>
+              <input type="text" class="form-input" id="fitness-weight" placeholder="165 lb or 75 kg" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Target Weight</label>
+              <input type="text" class="form-input" placeholder="160 lb or 72 kg" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Body Fat %</label>
+              <input type="number" class="form-input" placeholder="e.g., 18" />
+            </div>
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">BMI Calculator</label>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <div style="flex: 1; padding: 16px; background: var(--clay-50); border-radius: var(--radius-md); text-align: center;">
+                <div style="font-size: 28px; font-weight: 700; color: var(--sage); font-family: var(--font-display);" id="bmiValue">22.4</div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;" id="bmiCategory">Normal Weight</div>
+              </div>
+              <button class="btn" onclick="calculateBMI()" style="height: fit-content;">Calculate</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metabolism & Activity -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>⚡</span>
+            Metabolism & Activity
+          </h3>
+          
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Basal Metabolic Rate (BMR)</label>
+              <input type="number" class="form-input" placeholder="e.g., 1650 kcal/day" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Daily Calorie Target</label>
+              <input type="number" class="form-input" placeholder="e.g., 2200 kcal/day" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Activity Level (1-5)</label>
+              <input type="number" class="form-input" placeholder="1-5" min="1" max="5" value="3" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Workout Frequency/Week</label>
+              <input type="number" class="form-input" placeholder="e.g., 4" min="0" max="7" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Fitness Experience -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>🏋️</span>
+            Fitness Experience & Goals
+          </h3>
+          
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Cardio Experience</label>
+              <select class="form-input">
+                <option value="">Select level</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Strength Training Experience</label>
+              <select class="form-input">
+                <option value="">Select level</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Primary Fitness Goal</label>
+            <select class="form-input">
+              <option value="">Select goal</option>
+              <option value="weight-loss">Weight Loss</option>
+              <option value="muscle-gain">Muscle Gain</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="endurance">Build Endurance</option>
+              <option value="flexibility">Improve Flexibility</option>
+              <option value="general-health">General Health</option>
+            </select>
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Injury History / Limitations</label>
+            <textarea class="form-input" style="min-height: 80px; resize: vertical;" placeholder="Describe any injuries, pain points, or physical limitations..."></textarea>
+          </div>
+        </div>
+
+        <!-- Activity Routine (moved from Profile) -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>📅</span>
+            Activity & Routine
+          </h3>
+          
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Busyness Level (1-5)</label>
+              <input type="number" class="form-input" placeholder="1-5" min="1" max="5" value="3" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Routine Stability (1-5)</label>
+              <input type="number" class="form-input" placeholder="1-5" min="1" max="5" value="4" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Accountability Level (1-5)</label>
+              <input type="number" class="form-input" placeholder="1-5" min="1" max="5" value="3" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Preferred Workout Time</label>
+              <select class="form-input">
+                <option value="morning">Morning</option>
+                <option value="afternoon">Afternoon</option>
+                <option value="evening">Evening</option>
+                <option value="flexible">Flexible</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+          <button class="btn" onclick="resetForm()">Reset</button>
+        </div>
+      </div>
+
+      <!-- Wellness Content -->
+      <div class="content-section" id="wellness-content" style="display: none;">
+        <div class="content-header">
+          <h2 class="content-title">Wellness Settings</h2>
+          <p class="content-subtitle">Monitor your mental health, sleep patterns, and emotional wellbeing.</p>
+          
+          <div class="content-meta">
+            <div class="meta-item">
+              <span class="meta-label">Current Mood</span>
+              <span class="meta-value">72/100</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Sleep Average</span>
+              <span class="meta-value">7.2h</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Therapy Sessions</span>
+              <span class="meta-value">8 total</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sleep & Rest -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>😴</span>
+            Sleep & Rest
+          </h3>
+          
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Average Sleep Duration</label>
+              <input type="text" class="form-input" placeholder="e.g., 7.5 hours" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Sleep Quality (1-5)</label>
+              <input type="number" class="form-input" placeholder="1-5" min="1" max="5" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Typical Bedtime</label>
+              <input type="time" class="form-input" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Typical Wake Time</label>
+              <input type="time" class="form-input" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Lifestyle Habits (moved from Profile) -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>☕</span>
+            Lifestyle Habits
+          </h3>
+          
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" checked />
+              <span class="checkbox-label">Uses caffeine regularly</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" />
+              <span class="checkbox-label">Consumes alcohol</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" />
+              <span class="checkbox-label">Uses tobacco/nicotine</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" />
+              <span class="checkbox-label">Regular meditation practice</span>
+            </label>
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Daily Water Intake</label>
+            <input type="text" class="form-input" placeholder="e.g., 64 oz or 2L" />
+          </div>
+        </div>
+
+        <!-- Mental Health Tracking -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>🧘</span>
+            Mental Health Tracking
+          </h3>
+          
+          <div class="form-field">
+            <label class="form-label">Current Mood Rating (0-100)</label>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <input type="range" min="0" max="100" value="72" class="mood-slider" id="moodSlider" 
+                     style="flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--terracotta), var(--sunset), var(--sage-light)); outline: none; -webkit-appearance: none;">
+              <span id="moodValue" style="font-size: 20px; font-weight: 700; color: var(--sage); min-width: 50px; text-align: center;">72</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+              <span>Low</span>
+              <span>Moderate</span>
+              <span>High</span>
+            </div>
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Emotional Stability (1-5)</label>
+            <input type="number" class="form-input" placeholder="1-5" min="1" max="5" />
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Stress Level</label>
+            <select class="form-input">
+              <option value="low">Low</option>
+              <option value="moderate">Moderate</option>
+              <option value="high">High</option>
+              <option value="very-high">Very High</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Therapy Session Log -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>💬</span>
+            Therapy Session Log
+          </h3>
+          
+          <div style="margin-bottom: 20px;">
+            <canvas id="therapyChart" width="400" height="200" style="max-width: 100%;"></canvas>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Add Session</label>
+            <div style="display: flex; gap: 12px;">
+              <input type="date" class="form-input" id="sessionDate" style="flex: 1;" />
+              <input type="number" class="form-input" id="sessionMood" placeholder="Mood (0-100)" min="0" max="100" style="flex: 1;" />
+              <button class="btn btn-primary" onclick="addTherapySession()" style="white-space: nowrap;">Add Session</button>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; max-height: 300px; overflow-y: auto;">
+            <div style="display: flex; flex-direction: column; gap: 8px;" id="sessionList">
+              <!-- Sessions will be added here dynamically -->
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--clay-50); border-radius: var(--radius-sm); border-left: 3px solid var(--sage);">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">Jan 15, 2026</div>
+                  <div style="font-size: 13px; color: var(--text-secondary);">Mood: 68/100</div>
+                </div>
+                <button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="this.parentElement.remove()">Remove</button>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--clay-50); border-radius: var(--radius-sm); border-left: 3px solid var(--sage);">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">Jan 8, 2026</div>
+                  <div style="font-size: 13px; color: var(--text-secondary);">Mood: 75/100</div>
+                </div>
+                <button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="this.parentElement.remove()">Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+          <button class="btn" onclick="resetForm()">Reset</button>
+        </div>
+      </div>
+
+      <!-- Nutrition Content -->
+      <div class="content-section" id="nutrition-content" style="display: none;">
+        <div class="content-header">
+          <h2 class="content-title">Nutrition Settings</h2>
+          <p class="content-subtitle">Manage your dietary preferences, nutrition goals, and meal planning.</p>
+          
+          <div class="content-meta">
+            <div class="meta-item">
+              <span class="meta-label">Daily Calories</span>
+              <span class="meta-value">1,840 kcal</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Protein Target</span>
+              <span class="meta-value">150g</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Hydration</span>
+              <span class="meta-value" style="color: var(--sage);">On Track</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dietary Preferences -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>🥗</span>
+            Dietary Preferences
+          </h3>
+          
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Diet Type</label>
+              <select class="form-input">
+                <option value="omnivore">Omnivore</option>
+                <option value="vegetarian">Vegetarian</option>
+                <option value="vegan">Vegan</option>
+                <option value="pescatarian">Pescatarian</option>
+                <option value="keto">Ketogenic</option>
+                <option value="paleo">Paleo</option>
+                <option value="mediterranean">Mediterranean</option>
+                <option value="flexible">Flexible</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Meals Per Day</label>
+              <input type="number" class="form-input" placeholder="e.g., 3" min="1" max="8" value="3" />
+            </div>
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Food Allergies / Restrictions</label>
+            <textarea class="form-input" style="min-height: 80px; resize: vertical;" placeholder="List any food allergies, intolerances, or dietary restrictions..."></textarea>
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Favorite Foods</label>
+            <input type="text" class="form-input" placeholder="e.g., Chicken, broccoli, sweet potatoes..." />
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Foods to Avoid</label>
+            <input type="text" class="form-input" placeholder="e.g., Mushrooms, cilantro..." />
+          </div>
+        </div>
+
+        <!-- Macro & Calorie Goals -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>🎯</span>
+            Macro & Calorie Goals
+          </h3>
+          
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Daily Calorie Target</label>
+              <input type="number" class="form-input" placeholder="e.g., 2000" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Protein (grams/day)</label>
+              <input type="number" class="form-input" placeholder="e.g., 150" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Carbohydrates (grams/day)</label>
+              <input type="number" class="form-input" placeholder="e.g., 225" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Fat (grams/day)</label>
+              <input type="number" class="form-input" placeholder="e.g., 65" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Fiber (grams/day)</label>
+              <input type="number" class="form-input" placeholder="e.g., 30" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Daily Water Goal</label>
+              <input type="text" class="form-input" placeholder="e.g., 64 oz or 2L" />
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; padding: 16px; background: var(--clay-50); border-radius: var(--radius-md);">
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">Macro Distribution</div>
+            <div style="display: flex; gap: 8px; height: 24px; border-radius: 12px; overflow: hidden;">
+              <div style="flex: 30; background: var(--terracotta); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600;">Protein 30%</div>
+              <div style="flex: 45; background: var(--sunset); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600;">Carbs 45%</div>
+              <div style="flex: 25; background: var(--lavender); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600;">Fat 25%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meal Planning -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>📅</span>
+            Meal Planning Preferences
+          </h3>
+          
+          <div class="form-field">
+            <label class="form-label">Meal Prep Frequency</label>
+            <select class="form-input">
+              <option value="daily">Daily</option>
+              <option value="every-other">Every Other Day</option>
+              <option value="weekly">Once a Week</option>
+              <option value="never">Don't Meal Prep</option>
+            </select>
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Cooking Skill Level</label>
+            <select class="form-input">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+              <option value="expert">Expert/Chef</option>
+            </select>
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Time Available for Cooking</label>
+            <select class="form-input">
+              <option value="15">15 minutes or less</option>
+              <option value="30">30 minutes</option>
+              <option value="60">1 hour</option>
+              <option value="unlimited">Flexible/No limit</option>
+            </select>
+          </div>
+
+          <div class="checkbox-group" style="margin-top: 16px;">
+            <label class="checkbox-item">
+              <input type="checkbox" />
+              <span class="checkbox-label">Track calories daily</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" checked />
+              <span class="checkbox-label">Track macros daily</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" checked />
+              <span class="checkbox-label">Enable meal reminders</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Supplements -->
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>💊</span>
+            Supplements & Vitamins
+          </h3>
+          
+          <div class="form-field">
+            <label class="form-label">Current Supplements</label>
+            <textarea class="form-input" style="min-height: 80px; resize: vertical;" placeholder="List any supplements, vitamins, or medications you take regularly..."></textarea>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+          <button class="btn" onclick="resetForm()">Reset</button>
+        </div>
+      </div>
+
+      <!-- Notifications Content -->
+      <div class="content-section" id="notifications-content" style="display: none;">
+        <div class="content-header">
+          <h2 class="content-title">Notification Settings</h2>
+          <p class="content-subtitle">Manage how and when you receive alerts and reminders.</p>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>🔔</span>
+            Notification Preferences
+          </h3>
+          
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Email Notifications</div>
+              <div class="setting-description">Receive updates via email</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Push Notifications</div>
+              <div class="setting-description">Browser and mobile alerts</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Workout Reminders</div>
+              <div class="setting-description">Daily fitness reminders</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Meal Reminders</div>
+              <div class="setting-description">Nutrition tracking alerts</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Weekly Summary</div>
+              <div class="setting-description">Get a weekly health report</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+        </div>
+      </div>
+
+      <!-- Privacy Content -->
+      <div class="content-section" id="privacy-content" style="display: none;">
+        <div class="content-header">
+          <h2 class="content-title">Privacy & Security</h2>
+          <p class="content-subtitle">Control your data sharing and privacy preferences.</p>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>🔒</span>
+            Privacy Settings
+          </h3>
+          
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Share Anonymous Usage Data</div>
+              <div class="setting-description">Help improve our services</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Profile Visibility</div>
+              <div class="setting-description">Control who can see your profile</div>
+            </div>
+            <select class="form-input" style="width: 200px;">
+              <option value="private">Private</option>
+              <option value="friends">Friends Only</option>
+              <option value="public">Public</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>💾</span>
+            Data Management
+          </h3>
+          
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn" onclick="showNotification('Data export started', 'success')">Export My Data</button>
+            <button class="btn btn-danger">Delete All Data</button>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+        </div>
+      </div>
+
+      <!-- Devices Content -->
+      <div class="content-section" id="devices-content" style="display: none;">
+        <div class="content-header">
+          <h2 class="content-title">Connected Devices</h2>
+          <p class="content-subtitle">Manage your health tracking devices and integrations.</p>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>⌚</span>
+            Wearables & Trackers
+          </h3>
+          
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--clay-50); border-radius: var(--radius-md); border-left: 3px solid var(--sage);">
+              <div>
+                <div style="font-weight: 600; color: var(--text-primary);">Apple Watch</div>
+                <div style="font-size: 13px; color: var(--sage); margin-top: 4px;">● Connected - Last sync: 2 min ago</div>
+              </div>
+              <button class="btn" style="padding: 8px 16px;">Disconnect</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--clay-50); border-radius: var(--radius-md); border-left: 3px solid var(--clay-300);">
+              <div>
+                <div style="font-weight: 600; color: var(--text-primary);">Fitbit</div>
+                <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Not connected</div>
+              </div>
+              <button class="btn btn-primary" style="padding: 8px 16px;">Connect</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--clay-50); border-radius: var(--radius-md); border-left: 3px solid var(--clay-300);">
+              <div>
+                <div style="font-weight: 600; color: var(--text-primary);">Oura Ring</div>
+                <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Not connected</div>
+              </div>
+              <button class="btn btn-primary" style="padding: 8px 16px;">Connect</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="showNotification('Sync completed', 'success')">Sync All Devices</button>
+        </div>
+      </div>
+
+      <!-- Account Content -->
+      <div class="content-section" id="account-content" style="display: none;">
+        <div class="content-header">
+          <h2 class="content-title">Account Information</h2>
+          <p class="content-subtitle">Manage your account details and authentication.</p>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>👤</span>
+            Account Details
+          </h3>
+          
+          <div class="form-field">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-input" value="john@email.com" />
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-input" value="john_doe" />
+          </div>
+
+          <div class="form-field" style="margin-top: 16px;">
+            <label class="form-label">Change Password</label>
+            <input type="password" class="form-input" placeholder="New password" />
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>📅</span>
+            Membership
+          </h3>
+          
+          <div style="padding: 16px; background: var(--clay-50); border-radius: var(--radius-md);">
+            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Member since: January 2024</div>
+            <div style="font-size: 14px; color: var(--text-secondary);">Account Type: <span style="color: var(--sage); font-weight: 600;">Premium</span></div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+          <button class="btn btn-danger" style="margin-left: auto;">Log Out</button>
+        </div>
+      </div>
+
+      <!-- Subscription Content -->
+      <div class="content-section" id="subscription-content" style="display: none;">
+        <div class="content-header">
+          <h2 class="content-title">Subscription</h2>
+          <p class="content-subtitle">Manage your plan and billing information.</p>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>💎</span>
+            Current Plan
+          </h3>
+          
+          <div style="padding: 24px; background: linear-gradient(135deg, var(--forest-50), var(--clay-50)); border-radius: var(--radius-md); border: 1px solid var(--border);">
+            <div style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--sage); margin-bottom: 8px;">Premium Plan</div>
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">Full access to all features</div>
+            <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Price</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--sage);">$99<span style="font-size: 14px; font-weight: 400;">/year</span></div>
+              </div>
+              <div>
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Next Billing</div>
+                <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Feb 15, 2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-group-title">
+            <span>💳</span>
+            Payment Method
+          </h3>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--clay-50); border-radius: var(--radius-md);">
+            <div>
+              <div style="font-weight: 600; color: var(--text-primary);">•••• •••• •••• 4242</div>
+              <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Expires 12/2027</div>
+            </div>
+            <button class="btn" style="padding: 8px 16px;">Update</button>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="showNotification('Billing updated', 'success')">Update Billing</button>
+          <button class="btn" style="margin-left: auto;">Cancel Subscription</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+      <div class="status-indicators">
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span>System Online</span>
+        </div>
+        <div class="status-item">
+          <span>Last Sync: 2 min ago</span>
+        </div>
+      </div>
+      <div>
+        <span>Sanctuary Health • v2.4.1</span>
+      </div>
+    </div>
   </div>
 
-  <div class="container" style="max-width: 980px; padding-top: var(--space-md);">
+  <script>
+    // Navigation handling
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function() {
+        // Remove active class from all nav items
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        
+        // Add active to clicked item
+        this.classList.add('active');
+        
+        // Get content type
+        const contentType = this.getAttribute('data-content');
 
-    <header class="Benji-header" style="margin-bottom: var(--space-sm);">
-      <div class="header-content">
-        <h1 class="Benji-title" style="font-size: 2.8rem;">Settings</h1>
-        <p class="Benji-subtitle" id="sessionHint" style="margin-top: 2px;">
-          Manage your profile and preferences.
-        </p>
-      </div>
-    </header>
+        // Hide all content sections
+        document.querySelectorAll('.content-section').forEach(section => {
+          section.style.display = 'none';
+        });
 
-    <!-- ACCOUNT -->
-    <section class="form-domain">
-      <div class="domain-header">
-        <h2 class="domain-title"><span class="domain-icon">👤</span> Account</h2>
-      </div>
+        // Show selected content section
+        const selectedSection = document.getElementById(`${contentType}-content`);
+        if (selectedSection) {
+          selectedSection.style.display = 'block';
+        }
 
-      <div class="form-group" style="margin-bottom: var(--space-md);">
-        <label class="form-label">Signed in as</label>
-        <div class="text-input" style="display:flex; align-items:center; justify-content: space-between; gap: var(--space-sm);">
-          <span id="signedInAs" style="font-weight: 700;">—</span>
-          <span id="sessionType" style="font-size: .85rem; color: var(--text-muted); font-weight: 600;">—</span>
+        // Initialize therapy chart if wellness is selected
+        if (contentType === 'wellness') {
+          setTimeout(initTherapyChart, 100);
+        }
+      });
+    });
+
+    // BMI Calculator
+    function calculateBMI() {
+      const heightInput = document.getElementById('fitness-height');
+      const weightInput = document.getElementById('fitness-weight');
+      
+      if (!heightInput || !weightInput) return;
+      
+      const heightStr = heightInput.value;
+      const weightStr = weightInput.value;
+      
+      // Parse height (supports feet'inches" or cm)
+      let heightCm = 0;
+      if (heightStr.includes("'") || heightStr.includes('"')) {
+        const parts = heightStr.replace(/"/g, '').split("'");
+        const feet = parseInt(parts[0]) || 0;
+        const inches = parseInt(parts[1]) || 0;
+        heightCm = (feet * 12 + inches) * 2.54;
+      } else {
+        heightCm = parseFloat(heightStr);
+      }
+      
+      // Parse weight (supports lb or kg)
+      let weightKg = 0;
+      if (weightStr.toLowerCase().includes('lb')) {
+        weightKg = parseFloat(weightStr) * 0.453592;
+      } else {
+        weightKg = parseFloat(weightStr);
+      }
+      
+      if (heightCm > 0 && weightKg > 0) {
+        const heightM = heightCm / 100;
+        const bmi = (weightKg / (heightM * heightM)).toFixed(1);
+        
+        document.getElementById('bmiValue').textContent = bmi;
+        document.getElementById('bmiDisplay').textContent = bmi;
+        
+        // Update category
+        let category = '';
+        if (bmi < 18.5) category = 'Underweight';
+        else if (bmi < 25) category = 'Normal Weight';
+        else if (bmi < 30) category = 'Overweight';
+        else category = 'Obese';
+        
+        document.getElementById('bmiCategory').textContent = category;
+        showNotification('BMI calculated successfully!', 'success');
+      } else {
+        showNotification('Please enter valid height and weight', 'warning');
+      }
+    }
+
+    // Mood Slider
+    const moodSlider = document.getElementById('moodSlider');
+    const moodValue = document.getElementById('moodValue');
+    
+    if (moodSlider && moodValue) {
+      moodSlider.addEventListener('input', function() {
+        moodValue.textContent = this.value;
+      });
+    }
+
+    // Therapy Chart
+    let therapyChartInstance = null;
+    const therapySessions = [
+      { date: '2026-01-08', mood: 75 },
+      { date: '2026-01-15', mood: 68 },
+      { date: '2026-01-22', mood: 72 },
+      { date: '2026-01-29', mood: 78 }
+    ];
+
+    function initTherapyChart() {
+      const canvas = document.getElementById('therapyChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height);
+      
+      // Set styles
+      ctx.strokeStyle = '#016844';
+      ctx.fillStyle = '#016844';
+      ctx.lineWidth = 3;
+      
+      // Draw axes
+      const padding = 40;
+      const chartWidth = width - padding * 2;
+      const chartHeight = height - padding * 2;
+      
+      ctx.strokeStyle = '#e8dcc8';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding, padding);
+      ctx.lineTo(padding, height - padding);
+      ctx.lineTo(width - padding, height - padding);
+      ctx.stroke();
+      
+      // Draw grid lines
+      ctx.strokeStyle = '#f3ede3';
+      for (let i = 0; i <= 4; i++) {
+        const y = padding + (chartHeight / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+      }
+      
+      // Draw labels
+      ctx.fillStyle = '#8b6f53';
+      ctx.font = '11px DM Sans';
+      ctx.textAlign = 'right';
+      for (let i = 0; i <= 4; i++) {
+        const y = padding + (chartHeight / 4) * i;
+        const value = 100 - (i * 25);
+        ctx.fillText(value, padding - 8, y + 4);
+      }
+      
+      if (therapySessions.length === 0) return;
+      
+      // Draw line
+      ctx.strokeStyle = '#016844';
+      ctx.fillStyle = '#016844';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      
+      therapySessions.forEach((session, index) => {
+        const x = padding + (chartWidth / (therapySessions.length - 1 || 1)) * index;
+        const y = height - padding - (session.mood / 100) * chartHeight;
+        
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      
+      ctx.stroke();
+      
+      // Draw points
+      therapySessions.forEach((session, index) => {
+        const x = padding + (chartWidth / (therapySessions.length - 1 || 1)) * index;
+        const y = height - padding - (session.mood / 100) * chartHeight;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = '#016844';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw date labels
+        ctx.fillStyle = '#8b6f53';
+        ctx.font = '10px DM Sans';
+        ctx.textAlign = 'center';
+        const date = new Date(session.date);
+        const label = (date.getMonth() + 1) + '/' + date.getDate();
+        ctx.fillText(label, x, height - padding + 20);
+      });
+    }
+
+    // Add Therapy Session
+    function addTherapySession() {
+      const dateInput = document.getElementById('sessionDate');
+      const moodInput = document.getElementById('sessionMood');
+      const sessionList = document.getElementById('sessionList');
+      
+      if (!dateInput.value || !moodInput.value) {
+        showNotification('Please enter both date and mood rating', 'warning');
+        return;
+      }
+      
+      const mood = parseInt(moodInput.value);
+      if (mood < 0 || mood > 100) {
+        showNotification('Mood rating must be between 0 and 100', 'warning');
+        return;
+      }
+      
+      // Add to sessions array
+      therapySessions.push({
+        date: dateInput.value,
+        mood: mood
+      });
+      
+      // Sort by date
+      therapySessions.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // Update chart
+      initTherapyChart();
+      
+      // Add to list
+      const dateObj = new Date(dateInput.value);
+      const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      
+      const sessionItem = document.createElement('div');
+      sessionItem.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--clay-50); border-radius: var(--radius-sm); border-left: 3px solid var(--sage);';
+      sessionItem.innerHTML = `
+        <div>
+          <div style="font-weight: 600; color: var(--text-primary);">${dateStr}</div>
+          <div style="font-size: 13px; color: var(--text-secondary);">Mood: ${mood}/100</div>
         </div>
-        <div class="help-text" style="margin-top: .5rem;">
-          Prototype auth uses <code>localStorage</code> / <code>sessionStorage</code>.
-        </div>
-      </div>
+        <button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="this.parentElement.remove()">Remove</button>
+      `;
+      
+      sessionList.insertBefore(sessionItem, sessionList.firstChild);
+      
+      // Clear inputs
+      dateInput.value = '';
+      moodInput.value = '';
+      
+      showNotification('Session added successfully!', 'success');
+    }
 
-      <div class="form-group" style="margin-bottom: 0;">
-        <button class="danger-btn" id="logoutBtn" style="margin:0;">
-          Log Out
-        </button>
-      </div>
-    </section>
+    // Save settings
+    function saveSettings() {
+      showNotification('Settings saved successfully!', 'success');
+    }
 
-    <!-- PROFILE -->
-    <section class="form-domain">
-      <div class="domain-header">
-        <h2 class="domain-title"><span class="domain-icon">🧾</span> Profile</h2>
-      </div>
+    // Reset form
+    function resetForm() {
+      if (confirm('Are you sure you want to reset all changes?')) {
+        showNotification('Form reset to default values', 'warning');
+      }
+    }
 
-      <!-- General -->
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
-        <div class="form-group">
-          <label class="form-label" for="name">Name</label>
-          <input class="text-input" id="name" placeholder="Your name" />
-        </div>
+    // Notification system
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 32px;
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 24px;
+        color: var(--text-primary);
+        font-size: 14px;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      `;
+      
+      if (type === 'success') {
+        notification.style.borderColor = 'var(--sage)';
+        notification.style.background = 'rgba(1, 104, 68, 0.1)';
+      } else if (type === 'warning') {
+        notification.style.borderColor = 'var(--sunset)';
+        notification.style.background = 'rgba(232, 168, 124, 0.1)';
+      }
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
 
-        <div class="form-group">
-          <label class="form-label" for="gender">Gender</label>
-          <input class="text-input" id="gender" placeholder="Optional" />
-        </div>
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
 
-        <div class="form-group">
-          <label class="form-label" for="height">Height</label>
-          <input class="text-input" id="height" placeholder="e.g., 5'0&quot; or 152 cm" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="weight">Weight</label>
-          <input class="text-input" id="weight" placeholder="e.g., 96 lb or 43.5 kg" />
-        </div>
-      </div>
-
-      <!-- BMI (auto-calculated from height/weight; hidden from user, used internally) -->
-      <div style="display: none;" aria-hidden="true">
-        <span id="bmiValue">—</span>
-      </div>
-
-      <!-- Lifestyle -->
-      <div class="form-group">
-        <label class="form-label">Lifestyle choices</label>
-        <div class="checkbox-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="caffeine" />
-            <span class="checkbox-custom"></span>
-            <span>Uses caffeine</span>
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="alcohol" />
-            <span class="checkbox-custom"></span>
-            <span>Uses alcohol</span>
-          </label>
-        </div>
-        <div class="help-text">Add more toggles later (nicotine, etc.).</div>
-      </div>
-
-      <!-- Scales -->
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
-        <div class="form-group">
-          <label class="form-label" for="busyness">Busyness level (1–5)</label>
-          <input class="text-input" id="busyness" placeholder="1-5" inputmode="numeric" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="routine">Routine stability (1–5)</label>
-          <input class="text-input" id="routine" placeholder="1-5" inputmode="numeric" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="accountability">Accountability strictness (1–5)</label>
-          <input class="text-input" id="accountability" placeholder="1-5" inputmode="numeric" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="diet">Diet</label>
-          <input class="text-input" id="diet" placeholder="Open, Vegetarian, Vegan, Keto..." />
-        </div>
-      </div>
-
-      <!-- Fitness level (with optional description) -->
-      <div class="domain-header" style="margin-top: var(--space-lg);">
-        <h3 class="domain-title" style="font-size: 1.4rem;"><span class="domain-icon">🏋️</span> Fitness</h3>
-      </div>
-
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
-        <div class="form-group">
-          <label class="form-label" for="cardio">Cardio/Activity (1–5)</label>
-          <input class="text-input" id="cardio" placeholder="1-5" inputmode="numeric" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="cardioExp">Cardio training experience</label>
-          <input class="text-input" id="cardioExp" placeholder="Beginner / Intermediate / Advanced" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="muscleMass">Muscle mass (1–5)</label>
-          <input class="text-input" id="muscleMass" placeholder="1-5" inputmode="numeric" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="strengthExp">Strength training experience</label>
-          <input class="text-input" id="strengthExp" placeholder="Beginner / Intermediate / Advanced" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="workoutFreq">Workout frequency (1–5)</label>
-          <input class="text-input" id="workoutFreq" placeholder="1-5" inputmode="numeric" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="injuryHistory">Injury history</label>
-          <input class="text-input" id="injuryHistory" placeholder="e.g., knee pain, tight hips..." />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="fitnessDesc">Fitness description (optional)</label>
-        <textarea class="text-area" id="fitnessDesc" placeholder="Anything that helps personalize your plan..."></textarea>
-      </div>
-
-      <!-- Wellness -->
-      <div class="domain-header" style="margin-top: var(--space-lg);">
-        <h3 class="domain-title" style="font-size: 1.4rem;"><span class="domain-icon">🌿</span> Wellness</h3>
-      </div>
-
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
-        <div class="form-group">
-          <label class="form-label" for="sleepQuality">Sleep quality (1–5)</label>
-          <input class="text-input" id="sleepQuality" placeholder="1-5" inputmode="numeric" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="sleepDuration">Average sleep duration</label>
-          <input class="text-input" id="sleepDuration" placeholder="e.g., 6.5 hours" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="emotionalStability">Emotional stability (1–5)</label>
-          <input class="text-input" id="emotionalStability" placeholder="1-5" inputmode="numeric" />
-        </div>
-      </div>
-
-      <!-- Mental health consent gating -->
-      <div class="form-group">
-        <label class="form-label">Mental health details (optional)</label>
-
-        <div class="button-group">
-          <button type="button" class="option-btn" id="mhYes">Yes, I want to share</button>
-          <button type="button" class="option-btn" id="mhNo">No, skip this</button>
-        </div>
-
-        <div id="mhBox" style="display:none; margin-top: var(--space-sm);">
-          <label class="form-label" for="mhDx">Mental health diagnosis (optional)</label>
-          <input class="text-input" id="mhDx" placeholder="Optional — you can be vague" />
-          <div class="help-text">You can also leave this blank even if you select “Yes”.</div>
-        </div>
-      </div>
-
-      <!-- Save -->
-      <div class="form-actions" style="display:flex; gap: var(--space-sm); flex-wrap: wrap; justify-content: flex-start;">
-        <button class="secondary-btn" id="saveProfile" type="button" style="margin:0;">
-          Save Profile
-        </button>
-        <button class="secondary-btn" id="resetProfile" type="button" style="margin:0;">
-          Reset Form
-        </button>
-        <div class="help-text" id="saveMsg" style="display:none; font-weight: 700; color: var(--sage-dark); margin:0;">
-          Saved. ✅
-        </div>
-      </div>
-    </section>
-
-    <!-- SECURITY -->
-    <section class="form-domain">
-      <div class="domain-header">
-        <h2 class="domain-title"><span class="domain-icon">🔒</span> Security</h2>
-      </div>
-
-      <div class="form-group" style="margin-bottom: var(--space-md);">
-        <label class="form-label" for="newPassword">Change password (prototype)</label>
-        <input class="text-input" id="newPassword" type="password" placeholder="New password" />
-        <div class="help-text">This is UI-only. Replace with real backend auth later.</div>
-      </div>
-
-      <div class="form-actions" style="display:flex; gap: var(--space-sm); flex-wrap: wrap; justify-content: flex-start;">
-        <button class="secondary-btn" id="savePassword" type="button" style="margin:0;">
-          Update Password
-        </button>
-        <div class="help-text" id="pwMsg" style="display:none; font-weight: 700; color: var(--sage-dark); margin:0;">
-          Updated. ✅
-        </div>
-      </div>
-    </section>
-
-  </div>
-
-  <!-- Scripts -->
-  <script src="../js/settings.js"></script>
-  <script src="../components/topbar.js"></script>
+    // Add animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 </body>
 </html>

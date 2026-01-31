@@ -1,5 +1,7 @@
 from typing import Dict, List
 from datetime import datetime
+from langchain_core.messages import SystemMessage, HumanMessage
+import json
 
 
 # -----------------------------
@@ -223,6 +225,193 @@ def WellnessEmotionEvalTool(history: List[Dict]) -> Dict:
         "avg_mood": round(avg, 2)
     }
 
+def BenjiGoalsTool(facts: Dict, user_goal: str, model) -> Dict:
+    """
+    Generate SMART goals using the LLM based on user facts + goal.
+    
+    model = ChatGoogleGenerativeAI instance
+    """
+
+    prompt = (
+        "You are a professional fitness coach.\n\n"
+        "Given the user's goal and known facts, generate 1-3 SMART goals.\n\n"
+        "SMART = Specific, Measurable, Attainable, Relevant, Time-bound.\n\n"
+        "IMPORTANT: The Measurable field must contain a numeric/quantifiable target "
+        "Return STRICT JSON in this format:\n\n"
+        "{\n"
+        '  "smart_goals": [\n'
+        "    {\n"
+        '      "Specific": \"...\",\n'
+        '      "Measurable": \"...\",\n'
+        '      "Attainable": \"...\",\n'
+        '      "Relevant": \"...\",\n'
+        '      "Time_Bound": \"...\"\n'
+        "    }\n"
+        "  ]\n"
+        "}\n\n"
+        "Do not include explanations.\n"
+        "Do not include markdown.\n"
+        "Only output JSON.\n\n"
+        f"USER GOAL:\n{user_goal}\n\n"
+        f"USER FACTS:\n{json.dumps(facts, indent=2)}"
+    )
+
+    messages = [
+        SystemMessage(content="You are a smart fitness agent that outputs only valid JSON."),
+        HumanMessage(content=prompt)
+    ]
+
+    response = model.invoke(messages)
+    raw = response.content.strip()
+
+    # Strip markdown code blocks if model adds them
+    if raw.startswith("```"):
+        lines = raw.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines[-1].startswith("```"):
+            lines = lines[:-1]
+        raw = "\n".join(lines)
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        # Safe fallback
+        data = {
+            "smart_goals": []
+        }
+
+    return data
+    
+
+# -----------------------------
+# MEDICATION MANAGEMENT
+# -----------------------------
+
+def MedicationScheduleTool(facts: Dict) -> Dict:
+    """
+    Generate a medication schedule from user's medication list.
+    Returns a schedule with timing, contraindications, and food instructions.
+    """
+    medications = facts.get("medications", [])
+    
+    if not medications:
+        return {"schedule": [], "message": "No medications found"}
+    
+    # Build schedule with time-of-day recommendations
+    schedule = {
+        "morning": [],
+        "afternoon": [],
+        "evening": [],
+        "night": [],
+        "contraindications": [],
+        "food_instructions": [],
+        "spacing_notes": []
+    }
+    
+    # Common timing patterns
+    morning_keywords = ["morning", "am", "breakfast", "wake"]
+    afternoon_keywords = ["afternoon", "lunch", "noon", "midday"]
+    evening_keywords = ["evening", "dinner", "pm"]
+    night_keywords = ["night", "bedtime", "sleep", "before bed"]
+    
+    # Parse frequency and assign time slots
+    for med in medications:
+        name = med.get("name", "Unknown")
+        strength = med.get("strength", "")
+        frequency = med.get("frequency", "").lower()
+        
+        med_info = f"{name} {strength}"
+        
+        # Determine time slot based on frequency
+        if any(kw in frequency for kw in morning_keywords):
+            schedule["morning"].append(med_info)
+        elif any(kw in frequency for kw in night_keywords):
+            schedule["night"].append(med_info)
+        elif any(kw in frequency for kw in evening_keywords):
+            schedule["evening"].append(med_info)
+        elif any(kw in frequency for kw in afternoon_keywords):
+            schedule["afternoon"].append(med_info)
+        elif "twice" in frequency or "2x" in frequency:
+            schedule["morning"].append(f"{med_info} (1st dose)")
+            schedule["evening"].append(f"{med_info} (2nd dose)")
+        elif "three times" in frequency or "3x" in frequency:
+            schedule["morning"].append(f"{med_info} (1st dose)")
+            schedule["afternoon"].append(f"{med_info} (2nd dose)")
+            schedule["evening"].append(f"{med_info} (3rd dose)")
+        else:
+            # Default to morning if unclear
+            schedule["morning"].append(med_info)
+        
+        # Food instructions
+        if "with food" in frequency or "with meal" in frequency:
+            schedule["food_instructions"].append(f"{name}: Take with food")
+        elif "empty stomach" in frequency or "without food" in frequency:
+            schedule["food_instructions"].append(f"{name}: Take on empty stomach")
+    
+    return schedule
+
+
+def ContraindicationCheckTool(facts: Dict) -> Dict:
+    """
+    Check for drug-drug interactions and food contraindications.
+    Returns warnings and recommendations.
+    """
+    medications = facts.get("medications", [])
+    
+    if len(medications) < 2:
+        return {"warnings": [], "message": "Need at least 2 medications to check interactions"}
+    
+    warnings = []
+    
+    # Extract medication names (lowercase for comparison)
+    med_names = [med.get("name", "").lower() for med in medications]
+    
+    # Common contraindication patterns (simplified for MVP)
+    contraindications = {
+        "warfarin": ["aspirin", "ibuprofen", "naproxen", "nsaid"],
+        "aspirin": ["warfarin", "ibuprofen", "naproxen"],
+        "lisinopril": ["potassium", "spironolactone"],
+        "metformin": ["alcohol"],
+        "simvastatin": ["grapefruit"],
+        "atorvastatin": ["grapefruit"],
+        "levothyroxine": ["calcium", "iron"],
+        "omeprazole": ["clopidogrel"],
+    }
+    
+    # Check for interactions
+    for i, med1 in enumerate(med_names):
+        for med2 in med_names[i+1:]:
+            # Check if med1 has known interactions with med2
+            for drug, interacts_with in contraindications.items():
+                if drug in med1:
+                    if any(interaction in med2 for interaction in interacts_with):
+                        warnings.append(
+                            f"CAUTION: Potential interaction between {medications[i].get('name')} "
+                            f"and {medications[med_names.index(med2)].get('name')}. "
+                            f"Space doses apart and consult your doctor."
+                        )
+                
+                if drug in med2:
+                    if any(interaction in med1 for interaction in interacts_with):
+                        warnings.append(
+                            f"CAUTION: Potential interaction between {medications[med_names.index(med2)].get('name')} "
+                            f"and {medications[i].get('name')}. "
+                            f"Space doses apart and consult your doctor."
+                        )
+    
+    # General timing recommendations if multiple medications
+    if len(medications) >= 2 and not warnings:
+        warnings.append(
+            "TIP: When taking multiple medications, space them at least 1-2 hours apart "
+            "unless instructed otherwise by your healthcare provider."
+        )
+    
+    return {
+        "warnings": warnings,
+        "interaction_count": len([w for w in warnings if "CAUTION" in w])
+    }
+
 
 # -----------------------------
 # TOOL REGISTRIES
@@ -245,4 +434,6 @@ OPTIONAL_TOOLS = {
     "injury_safety": InjurySafetyTool,
     "weekly_recap": WeeklyFitnessRecapTool,
     "emotion_eval": WellnessEmotionEvalTool,
+    "medication_schedule": MedicationScheduleTool,
+    "contraindication_check": ContraindicationCheckTool,
 }

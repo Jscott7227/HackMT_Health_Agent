@@ -1,12 +1,14 @@
 import os
 import json
 from dotenv import load_dotenv
+from typing import Optional
 load_dotenv()
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from backend.llm.tools import MANDATORY_TOOLS, OPTIONAL_TOOLS
+
+from backend.llm.tools import MANDATORY_TOOLS, OPTIONAL_TOOLS, BenjiGoalsTool
 
 class BenjiLLM:
     def __init__(self):
@@ -150,13 +152,63 @@ class BenjiLLM:
             
         messages = [
             SystemMessage(
-                content="You are a smart fitness coach. Use tool outputs for advice."
+                content="""You are a smart fitness and wellness coach. Use tool outputs for advice.
+                
+When generating medication schedules:
+- Check for contraindications (drug-drug, drug-food interactions)
+- Consider time-of-day (morning, afternoon, evening, night) based on medication frequency
+- Note if medications should be taken with or without food
+- Space medications appropriately (e.g., 2+ hours apart if contraindicated)
+- Always recommend consulting with healthcare providers for medical decisions
+- Format schedules clearly with time slots and safety warnings
+
+Provide clear, actionable guidance while emphasizing the importance of professional medical supervision."""
             ),
             HumanMessage(content=combined)
         ]
 
         response = self.model.invoke(messages)
         return response.content
+    
+    def run_goals(
+        self,
+        user_goal: str,
+        user_facts: Optional[dict] = None,
+        user_id: Optional[str] = None
+    ) -> dict:
+        """
+        Generate SMART goals for a user's input goal using LLM and update user facts.
+
+        Args:
+            user_goal: The general user goal (e.g., "lose some weight")
+            user_facts: Optional dictionary of existing facts
+            user_id: Optional user ID to persist facts in backend
+
+        Returns:
+            dict containing "smart_goals" (list of SMART goal dicts)
+        """
+
+        facts = self.user_facts.copy()
+        if user_facts:
+            facts.update(user_facts)
+
+        # Generate SMART goals via LLM
+        goals = BenjiGoalsTool(facts=facts, user_goal=user_goal, model=self.model)
+
+        # Persist generated goals in user_facts
+        facts["smart_goals"] = goals.get("smart_goals", [])
+
+        if user_id:
+            try:
+                from backend.app.main import update_user_facts
+                update_user_facts(user_id=user_id, user_facts={"smart_goals": facts["smart_goals"]})
+            except Exception as e:
+                print(f"Warning: failed to save SMART goals for user {user_id}: {e}")
+
+        # Update local session
+        self.user_facts = facts
+
+        return goals
     
     
 if __name__ == "__main__":

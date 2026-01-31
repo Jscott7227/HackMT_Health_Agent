@@ -52,6 +52,7 @@ The system flows from you to the agent and back: you share personal data through
 - Encouragement and motivation tailored to your goals and progress.
 - Supportive, advocate-style interactions, including check-ins and suggested next steps.
 - Designed to work for a wide range of goals and circumstances.
+- Medication Manager: track medications (name, strength, frequency) and get an agent-generated schedule that respects contraindications (e.g. drug–drug, with/without meals).
 
 ## Technology Stack
 
@@ -200,6 +201,23 @@ These sections may appear multiple times when the user has multiple ongoing goal
 - Displays basic user information as provided at registration.
 - All information fields are editable by the user.
 
+#### Medication Manager
+
+- Keeps track of the user’s medications and lets the agent build a safe, practical taking schedule.
+
+**Input (per medication)**
+
+- **Name** (e.g., drug name)
+- **Strength** (e.g., 10 mg, 500 mg)
+- **How often** (e.g., twice daily, every 8 hours, with breakfast)
+
+**Agent behavior**
+
+- Build a **schedule** for when to take each medication.
+- Respect **contraindications**, e.g.:
+  - Drug–drug: this medication cannot be taken with that one (spacing or avoidance).
+  - Food: take with meals / on an empty stomach.
+- Consider time-of-day and spacing between doses where relevant.
 
 ## Hackathon Context
 
