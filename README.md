@@ -39,6 +39,17 @@ Comprehensive but non-judgmental tracking across eight key domains:
 - A modern web browser
 - An Anthropic API key (get one at https://console.anthropic.com)
 
+### Backend Setup
+
+1. Create a .env file with this format in the base directory
+   ```
+   GEMINI_API_KEY={Insert Gemini API key}
+   GEMINI_MODEL=gemini-2.5-pro
+   ```
+2. Run ```pip install -r requirements.txt```
+3. Start the service with python -m uvicorn backend.app.main:app --reload
+4. Access the backend docs at http://127.0.0.1:8000/docs#/default/run_agent_run_post
+
 ### Installation
 
 1. **Clone or download** this repository
