@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Health Settings • Sanctuary</title>
+  <title>Settings • Benji</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   
+  <link rel="stylesheet" href="../css/styles.css" />
+
   <style>
     * {
       margin: 0;
@@ -105,9 +107,14 @@
     .app-container {
       display: grid;
       grid-template-columns: 280px 1fr;
-      grid-template-rows: 60px 1fr 50px;
+      grid-template-rows: auto 1fr 50px;
       height: 100vh;
       gap: 0;
+    }
+
+    .topbar-slot {
+      grid-column: 1 / -1;
+      grid-row: 1;
     }
 
     /* Top Bar */
@@ -250,7 +257,7 @@
     }
 
     .content-header {
-      margin-bottom: 32px;
+      margin-bottom: 20px;
     }
 
     .content-title {
@@ -302,7 +309,7 @@
       background: white;
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 24px;
+      padding: 18px 20px;
       margin-bottom: 24px;
       box-shadow: var(--shadow-sm);
       transition: box-shadow var(--transition-base);
@@ -315,7 +322,7 @@
     .settings-group-title {
       font-size: 16px;
       font-weight: 600;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -643,81 +650,118 @@
       font-family: var(--font-body);
       line-height: 1.5;
     }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 24px;
+      animation: fadeInUp 0.3s ease-out;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .modal-text {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .modal-actions .btn {
+      margin: 0;
+    }
   </style>
 </head>
 
-<body>
+<body data-page="settings">
   <div class="app-container">
     <!-- Top Bar -->
-    <div class="top-bar">
-      <div class="top-bar-left">
-        <button class="back-btn" onclick="window.history.back()">←</button>
-        <h1 class="page-title">Health Settings</h1>
-      </div>
-      <div class="top-bar-right">
-        <div class="user-info">
-          <span id="userName">John Doe</span>
-          <div class="user-avatar">JD</div>
-        </div>
-      </div>
-    </div>
+    <div id="benji-root" class="topbar-slot"></div>
 
     <!-- Navigation Panel -->
     <div class="nav-panel">
       <div class="nav-section">
-        <div class="nav-section-title">Health</div>
-        <a class="nav-item active" data-content="profile">
-          <span class="nav-icon">🧾</span>
-          <span>Profile</span>
-        </a>
-        <a class="nav-item" data-content="fitness">
-          <span class="nav-icon">🏋️</span>
-          <span>Fitness</span>
-        </a>
-        <a class="nav-item" data-content="wellness">
-          <span class="nav-icon">🌿</span>
-          <span>Wellness</span>
-        </a>
-        <a class="nav-item" data-content="nutrition">
-          <span class="nav-icon">🥗</span>
-          <span>Nutrition</span>
+        <div class="nav-section-title">Account</div>
+        <a class="nav-item active" data-content="account">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M4 20c2.2-3.4 13.8-3.4 16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span>Account Info</span>
         </a>
       </div>
 
       <div class="nav-section">
         <div class="nav-section-title">System</div>
         <a class="nav-item" data-content="notifications">
-          <span class="nav-icon">🔔</span>
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M18 16H6l1.5-2.2A6 6 0 0 0 9 10V9a3 3 0 1 1 6 0v1a6 6 0 0 0 1.5 3.8L18 16Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M10 18a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
           <span>Notifications</span>
           <span class="nav-badge">2</span>
         </a>
         <a class="nav-item" data-content="privacy">
-          <span class="nav-icon">🔒</span>
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </span>
           <span>Privacy</span>
         </a>
         <a class="nav-item" data-content="devices">
-          <span class="nav-icon">⌚</span>
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M9 4h6M9 20h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
           <span>Devices</span>
-        </a>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-section-title">Account</div>
-        <a class="nav-item" data-content="account">
-          <span class="nav-icon">👤</span>
-          <span>Account Info</span>
-        </a>
-        <a class="nav-item" data-content="subscription">
-          <span class="nav-icon">💳</span>
-          <span>Subscription</span>
         </a>
       </div>
     </div>
 
     <!-- Content Panel -->
     <div class="content-panel" id="contentPanel">
-      <!-- Profile Content (Default) -->
-      <div class="content-section" id="profile-content">
+      <!-- Profile Content (hidden) -->
+      <div class="content-section" id="profile-content" style="display: none;">
         <div class="content-header">
           <h2 class="content-title">Hello Jun</h2>
           <p class="content-subtitle">Manage your personal information and health metrics that help us personalize your experience.</p>
@@ -741,7 +785,7 @@
         <!-- Basic Information -->
         <div class="settings-group">
           <h3 class="settings-group-title">
-            <span>👤</span>
+            <span></span>
             Basic Information
           </h3>
           
@@ -910,7 +954,7 @@
         <!-- Activity Routine (moved from Profile) -->
         <div class="settings-group">
           <h3 class="settings-group-title">
-            <span>📅</span>
+            <span></span>
             Activity & Routine
           </h3>
           
@@ -1222,7 +1266,7 @@
         <!-- Meal Planning -->
         <div class="settings-group">
           <h3 class="settings-group-title">
-            <span>📅</span>
+            <span></span>
             Meal Planning Preferences
           </h3>
           
@@ -1299,10 +1343,7 @@
         </div>
 
         <div class="settings-group">
-          <h3 class="settings-group-title">
-            <span>🔔</span>
-            Notification Preferences
-          </h3>
+          <h3 class="settings-group-title">Notification Preferences</h3>
           
           <div class="setting-row">
             <div class="setting-info">
@@ -1373,10 +1414,7 @@
         </div>
 
         <div class="settings-group">
-          <h3 class="settings-group-title">
-            <span>🔒</span>
-            Privacy Settings
-          </h3>
+          <h3 class="settings-group-title">Privacy Settings</h3>
           
           <div class="setting-row">
             <div class="setting-info">
@@ -1403,10 +1441,7 @@
         </div>
 
         <div class="settings-group">
-          <h3 class="settings-group-title">
-            <span>💾</span>
-            Data Management
-          </h3>
+          <h3 class="settings-group-title">Data Management</h3>
           
           <div style="display: flex; flex-direction: column; gap: 12px;">
             <button class="btn" onclick="showNotification('Data export started', 'success')">Export My Data</button>
@@ -1427,10 +1462,7 @@
         </div>
 
         <div class="settings-group">
-          <h3 class="settings-group-title">
-            <span>⌚</span>
-            Wearables & Trackers
-          </h3>
+          <h3 class="settings-group-title">Wearables & Trackers</h3>
           
           <div style="display: flex; flex-direction: column; gap: 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--clay-50); border-radius: var(--radius-md); border-left: 3px solid var(--sage);">
@@ -1465,17 +1497,14 @@
       </div>
 
       <!-- Account Content -->
-      <div class="content-section" id="account-content" style="display: none;">
+      <div class="content-section" id="account-content">
         <div class="content-header">
           <h2 class="content-title">Account Information</h2>
           <p class="content-subtitle">Manage your account details and authentication.</p>
         </div>
 
         <div class="settings-group">
-          <h3 class="settings-group-title">
-            <span>👤</span>
-            Account Details
-          </h3>
+          <h3 class="settings-group-title">Account Details</h3>
           
           <div class="form-field">
             <label class="form-label">Email Address</label>
@@ -1494,10 +1523,7 @@
         </div>
 
         <div class="settings-group">
-          <h3 class="settings-group-title">
-            <span>📅</span>
-            Membership
-          </h3>
+          <h3 class="settings-group-title">Membership</h3>
           
           <div style="padding: 16px; background: var(--clay-50); border-radius: var(--radius-md);">
             <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Member since: January 2024</div>
@@ -1507,7 +1533,7 @@
 
         <div class="action-buttons">
           <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
-          <button class="btn btn-danger" style="margin-left: auto;">Log Out</button>
+          <button class="btn btn-danger" id="logoutBtn" style="margin-left: auto;">Log Out</button>
         </div>
       </div>
 
@@ -1579,34 +1605,43 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="logoutModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+      <div class="modal-title" id="logoutTitle">Log out?</div>
+      <div class="modal-text">You’ll be signed out and returned to the login page.</div>
+      <div class="modal-actions">
+        <button class="btn" id="logoutCancelBtn" type="button">Cancel</button>
+        <button class="btn btn-danger" id="logoutConfirmBtn" type="button">Log Out</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Navigation handling
+    function showContent(contentType) {
+      document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+      document.querySelectorAll('.content-section').forEach(section => {
+        section.style.display = 'none';
+      });
+
+      const activeNav = document.querySelector(`.nav-item[data-content="${contentType}"]`);
+      if (activeNav) activeNav.classList.add('active');
+
+      const selectedSection = document.getElementById(`${contentType}-content`);
+      if (selectedSection) {
+        selectedSection.style.display = 'block';
+      }
+
+      if (contentType === 'wellness') {
+        setTimeout(initTherapyChart, 100);
+      }
+    }
+
+    showContent('account');
+
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', function() {
-        // Remove active class from all nav items
-        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-        
-        // Add active to clicked item
-        this.classList.add('active');
-        
-        // Get content type
-        const contentType = this.getAttribute('data-content');
-
-        // Hide all content sections
-        document.querySelectorAll('.content-section').forEach(section => {
-          section.style.display = 'none';
-        });
-
-        // Show selected content section
-        const selectedSection = document.getElementById(`${contentType}-content`);
-        if (selectedSection) {
-          selectedSection.style.display = 'block';
-        }
-
-        // Initialize therapy chart if wellness is selected
-        if (contentType === 'wellness') {
-          setTimeout(initTherapyChart, 100);
-        }
+        showContent(this.getAttribute('data-content'));
       });
     });
 
@@ -1836,6 +1871,52 @@
       }
     }
 
+    // Logout modal
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutModal = document.getElementById('logoutModal');
+    const logoutCancelBtn = document.getElementById('logoutCancelBtn');
+    const logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
+
+    function openLogoutModal() {
+      if (!logoutModal) return;
+      logoutModal.classList.add('active');
+      logoutModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeLogoutModal() {
+      if (!logoutModal) return;
+      logoutModal.classList.remove('active');
+      logoutModal.setAttribute('aria-hidden', 'true');
+    }
+
+    async function handleLogout() {
+      try {
+        // TODO: replace with real logout call when backend is available.
+        if (window.AuthAPI?.logout) {
+          await window.AuthAPI.logout();
+        }
+      } catch (err) {
+        console.error('Logout failed:', err);
+      } finally {
+        window.location.href = '../html/landing.html';
+      }
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', openLogoutModal);
+    }
+    if (logoutCancelBtn) {
+      logoutCancelBtn.addEventListener('click', closeLogoutModal);
+    }
+    if (logoutConfirmBtn) {
+      logoutConfirmBtn.addEventListener('click', handleLogout);
+    }
+    if (logoutModal) {
+      logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) closeLogoutModal();
+      });
+    }
+
     // Notification system
     function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
@@ -1897,5 +1978,6 @@
     `;
     document.head.appendChild(style);
   </script>
+  <script src="../components/topbar.js"></script>
 </body>
 </html>
