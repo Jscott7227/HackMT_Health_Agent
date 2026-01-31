@@ -196,6 +196,28 @@ These sections may appear multiple times when the user has multiple ongoing goal
 - **Diet summary:** Contents of what they ate
 - **Chatbot helper:** Any specific questions for the goal
 
+#### Menstrual Cycle
+
+- **Cycle day:** Current cycle day (simple data input).
+- **Menstrual flow:** Light, medium, heavy, blood clots.
+- **Symptoms:** Everything is fine, cramps, headache, acne, backache, fatigue, hot flashes, night sweats, brain fog, cravings, abdominal pain, dryness, (etc.).
+- **Cramp/pain level (0–10):** Numerical scale for pain intensity.
+- **Discharge:** No discharge, creamy, watery, sticky, egg white, spotting, unusual, clumpy white, gray.
+- **Oral contraceptives:** Input or state indicator for oral contraceptive use.
+
+**Simple state rules:**
+
+- If bleeding = medium/heavy OR cycle day 1–7 → **"Menstruation"**
+- If bleeding = none AND energy high AND irritability low AND cycle day 8–14 → **"Follicular / higher capacity"**
+- If cycle day 15–21 AND appetite moderate AND energy moderate → **"Ovulation/early luteal"**
+- If cycle day 22–28+ OR cravings high OR irritability high OR bloating high → **"Late luteal / PMS-leaning"**
+- If user says "not sure" → use symptoms + appetite + energy to pick a **"today mode"** (low/medium/high capacity).
+
+**Example interdisciplinary stuff:**
+
+- **Low-capacity day** (high cramps/fatigue). Best: 15–30 min walk, gentle mobility, light core/pelvic/hip work. Avoid: max lifts, high-impact intervals, long hard runs. If lifting: reduce load 20–40%, keep reps smooth, longer rest.
+- **Nutrition.** Cravings + PMS pattern (cravings 4/5, bloating 4/5): Your body's asking for quick fuel today. Try a "craving-friendly" plan: Protein anchor (20–35g). Carb you actually want (rice/fruit/oats). Add fiber + salt balance (yogurt + berries, broth, bananas). This usually reduces the "snack spiral" without forcing restriction.
+
 #### Profile Tab
 
 - Displays basic user information as provided at registration.
