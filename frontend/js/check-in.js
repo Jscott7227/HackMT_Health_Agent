@@ -3,7 +3,7 @@
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
   /* ── Main domain tabs ─────────────────────────────── */
-  const domains = ["day", "fitness", "wellness"];
+  const domains = ["day", "fitness", "wellness", "menstrual"];
   let currentIndex = 0;
 
   const tabs       = $$("#checkinTabs .nav-tab");
@@ -39,6 +39,8 @@
     ["#perfDifficulty",     "#perfDifficultyValue"],
     ["#perfSoreness",       "#perfSorenessValue"],
     ["#perfFatigue",        "#perfFatigueValue"],
+    ["#crampPain",          "#crampPainValue"],
+
   ];
 
   const setReadout = (sliderSel, readoutSel) => {
@@ -80,9 +82,10 @@
       t.classList.toggle("active", t.dataset.domain === domains[currentIndex])
     );
 
-    const label = currentIndex === 0 ? "Overall Day"
-                : currentIndex === 1 ? "Fitness"
-                : "Wellness";
+  const label = currentIndex === 0 ? "Overall Day"
+              : currentIndex === 1 ? "Fitness"
+              : currentIndex === 2 ? "Wellness"
+              : "Menstrual";
 
     if (progressText) progressText.textContent = label;
     if (progressFill) progressFill.style.width =
@@ -145,6 +148,24 @@
     });
   };
 
+  /* ── Menstrual toggles ────────────────────────────── */
+  const dischargeNotesWrap = $("#dischargeNotesWrap");
+  const ocpDetails = $("#ocpDetails");
+
+  const updateDischargeNotes = () => {
+    const v = getExclusiveValue("discharge");
+    if (!dischargeNotesWrap) return;
+    dischargeNotesWrap.style.display =
+      (v === "unusual" || v === "gray" || v === "clumpy-white") ? "block" : "none";
+  };
+
+  const updateOCPDetails = () => {
+    const yes = getExclusiveValue("ocp") === "yes";
+    if (!ocpDetails) return;
+    ocpDetails.style.display = yes ? "block" : "none";
+  };
+
+
   /* ── Flare-up toggle ──────────────────────────────── */
   const flareupDetails = $("#flareupDetails");
 
@@ -162,6 +183,16 @@
 
   const num = (id) => Number($(id)?.value) || 0;
   const str = (id) => ($(id)?.value ?? "").trim();
+  const daysSince = (dateStr) => {
+    if (!dateStr) return 0;
+    const start = new Date(`${dateStr}T00:00:00`);
+    if (Number.isNaN(start.getTime())) return 0;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffMs = today - start;
+    const diffDays = Math.floor(diffMs / 86400000) + 1;
+    return diffDays > 0 ? diffDays : 0;
+  };
 
   const payload = () => {
     const data = {
@@ -184,6 +215,20 @@
       wellnessNotes: str("#wellnessNotes"),
       stress:        num("#stressScore"),
       mood:          Number(getExclusiveValue("mood") ?? 0),
+
+      /* Menstrual */
+      menstrual: {
+        lastPeriodStart: str("#lastPeriodStart"),
+        cycleDay: daysSince(str("#lastPeriodStart")),
+        flow: getExclusiveValue("flow"), // light | medium | heavy | blood-clots
+        symptoms: $$('input[name="symptoms"]:checked').map(i => i.value),
+        crampPain: num("#crampPain"), // 0–10
+        discharge: getExclusiveValue("discharge"), // none | creamy | watery | sticky | egg-white | spotting | unusual | clumpy-white | gray
+        dischargeNotes: str("#dischargeNotes"),
+        oralContraceptives: getExclusiveValue("ocp") === "yes",
+        ocpType: str("#ocpType"),
+      },
+
 
       /* Meta */
       activeGoals: userGoals,
@@ -305,6 +350,8 @@
       setExclusiveActive(groupBtn.dataset.group, groupBtn.dataset.value);
       if (groupBtn.dataset.group === "recoveryDay") updateRecoveryDay();
       if (groupBtn.dataset.group === "rehab-flareup") updateFlareup();
+      if (groupBtn.dataset.group === "discharge") updateDischargeNotes();
+      if (groupBtn.dataset.group === "ocp") updateOCPDetails();
       return;
     }
   });
@@ -357,4 +404,7 @@
   setDomain(0);
   updateRecoveryDay();
   updateFlareup();
+  updateDischargeNotes();
+  updateOCPDetails();
+
 })();

@@ -143,6 +143,18 @@
           </span>
           <span class="tab-label">Wellness</span>
         </button>
+        <button class="nav-tab" data-domain="menstrual">
+        <span class="tab-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2a7 7 0 1 0 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 9a5 5 0 1 0 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+            <path d="M12 12c1.5 0 3 1.1 3 2.8 0 2.2-2.2 3.7-3 4.2-.8-.5-3-2-3-4.2 0-1.7 1.5-2.8 3-2.8Z"
+                  stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="tab-label">Menstrual</span>
+      </button>
+
       </nav>
 
       <!-- Progress Indicator -->
@@ -484,6 +496,101 @@
               </div>
             </div>
           </div>
+
+          <!-- TAB 4: Menstrual -->
+          <div class="domain-section" id="domain-menstrual">
+            <div class="section-intro">
+              <h2 class="section-title">Menstrual</h2>
+              <p class="section-description">Cycle + symptoms check.</p>
+            </div>
+
+            <div class="form-domain">
+
+              <!-- Last period start -->
+              <div class="form-group">
+                <label class="form-label">First day of your last period (optional)</label>
+                <input type="date" id="lastPeriodStart" class="text-input">
+                <p class="checkin-hint">Not sure? It’s okay to leave this blank.</p>
+              </div>
+
+              <!-- Menstrual flow -->
+              <div class="form-group">
+                <label class="form-label">Menstrual flow</label>
+                <div class="button-group">
+                  <button type="button" class="option-btn" data-group="flow" data-value="light">Light</button>
+                  <button type="button" class="option-btn" data-group="flow" data-value="medium">Medium</button>
+                  <button type="button" class="option-btn" data-group="flow" data-value="heavy">Heavy</button>
+                  <button type="button" class="option-btn" data-group="flow" data-value="blood-clots">Blood clots</button>
+                </div>
+              </div>
+
+              <!-- Symptoms -->
+              <div class="form-group">
+                <label class="form-label">Symptoms</label>
+                <div class="checkbox-group" id="symptomGroup">
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="fine"><span class="checkbox-custom"></span><span>Everything is fine</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="cramps"><span class="checkbox-custom"></span><span>Cramps</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="headache"><span class="checkbox-custom"></span><span>Headache</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="acne"><span class="checkbox-custom"></span><span>Acne</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="backache"><span class="checkbox-custom"></span><span>Backache</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="fatigue"><span class="checkbox-custom"></span><span>Fatigue</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="hot-flashes"><span class="checkbox-custom"></span><span>Hot flashes</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="night-sweats"><span class="checkbox-custom"></span><span>Night sweats</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="brain-fog"><span class="checkbox-custom"></span><span>Brain fog</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="cravings"><span class="checkbox-custom"></span><span>Cravings</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="abdominal-pain"><span class="checkbox-custom"></span><span>Abdominal pain</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="symptoms" value="dryness"><span class="checkbox-custom"></span><span>Dryness</span></label>
+                </div>
+              </div>
+
+              <!-- Cramp / pain level -->
+              <div class="form-group">
+                <label class="form-label">Cramp / pain level (0–10)</label>
+                <div class="scale-input">
+                  <input type="range" min="0" max="10" value="0" id="crampPain" class="range-slider stress">
+                  <div class="scale-labels"><span>0</span><span>2</span><span>5</span><span>8</span><span>10</span></div>
+                </div>
+                <div class="value-readout"><span id="crampPainValue">0</span>/10</div>
+              </div>
+
+              <!-- Discharge -->
+              <div class="form-group">
+                <label class="form-label">Discharge</label>
+                <div class="button-group" style="flex-wrap: wrap;">
+                  <button type="button" class="option-btn" data-group="discharge" data-value="none">No discharge</button>
+                  <button type="button" class="option-btn" data-group="discharge" data-value="creamy">Creamy</button>
+                  <button type="button" class="option-btn" data-group="discharge" data-value="watery">Watery</button>
+                  <button type="button" class="option-btn" data-group="discharge" data-value="sticky">Sticky</button>
+                  <button type="button" class="option-btn" data-group="discharge" data-value="egg-white">Egg white</button>
+                  <button type="button" class="option-btn" data-group="discharge" data-value="spotting">Spotting</button>
+                  <button type="button" class="option-btn" data-group="discharge" data-value="unusual">Unusual</button>
+                  <button type="button" class="option-btn" data-group="discharge" data-value="clumpy-white">Clumpy white</button>
+                  <button type="button" class="option-btn" data-group="discharge" data-value="gray">Gray</button>
+                </div>
+
+                <div id="dischargeNotesWrap" style="margin-top: var(--space-sm); display:none;">
+                  <label class="form-label">Optional discharge notes</label>
+                  <textarea id="dischargeNotes" class="text-area" placeholder="Anything to note (odor, itching, new changes)..." rows="2"></textarea>
+                </div>
+              </div>
+
+              <!-- Oral contraceptives -->
+              <div class="form-group">
+                <label class="form-label">Oral contraceptives</label>
+                <div class="button-group">
+                  <button type="button" class="option-btn" data-group="ocp" data-value="yes">Yes</button>
+                  <button type="button" class="option-btn active" data-group="ocp" data-value="no">No</button>
+                </div>
+
+                <div id="ocpDetails" style="display:none; margin-top: var(--space-sm);">
+                  <label class="form-label">Optional details</label>
+                  <input type="text" id="ocpType" class="text-input" placeholder="Brand / notes (optional)">
+                </div>
+              </div>
+
+            </div>
+          </div>
+
 
         </form>
       </div>

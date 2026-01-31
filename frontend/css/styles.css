@@ -2875,6 +2875,9 @@ textarea:focus-visible {
   padding: var(--space-lg);
   animation: fadeInUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.checkin-modal-body .Benji-nav {
+  margin-right: 44px;
+}
 .checkin-modal-close {
   position: absolute;
   top: 14px;
