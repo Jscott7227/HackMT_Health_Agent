@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Premium Health App – Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ============================================================
+     BACKGROUND
+     ============================================================ -->
+<div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+</div>
+
+<!-- ============================================================
+     ONBOARDING SHELL
+     ============================================================ -->
+<div class="onboarding-shell">
+    <div class="onboarding-card">
+
+        <div class="ob-progress-strip">
+            <div class="ob-progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- ================================================
+             SCREEN 1 – Welcome
+             ================================================ -->
+        <div class="ob-screen active" id="screen-1">
+            <div class="ob-welcome-icon">🌿</div>
+            <h1 class="ob-headline">Let's personalize<br>your health plan</h1>
+            <p class="ob-subtext">Answer a few quick questions so we can tailor guidance specifically for you. This takes about 2 minutes.</p>
+            <button class="ob-cta" onclick="goTo(2)">Get started</button>
+            <p class="ob-microcopy">You can update any answer later.</p>
+        </div>
+
+        <!-- ================================================
+             SCREEN 2 – Primary Goal
+             ================================================ -->
+        <div class="ob-screen" id="screen-2">
+            <p class="ob-step-label" id="stepLabel-2"></p>
+            <h1 class="ob-headline">What's your main<br>goal right now?</h1>
+            <div class="ob-option-list" id="goalList">
+                <button class="ob-option-card" data-group="goal" data-value="lose-fat" onclick="selectOption(this)">
+                    <span class="ob-option-icon">🔥</span>
+                    <span class="ob-option-label">Lose body fat</span>
+                    <span class="ob-option-check"></span>
+                </button>
+                <button class="ob-option-card" data-group="goal" data-value="build-muscle" onclick="selectOption(this)">
+                    <span class="ob-option-icon">💪</span>
+                    <span class="ob-option-label">Build muscle</span>
+                    <span class="ob-option-check"></span>
+                </button>
+                <button class="ob-option-card" data-group="goal" data-value="endurance" onclick="selectOption(this)">
+                    <span class="ob-option-icon">🏃</span>
+                    <span class="ob-option-label">Improve endurance</span>
+                    <span class="ob-option-check"></span>
+                </button>
+                <button class="ob-option-card" data-group="goal" data-value="feel-healthier" onclick="selectOption(this)">
+                    <span class="ob-option-icon">🌱</span>
+                    <span class="ob-option-label">Feel healthier overall</span>
+                    <span class="ob-option-check"></span>
+                </button>
+                <button class="ob-option-card" data-group="goal" data-value="not-sure" onclick="selectOption(this)">
+                    <span class="ob-option-icon">🤔</span>
+                    <span class="ob-option-label">Not sure yet</span>
+                    <span class="ob-option-check"></span>
+                </button>
+            </div>
+            <p class="ob-microcopy">We'll adapt your plan based on this.</p>
+            <button class="ob-cta" id="cta-2" onclick="goTo(3)" disabled>Continue</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 3 – Mental Health Consent Gate
+             ================================================ -->
+        <div class="ob-screen" id="screen-3">
+            <p class="ob-step-label" id="stepLabel-3"></p>
+            <div class="ob-consent-icon">🧠</div>
+            <h1 class="ob-headline">Would you like to include<br>mental health details?</h1>
+            <p class="ob-subtext">This helps us better support your overall wellbeing and adjust recommendations on tougher days.</p>
+            <div class="ob-option-list" id="consentList">
+                <button class="ob-option-card" data-group="mentalConsent" data-value="yes" onclick="selectOption(this)">
+                    <span class="ob-option-icon">💚</span>
+                    <span class="ob-option-label">
+                        Yes, include it
+                        <span class="ob-option-helper">We'll ask a few optional questions later in the flow</span>
+                    </span>
+                    <span class="ob-option-check"></span>
+                </button>
+                <button class="ob-option-card" data-group="mentalConsent" data-value="no" onclick="selectOption(this)">
+                    <span class="ob-option-icon">🔒</span>
+                    <span class="ob-option-label">
+                        No thanks
+                        <span class="ob-option-helper">We won't ask about this again</span>
+                    </span>
+                    <span class="ob-option-check"></span>
+                </button>
+            </div>
+            <p class="ob-disclaimer">This is completely optional. Your answers stay private and are never shared.</p>
+            <button class="ob-cta" id="cta-3" onclick="advanceFrom(3)" disabled>Continue</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 4 – Experience Level
+             ================================================ -->
+        <div class="ob-screen" id="screen-4">
+            <p class="ob-step-label" id="stepLabel-4"></p>
+            <h1 class="ob-headline">How would you describe<br>your fitness experience?</h1>
+            <div class="ob-option-list" id="expList">
+                <button class="ob-option-card" data-group="experience" data-value="beginner" onclick="selectOption(this)">
+                    <span class="ob-option-icon">🌅</span>
+                    <span class="ob-option-label">
+                        Beginner
+                        <span class="ob-option-helper">Just getting started or returning after a long break</span>
+                    </span>
+                    <span class="ob-option-check"></span>
+                </button>
+                <button class="ob-option-card" data-group="experience" data-value="intermediate" onclick="selectOption(this)">
+                    <span class="ob-option-icon">⚡</span>
+                    <span class="ob-option-label">
+                        Intermediate
+                        <span class="ob-option-helper">Exercise regularly and know the basics</span>
+                    </span>
+                    <span class="ob-option-check"></span>
+                </button>
+                <button class="ob-option-card" data-group="experience" data-value="advanced" onclick="selectOption(this)">
+                    <span class="ob-option-icon">🏆</span>
+                    <span class="ob-option-label">
+                        Advanced
+                        <span class="ob-option-helper">Structured training experience</span>
+                    </span>
+                    <span class="ob-option-check"></span>
+                </button>
+            </div>
+            <button class="ob-cta" id="cta-4" onclick="goTo(5)" disabled>Continue</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 5 – Mental Health Detail (CONDITIONAL)
+             Only shown if consent = yes
+             ================================================ -->
+        <div class="ob-screen" id="screen-5">
+            <p class="ob-step-label" id="stepLabel-5"></p>
+            <h1 class="ob-headline">How are you doing<br>emotionally?</h1>
+            <p class="ob-subtext">Be as honest as you like. There are no wrong answers here.</p>
+
+            <!-- Mood scale 1-5 -->
+            <div class="ob-labeled-scale" id="moodScale">
+                <p class="ob-scale-question">How would you describe your mood lately?</p>
+                <div class="ob-scale-track">
+                    <button class="ob-scale-pip" data-value="1" onclick="selectScale('mood',1,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Very low</span></button>
+                    <button class="ob-scale-pip" data-value="2" onclick="selectScale('mood',2,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Low</span></button>
+                    <button class="ob-scale-pip" data-value="3" onclick="selectScale('mood',3,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Neutral</span></button>
+                    <button class="ob-scale-pip" data-value="4" onclick="selectScale('mood',4,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Good</span></button>
+                    <button class="ob-scale-pip" data-value="5" onclick="selectScale('mood',5,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Great</span></button>
+                </div>
+            </div>
+
+            <!-- Stress level 1-5 -->
+            <div class="ob-labeled-scale" id="stressScale">
+                <p class="ob-scale-question">What's your current stress level?</p>
+                <div class="ob-scale-track">
+                    <button class="ob-scale-pip" data-value="1" onclick="selectScale('stress',1,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Very low</span></button>
+                    <button class="ob-scale-pip" data-value="2" onclick="selectScale('stress',2,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Low</span></button>
+                    <button class="ob-scale-pip" data-value="3" onclick="selectScale('stress',3,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Moderate</span></button>
+                    <button class="ob-scale-pip" data-value="4" onclick="selectScale('stress',4,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">High</span></button>
+                    <button class="ob-scale-pip" data-value="5" onclick="selectScale('stress',5,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Very high</span></button>
+                </div>
+            </div>
+
+            <!-- Optional reflection (collapsible) -->
+            <div class="ob-collapsible">
+                <button class="ob-collapsible-trigger" onclick="toggleCollapsible(this)">
+                    <span>Add a short reflection <span class="ob-collapsible-arrow">›</span></span>
+                </button>
+                <div class="ob-collapsible-body">
+                    <textarea class="ob-reflection-input" id="mentalReflection" placeholder="A sentence or two about how you're feeling…" rows="3"></textarea>
+                </div>
+            </div>
+
+            <p class="ob-disclaimer">This information is used only to personalise your experience. We never diagnose.</p>
+            <button class="ob-cta" id="cta-5" onclick="goTo(6)" disabled>Continue</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 6 – Height
+             ================================================ -->
+        <div class="ob-screen" id="screen-6">
+            <p class="ob-step-label" id="stepLabel-6"></p>
+            <h1 class="ob-headline">What's your height?</h1>
+            <div class="ob-metric-row">
+                <div class="ob-unit-toggle" id="heightUnitToggle">
+                    <button class="ob-unit-btn active" data-unit="imperial" onclick="switchUnit('height','imperial',this)">ft &amp; in</button>
+                    <button class="ob-unit-btn" data-unit="metric" onclick="switchUnit('height','metric',this)">cm</button>
+                </div>
+            </div>
+            <div id="heightMetric" class="ob-metric-row" style="display:none;">
+                <input type="number" class="ob-metric-input" id="heightCm" placeholder="170" min="60" max="280" oninput="validateMetric()" />
+                <span class="ob-imperial-label">cm</span>
+            </div>
+            <div id="heightImperial" class="ob-imperial-row" style="display:flex;">
+                <input type="number" class="ob-metric-input" id="heightFt" placeholder="5" min="1" max="8" oninput="validateMetric()" />
+                <span class="ob-imperial-label">ft</span>
+                <input type="number" class="ob-metric-input" id="heightIn" placeholder="7" min="0" max="11" oninput="validateMetric()" />
+                <span class="ob-imperial-label">in</span>
+            </div>
+            <p class="ob-microcopy">This helps us estimate healthy ranges.</p>
+            <button class="ob-cta" id="cta-6" onclick="goTo(7)" disabled>Continue</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 7 – Weight
+             ================================================ -->
+        <div class="ob-screen" id="screen-7">
+            <p class="ob-step-label" id="stepLabel-7"></p>
+            <h1 class="ob-headline">What's your current weight?</h1>
+            <div class="ob-metric-row">
+                <div class="ob-unit-toggle" id="weightUnitToggle">
+                    <button class="ob-unit-btn active" data-unit="imperial" onclick="switchUnit('weight','imperial',this)">lb</button>
+                    <button class="ob-unit-btn" data-unit="metric" onclick="switchUnit('weight','metric',this)">kg</button>
+                </div>
+            </div>
+            <div id="weightMetric" class="ob-metric-row" style="display:none;">
+                <input type="number" class="ob-metric-input" id="weightKg" placeholder="70" min="20" max="300" oninput="validateMetric()" />
+                <span class="ob-imperial-label">kg</span>
+            </div>
+            <div id="weightImperial" class="ob-metric-row" style="display:flex;">
+                <input type="number" class="ob-metric-input" id="weightLb" placeholder="155" min="44" max="660" oninput="validateMetric()" />
+                <span class="ob-imperial-label">lb</span>
+            </div>
+            <p class="ob-microcopy">Used only to personalize recommendations. No judgments.</p>
+            <button class="ob-cta" id="cta-7" onclick="goTo(8)">Continue</button>
+            <p class="ob-microcopy"><button class="ob-skip-link" onclick="skipWeight()">Prefer not to say</button></p>
+        </div>
+
+        <!-- ================================================
+             SCREEN 8 – Activity & Wellness Scales
+             ================================================ -->
+        <div class="ob-screen" id="screen-8">
+            <p class="ob-step-label" id="stepLabel-8"></p>
+            <h1 class="ob-headline">How active and energised<br>are you right now?</h1>
+
+            <!-- Activity slider -->
+            <div class="ob-slider-wrap">
+                <p class="ob-scale-question">Physical activity level</p>
+                <div class="ob-slider-labels">
+                    <span>Very inactive</span>
+                    <span>Lightly active</span>
+                    <span>Moderately active</span>
+                    <span>Very active</span>
+                </div>
+                <input type="range" class="ob-slider" id="activitySlider" min="0" max="3" step="1" value="1" oninput="updateActivity()" />
+                <p class="ob-slider-current" id="activityLabel">Lightly active</p>
+            </div>
+
+            <!-- Energy level 1-5 -->
+            <div class="ob-labeled-scale" id="energyScale">
+                <p class="ob-scale-question">How's your energy day-to-day?</p>
+                <div class="ob-scale-track">
+                    <button class="ob-scale-pip" data-value="1" onclick="selectScale('energy',1,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Very low / rarely</span></button>
+                    <button class="ob-scale-pip" data-value="2" onclick="selectScale('energy',2,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Low</span></button>
+                    <button class="ob-scale-pip" data-value="3" onclick="selectScale('energy',3,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Moderate / inconsistent</span></button>
+                    <button class="ob-scale-pip" data-value="4" onclick="selectScale('energy',4,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Good</span></button>
+                    <button class="ob-scale-pip" data-value="5" onclick="selectScale('energy',5,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Very high / consistent</span></button>
+                </div>
+            </div>
+
+            <!-- Sleep quality 1-5 -->
+            <div class="ob-labeled-scale" id="sleepScale">
+                <p class="ob-scale-question">How well have you been sleeping?</p>
+                <div class="ob-scale-track">
+                    <button class="ob-scale-pip" data-value="1" onclick="selectScale('sleep',1,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Terrible</span></button>
+                    <button class="ob-scale-pip" data-value="2" onclick="selectScale('sleep',2,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Poor</span></button>
+                    <button class="ob-scale-pip" data-value="3" onclick="selectScale('sleep',3,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Okay</span></button>
+                    <button class="ob-scale-pip" data-value="4" onclick="selectScale('sleep',4,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Good</span></button>
+                    <button class="ob-scale-pip" data-value="5" onclick="selectScale('sleep',5,this)"><span class="ob-pip-dot"></span><span class="ob-pip-label">Great</span></button>
+                </div>
+            </div>
+
+            <p class="ob-microcopy">Think about the last 4 weeks.</p>
+            <button class="ob-cta" onclick="goTo(9)">Continue</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 9 – Lifestyle Constraints
+             ================================================ -->
+        <div class="ob-screen" id="screen-9">
+            <p class="ob-step-label" id="stepLabel-9"></p>
+            <h1 class="ob-headline">Do any of these<br>apply to you?</h1>
+            <div class="ob-multiselect-list" id="constraintList">
+                <button class="ob-multi-card" data-value="limited-time" onclick="toggleMulti(this)">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">⏱️</span>
+                    <span>Limited time</span>
+                </button>
+                <button class="ob-multi-card" data-value="low-energy" onclick="toggleMulti(this)">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">😴</span>
+                    <span>Low energy / poor sleep</span>
+                </button>
+                <button class="ob-multi-card" data-value="past-injuries" onclick="toggleMulti(this)">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">🩹</span>
+                    <span>Past injuries</span>
+                </button>
+                <button class="ob-multi-card" data-value="high-stress" onclick="toggleMulti(this)">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">🧘</span>
+                    <span>High stress</span>
+                </button>
+                <button class="ob-multi-card" data-value="none-constraints" onclick="toggleMultiNone(this, 'constraintList')">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">✨</span>
+                    <span>None of the above</span>
+                </button>
+            </div>
+            <p class="ob-microcopy">This helps us keep your plan sustainable.</p>
+            <button class="ob-cta" onclick="goTo(10)">Continue</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 10 – Health Considerations
+             ================================================ -->
+        <div class="ob-screen" id="screen-10">
+            <p class="ob-step-label" id="stepLabel-10"></p>
+            <h1 class="ob-headline">Any health considerations<br>we should be aware of?</h1>
+            <div class="ob-multiselect-list" id="healthList">
+                <button class="ob-multi-card" data-value="joint-pain" onclick="toggleMulti(this)">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">🦴</span>
+                    <span>Joint pain or injuries</span>
+                </button>
+                <button class="ob-multi-card" data-value="cardio-concerns" onclick="toggleMulti(this)">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">❤️</span>
+                    <span>Cardiovascular concerns</span>
+                </button>
+                <button class="ob-multi-card" data-value="metabolic" onclick="toggleMulti(this)">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">🧬</span>
+                    <span>Metabolic conditions</span>
+                </button>
+                <button class="ob-multi-card" data-value="prefer-not-health" onclick="toggleMultiNone(this, 'healthList')">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">🔒</span>
+                    <span>Prefer not to say</span>
+                </button>
+                <button class="ob-multi-card" data-value="none-health" onclick="toggleMultiNone(this, 'healthList')">
+                    <span class="ob-multi-check"></span>
+                    <span class="ob-multi-icon">✨</span>
+                    <span>None</span>
+                </button>
+            </div>
+            <p class="ob-disclaimer">We don't provide medical diagnoses. This helps us avoid unsafe advice.</p>
+            <button class="ob-cta" onclick="goTo(11)">Continue</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 11 – Motivation & Confidence
+             ================================================ -->
+        <div class="ob-screen" id="screen-11">
+            <p class="ob-step-label" id="stepLabel-11"></p>
+            <h1 class="ob-headline">How confident do you feel<br>about reaching your goal?</h1>
+            <div class="ob-scale-row" id="confidenceRow">
+                <button class="ob-scale-btn" data-value="not-confident" onclick="selectConfidence(this)">Not confident</button>
+                <button class="ob-scale-btn" data-value="somewhat" onclick="selectConfidence(this)">Somewhat confident</button>
+                <button class="ob-scale-btn" data-value="very" onclick="selectConfidence(this)">Very confident</button>
+            </div>
+            <div class="ob-affirmation" id="affirmation" style="display:none;"></div>
+            <button class="ob-cta" id="cta-11" onclick="goToReview()" disabled>Continue</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 12 – Review & Confirm
+             ================================================ -->
+        <div class="ob-screen" id="screen-12">
+            <p class="ob-step-label">Almost there</p>
+            <h1 class="ob-headline">Here's what we<br>understand so far</h1>
+            <div class="ob-review-grid" id="reviewGrid"></div>
+            <button class="ob-cta" onclick="goTo(13)">Create my plan</button>
+            <button class="ob-cta-secondary" onclick="goTo(2)">Edit answers</button>
+        </div>
+
+        <!-- ================================================
+             SCREEN 13 – Analysis Transition
+             ================================================ -->
+        <div class="ob-screen" id="screen-13">
+            <div class="ob-analysis-wrap">
+                <div class="ob-analysis-ring">
+                    <svg viewBox="0 0 80 80">
+                        <defs>
+                            <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="var(--sage-light)" />
+                                <stop offset="100%" stop-color="var(--sage)" />
+                            </linearGradient>
+                        </defs>
+                        <circle class="ob-ring-bg" cx="40" cy="40" r="30" />
+                        <circle class="ob-ring-fill" cx="40" cy="40" r="30" />
+                    </svg>
+                </div>
+                <h1 class="ob-headline">Analyzing your responses…</h1>
+                <p class="ob-subtext">Building a plan tailored to your goals, body, and lifestyle.</p>
+                <div class="ob-analysis-dots">
+                    <div class="ob-analysis-dot"></div>
+                    <div class="ob-analysis-dot"></div>
+                    <div class="ob-analysis-dot"></div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- .onboarding-card -->
+</div><!-- .onboarding-shell -->
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* --------------------------------------------------------
+   ROUTE MAP
+   Screen 5 (mental health detail) is spliced in or out
+   at runtime based on the consent answer on screen 3.
+   -------------------------------------------------------- */
+var ROUTE = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13];
+
+/* --------------------------------------------------------
+   STATE – mirrors the profile schema from the handoff doc
+   -------------------------------------------------------- */
+var state = {
+    goal: null,
+    experience: null,
+    mentalConsent: null,
+    mood: null,
+    stress: null,
+    mentalReflection: null,
+    height: null,
+    heightUnit: 'imperial',
+    weight: null,
+    weightSkipped: false,
+    weightUnit: 'imperial',
+    activity: 1,
+    energy: null,
+    sleep: null,
+    constraints: [],
+    health: [],
+    confidence: null
+};
+
+/* --------------------------------------------------------
+   LABELS
+   -------------------------------------------------------- */
+var ACTIVITY_LABELS = ['Very inactive','Lightly active','Moderately active','Very active'];
+
+var AFFIRMATIONS = {
+    'not-confident':  "That's okay – we'll meet you where you are.",
+    'somewhat':       "A little doubt is normal. We'll build your confidence step by step.",
+    'very':           "That's great! Let's channel that energy into your plan."
+};
+
+var GOAL_LABELS = {
+    'lose-fat':      'Lose body fat',
+    'build-muscle':  'Build muscle',
+    'endurance':     'Improve endurance',
+    'feel-healthier':'Feel healthier overall',
+    'not-sure':      'Not sure yet'
+};
+
+var EXP_LABELS = {
+    'beginner':     'Beginner',
+    'intermediate': 'Intermediate',
+    'advanced':     'Advanced'
+};
+
+var GENERIC_SCALE = { 1:'Very low', 2:'Low', 3:'Moderate', 4:'Good', 5:'Very high' };
+var SLEEP_LABELS  = { 1:'Terrible',  2:'Poor', 3:'Okay',    4:'Good', 5:'Great' };
+
+/* --------------------------------------------------------
+   ROUTE HELPERS – dynamic step counting
+   -------------------------------------------------------- */
+function totalSteps() {
+    var count = 0;
+    for (var i = 0; i < ROUTE.length; i++) {
+        var s = ROUTE[i];
+        if (s !== 1 && s !== 12 && s !== 13) count++;
+    }
+    return count;
+}
+
+function currentStep(screenId) {
+    var step = 0;
+    for (var i = 0; i < ROUTE.length; i++) {
+        var s = ROUTE[i];
+        if (s !== 1 && s !== 12 && s !== 13) step++;
+        if (s === screenId) return step;
+    }
+    return 0;
+}
+
+function updateStepLabels() {
+    var total = totalSteps();
+    for (var i = 0; i < ROUTE.length; i++) {
+        var id = ROUTE[i];
+        var el = document.getElementById('stepLabel-' + id);
+        if (!el) continue;
+        var step = currentStep(id);
+        if (step > 0) el.textContent = 'Step ' + step + ' of ' + total;
+    }
+}
+
+/* --------------------------------------------------------
+   NAVIGATION
+   -------------------------------------------------------- */
+function goTo(n) {
+    if (n === 12) buildReview();
+
+    var screens = document.querySelectorAll('.ob-screen');
+    for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
+
+    var target = document.getElementById('screen-' + n);
+    if (target) target.classList.add('active');
+
+    // progress bar
+    var idx = ROUTE.indexOf(n);
+    var pct = idx <= 0 ? 0 : Math.round(idx / (ROUTE.length - 1) * 100);
+    if (pct > 100) pct = 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+
+    // re-trigger ring on analysis screen
+    if (n === 13) {
+        var ring = target.querySelector('.ob-ring-fill');
+        if (ring) {
+            ring.style.animation = 'none';
+            void ring.offsetWidth;
+            ring.style.animation = '';
+        }
+    }
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Used by screen 3 CTA – updates the route first, then advances
+function advanceFrom(fromScreen) {
+    if (fromScreen === 3) applyConsentRoute();
+    var idx = ROUTE.indexOf(fromScreen);
+    if (idx < ROUTE.length - 1) goTo(ROUTE[idx + 1]);
+}
+
+function goToReview() { goTo(12); }
+
+/* --------------------------------------------------------
+   CONSENT GATING
+   -------------------------------------------------------- */
+function applyConsentRoute() {
+    var base = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13];
+    if (state.mentalConsent === 'yes') {
+        // insert screen 5 right after screen 4
+        for (var i = 0; i < base.length; i++) {
+            if (base[i] === 4) { base.splice(i + 1, 0, 5); break; }
+        }
+    }
+    ROUTE = base;
+    updateStepLabels();
+}
+
+/* --------------------------------------------------------
+   SINGLE-SELECT OPTION CARDS
+   -------------------------------------------------------- */
+function selectOption(el) {
+    var group = el.dataset.group;
+    var cards = document.querySelectorAll('.ob-option-card[data-group="' + group + '"]');
+    for (var i = 0; i < cards.length; i++) cards[i].classList.remove('selected');
+    el.classList.add('selected');
+    state[group] = el.dataset.value;
+    enableCurrentCTA();
+}
+
+function enableCurrentCTA() {
+    var active = document.querySelector('.ob-screen.active');
+    if (!active) return;
+    var cta = active.querySelector('.ob-cta[disabled]');
+    if (!cta) return;
+    if (active.querySelector('.ob-option-card.selected')) cta.removeAttribute('disabled');
+}
+
+/* --------------------------------------------------------
+   MULTI-SELECT CARDS
+   -------------------------------------------------------- */
+function toggleMulti(el) {
+    el.classList.toggle('selected');
+}
+
+function toggleMultiNone(el, listId) {
+    var list = document.getElementById(listId);
+    var wasOn = el.classList.contains('selected');
+    var cards = list.querySelectorAll('.ob-multi-card');
+    for (var i = 0; i < cards.length; i++) cards[i].classList.remove('selected');
+    if (!wasOn) el.classList.add('selected');
+}
+
+/* --------------------------------------------------------
+   1–5 LABELED SCALE  (mood, stress, energy, sleep)
+   -------------------------------------------------------- */
+function selectScale(field, value, el) {
+    var containerId = field + 'Scale';
+    var container = document.getElementById(containerId);
+    if (container) {
+        var pips = container.querySelectorAll('.ob-scale-pip');
+        for (var i = 0; i < pips.length; i++) pips[i].classList.remove('selected');
+    }
+    el.classList.add('selected');
+    state[field] = value;
+
+    // Screen 5 CTA gates on both mood AND stress
+    if (field === 'mood' || field === 'stress') {
+        var cta5 = document.getElementById('cta-5');
+        if (cta5 && state.mood && state.stress) cta5.removeAttribute('disabled');
+    }
+}
+
+/* --------------------------------------------------------
+   COLLAPSIBLE
+   -------------------------------------------------------- */
+function toggleCollapsible(trigger) {
+    trigger.parentElement.classList.toggle('open');
+}
+
+/* --------------------------------------------------------
+   HEIGHT / WEIGHT
+   -------------------------------------------------------- */
+function switchUnit(field, unit, btn) {
+    var toggleEl = (field === 'height')
+        ? document.getElementById('heightUnitToggle')
+        : document.getElementById('weightUnitToggle');
+    var btns = toggleEl.querySelectorAll('.ob-unit-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+    btn.classList.add('active');
+
+    if (field === 'height') {
+        state.heightUnit = unit;
+        document.getElementById('heightMetric').style.display  = (unit === 'metric')   ? 'flex' : 'none';
+        document.getElementById('heightImperial').style.display = (unit === 'imperial') ? 'flex' : 'none';
+    } else {
+        state.weightUnit = unit;
+        document.getElementById('weightMetric').style.display  = (unit === 'metric')   ? 'flex' : 'none';
+        document.getElementById('weightImperial').style.display = (unit === 'imperial') ? 'flex' : 'none';
+    }
+    validateMetric();
+}
+
+function validateMetric() {
+    var hCta = document.getElementById('cta-6');
+    if (state.heightUnit === 'imperial') {
+        var ft   = document.getElementById('heightFt').value;
+        var inch = document.getElementById('heightIn').value;
+        state.height = (ft || inch) ? ((ft||'0') + ' ft ' + (inch||'0') + ' in') : null;
+    } else {
+        var cm = document.getElementById('heightCm').value;
+        state.height = cm ? (cm + ' cm') : null;
+    }
+    if (hCta) {
+        if (state.height) hCta.removeAttribute('disabled');
+        else hCta.setAttribute('disabled','');
+    }
+
+    if (state.weightUnit === 'imperial') {
+        var lb = document.getElementById('weightLb').value;
+        state.weight = lb ? (lb + ' lb') : null;
+    } else {
+        var kg = document.getElementById('weightKg').value;
+        state.weight = kg ? (kg + ' kg') : null;
+    }
+}
+
+function skipWeight() {
+    state.weightSkipped = true;
+    state.weight = null;
+    goTo(8);
+}
+
+/* --------------------------------------------------------
+   ACTIVITY SLIDER
+   -------------------------------------------------------- */
+function updateActivity() {
+    state.activity = parseInt(document.getElementById('activitySlider').value);
+    document.getElementById('activityLabel').textContent = ACTIVITY_LABELS[state.activity];
+}
+
+/* --------------------------------------------------------
+   CONFIDENCE (3-button)
+   -------------------------------------------------------- */
+function selectConfidence(el) {
+    var btns = document.querySelectorAll('.ob-scale-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('selected');
+    el.classList.add('selected');
+    state.confidence = el.dataset.value;
+
+    var aff = document.getElementById('affirmation');
+    aff.style.display = 'block';
+    aff.innerHTML = '<p>' + AFFIRMATIONS[state.confidence] + '</p>';
+    document.getElementById('cta-11').removeAttribute('disabled');
+}
+
+/* --------------------------------------------------------
+   REVIEW – assembles summary from state
+   -------------------------------------------------------- */
+function buildReview() {
+    var grid = document.getElementById('reviewGrid');
+    grid.innerHTML = '';
+    var items = [];
+
+    if (state.goal)
+        items.push({ icon:'🎯', key:'Goal', value: GOAL_LABELS[state.goal] || state.goal });
+    if (state.experience)
+        items.push({ icon:'📊', key:'Experience', value: EXP_LABELS[state.experience] });
+
+    if (state.mentalConsent === 'yes') {
+        if (state.mood)   items.push({ icon:'😊', key:'Mood',   value: GENERIC_SCALE[state.mood] });
+        if (state.stress) items.push({ icon:'🧘', key:'Stress', value: GENERIC_SCALE[state.stress] });
+    }
+
+    if (state.height)
+        items.push({ icon:'📏', key:'Height', value: state.height });
+    if (state.weightSkipped)
+        items.push({ icon:'⚖️', key:'Weight', value: 'Not provided' });
+    else if (state.weight)
+        items.push({ icon:'⚖️', key:'Weight', value: state.weight });
+
+    items.push({ icon:'🏃', key:'Activity', value: ACTIVITY_LABELS[state.activity] });
+    if (state.energy) items.push({ icon:'⚡', key:'Energy', value: GENERIC_SCALE[state.energy] });
+    if (state.sleep)  items.push({ icon:'🌙', key:'Sleep',  value: SLEEP_LABELS[state.sleep] });
+
+    var cCards = document.querySelectorAll('#constraintList .ob-multi-card.selected');
+    if (cCards.length) {
+        var cL = [];
+        for (var i = 0; i < cCards.length; i++) cL.push(cCards[i].querySelector('span:last-child').textContent.trim());
+        items.push({ icon:'⏱️', key:'Lifestyle', value: cL.join(', ') });
+    }
+
+    var hCards = document.querySelectorAll('#healthList .ob-multi-card.selected');
+    if (hCards.length) {
+        var hL = [];
+        for (var i = 0; i < hCards.length; i++) hL.push(hCards[i].querySelector('span:last-child').textContent.trim());
+        items.push({ icon:'❤️', key:'Health', value: hL.join(', ') });
+    }
+
+    var confMap = { 'not-confident':'Not confident', 'somewhat':'Somewhat confident', 'very':'Very confident' };
+    if (state.confidence)
+        items.push({ icon:'💬', key:'Confidence', value: confMap[state.confidence] });
+
+    for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        grid.innerHTML +=
+            '<div class="ob-review-item">' +
+                '<div class="ob-review-left">' +
+                    '<span class="ob-review-icon">' + it.icon + '</span>' +
+                    '<span class="ob-review-key">'  + it.key  + '</span>' +
+                '</div>' +
+                '<span class="ob-review-value">' + it.value + '</span>' +
+            '</div>';
+    }
+}
+
+/* --------------------------------------------------------
+   INIT
+   -------------------------------------------------------- */
+document.getElementById('heightMetric').style.display  = 'none';
+document.getElementById('heightImperial').style.display = 'flex';
+document.getElementById('weightMetric').style.display  = 'none';
+document.getElementById('weightImperial').style.display = 'flex';
+updateStepLabels();
+</script>
+</body>
+</html>
