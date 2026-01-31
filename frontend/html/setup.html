@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body data-page="setup">
@@ -55,27 +56,27 @@
                 <h1 class="ob-headline">What's your main<br>goal right now?</h1>
                 <div class="ob-option-list" id="goalList">
                     <button class="ob-option-card" data-group="goal" data-value="lose-fat" onclick="selectOption(this)">
-                        <span class="ob-option-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2s4 4 4 8a4 4 0 1 1-8 0c0-2.5 1.5-4.5 2.5-6C10 7 13 8 13 12a3 3 0 1 0 6 0c0-5-4-8-7-10Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-weight-scale" aria-hidden="true"></i></span>
                         <span class="ob-option-label">Lose body fat</span>
                         <span class="ob-option-check"></span>
                     </button>
                     <button class="ob-option-card" data-group="goal" data-value="build-muscle" onclick="selectOption(this)">
-                        <span class="ob-option-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 13h4l2-3 2 2v6H6v-3a2 2 0 0 1 1-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 6h3l1 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-dumbbell" aria-hidden="true"></i></span>
                         <span class="ob-option-label">Build muscle</span>
                         <span class="ob-option-check"></span>
                     </button>
                     <button class="ob-option-card" data-group="goal" data-value="endurance" onclick="selectOption(this)">
-                        <span class="ob-option-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="15" cy="5" r="2" stroke="currentColor" stroke-width="1.8"/><path d="M6 13l4-2 3 2 2 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 21l3-5 3 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-person-running" aria-hidden="true"></i></span>
                         <span class="ob-option-label">Improve endurance</span>
                         <span class="ob-option-check"></span>
                     </button>
                     <button class="ob-option-card" data-group="goal" data-value="feel-healthier" onclick="selectOption(this)">
-                        <span class="ob-option-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 20V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 6c-3 0-6 2-7 5 4 0 7-2 7-5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 10c3 0 6 2 7 5-4 0-7-2-7-5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-heart" aria-hidden="true"></i></span>
                         <span class="ob-option-label">Feel healthier overall</span>
                         <span class="ob-option-check"></span>
                     </button>
                     <button class="ob-option-card" data-group="goal" data-value="not-sure" onclick="selectOption(this)">
-                        <span class="ob-option-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.9.3-1.5 1-1.5 1.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></span>
                         <span class="ob-option-label">Not sure yet</span>
                         <span class="ob-option-check"></span>
                     </button>
@@ -89,12 +90,12 @@
                 ================================================ -->
             <div class="ob-screen" id="screen-3">
                 <p class="ob-step-label" id="stepLabel-3"></p>
-                <div class="ob-consent-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 8a3 3 0 0 1 6 0 3 3 0 0 1 2 5 3 3 0 0 1-5 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 8a3 3 0 0 0-2 5 3 3 0 0 0 5 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                <div class="ob-consent-icon"><i class="fa-solid fa-brain" aria-hidden="true"></i></div>
                 <h1 class="ob-headline">Would you like to include<br>mental health details?</h1>
                 <p class="ob-subtext">This helps us better support your overall wellbeing and adjust recommendations on tougher days.</p>
                 <div class="ob-option-list" id="consentList">
                     <button class="ob-option-card" data-group="mentalConsent" data-value="yes" onclick="selectOption(this)">
-                        <span class="ob-option-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1l1.7 1.7L12 21l7.1-6.6 1.7-1.7a5 5 0 0 0 0-7.1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-heart" aria-hidden="true"></i></span>
                         <span class="ob-option-label">
                             Yes, include it
                             <span class="ob-option-helper">We'll ask a few optional questions later in the flow</span>
@@ -102,7 +103,7 @@
                         <span class="ob-option-check"></span>
                     </button>
                     <button class="ob-option-card" data-group="mentalConsent" data-value="no" onclick="selectOption(this)">
-                        <span class="ob-option-icon"></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-xmark" aria-hidden="true"></i></span>
                         <span class="ob-option-label">
                             No thanks
                             <span class="ob-option-helper">We won't ask about this again</span>
@@ -122,7 +123,7 @@
                 <h1 class="ob-headline">How would you describe<br>your fitness experience?</h1>
                 <div class="ob-option-list" id="expList">
                     <button class="ob-option-card" data-group="experience" data-value="beginner" onclick="selectOption(this)">
-                        <span class="ob-option-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6 18a6 6 0 0 1 12 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 6v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 8.5l-1.5-1.5M15.5 8.5l1.5-1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-seedling" aria-hidden="true"></i></span>
                         <span class="ob-option-label">
                             Beginner
                             <span class="ob-option-helper">Just getting started or returning after a long break</span>
@@ -130,7 +131,7 @@
                         <span class="ob-option-check"></span>
                     </button>
                     <button class="ob-option-card" data-group="experience" data-value="intermediate" onclick="selectOption(this)">
-                        <span class="ob-option-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-bolt" aria-hidden="true"></i></span>
                         <span class="ob-option-label">
                             Intermediate
                             <span class="ob-option-helper">Exercise regularly and know the basics</span>
@@ -138,7 +139,7 @@
                         <span class="ob-option-check"></span>
                     </button>
                     <button class="ob-option-card" data-group="experience" data-value="advanced" onclick="selectOption(this)">
-                        <span class="ob-option-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 4h8v3a4 4 0 0 1-8 0V4Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 4H4a4 4 0 0 0 4 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 4h2a4 4 0 0 1-4 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 13v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 21h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                        <span class="ob-option-icon"><i class="fa-solid fa-trophy" aria-hidden="true"></i></span>
                         <span class="ob-option-label">
                             Advanced
                             <span class="ob-option-helper">Structured training experience</span>
@@ -304,27 +305,27 @@
                 <div class="ob-multiselect-list" id="constraintList">
                     <button class="ob-multi-card" data-value="limited-time" onclick="toggleMulti(this)">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M12 13l3-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 3h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span>
                         <span>Limited time</span>
                     </button>
                     <button class="ob-multi-card" data-value="low-energy" onclick="toggleMulti(this)">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12a9 9 0 0 0 9 9 8 8 0 0 1-9-9Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 5h6M16 3h4M15 9h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-moon" aria-hidden="true"></i></span>
                         <span>Low energy / poor sleep</span>
                     </button>
                     <button class="ob-multi-card" data-value="past-injuries" onclick="toggleMulti(this)">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 15l10-10a4 4 0 0 1 6 6L11 21a4 4 0 0 1-6-6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 9l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-bandage" aria-hidden="true"></i></span>
                         <span>Past injuries</span>
                     </button>
                     <button class="ob-multi-card" data-value="high-stress" onclick="toggleMulti(this)">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="5" r="2" stroke="currentColor" stroke-width="1.8"/><path d="M6 20c2-3 10-3 12 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 12l5 3 5-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-face-tired" aria-hidden="true"></i></span>
                         <span>High stress</span>
                     </button>
                     <button class="ob-multi-card" data-value="none-constraints" onclick="toggleMultiNone(this, 'constraintList')">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span>
                         <span>None of the above</span>
                     </button>
                 </div>
@@ -341,27 +342,27 @@
                 <div class="ob-multiselect-list" id="healthList">
                     <button class="ob-multi-card" data-value="joint-pain" onclick="toggleMulti(this)">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 10a2 2 0 1 1-2-2c.5 0 1 .2 1.3.6l6.4 6.4c.4.4.6.8.6 1.3a2 2 0 1 1-2-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-bone" aria-hidden="true"></i></span>
                         <span>Joint pain or injuries</span>
                     </button>
                     <button class="ob-multi-card" data-value="cardio-concerns" onclick="toggleMulti(this)">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1l1.7 1.7L12 21l7.1-6.6 1.7-1.7a5 5 0 0 0 0-7.1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i></span>
                         <span>Cardiovascular concerns</span>
                     </button>
                     <button class="ob-multi-card" data-value="metabolic" onclick="toggleMulti(this)">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3c3 3 7 3 10 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 21c3-3 7-3 10 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 7h8M8 17h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-flask" aria-hidden="true"></i></span>
                         <span>Metabolic conditions</span>
                     </button>
                     <button class="ob-multi-card" data-value="prefer-not-health" onclick="toggleMultiNone(this, 'healthList')">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i></span>
                         <span>Prefer not to say</span>
                     </button>
                     <button class="ob-multi-card" data-value="none-health" onclick="toggleMultiNone(this, 'healthList')">
                         <span class="ob-multi-check"></span>
-                        <span class="ob-multi-icon"></span>
+                        <span class="ob-multi-icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span>
                         <span>None</span>
                     </button>
                 </div>
