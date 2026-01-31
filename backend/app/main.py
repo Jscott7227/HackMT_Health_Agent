@@ -3,6 +3,7 @@ from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
 from hashlib import sha256
 from uuid import uuid4
+from fastapi.middleware.cors import CORSMiddleware
 
 import json
 import os
@@ -15,6 +16,14 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 benji = BenjiLLM()
 
 USERS_DB_FILE = os.path.join("backend", "users.json")
@@ -24,6 +33,7 @@ if not os.path.exists(USERS_DB_FILE):
         
 class SignupRequest(BaseModel):
     username: str
+    name: str
     password: str
 
 class LoginRequest(BaseModel):
@@ -123,6 +133,7 @@ def signup(request: SignupRequest):
     users[user_id] = {
         "username": request.username,
         "password": hash_password(request.password),
+        "user_name": request.name,
         "user_facts": {}
     }
     save_users(users)
