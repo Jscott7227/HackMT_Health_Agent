@@ -3,6 +3,7 @@ from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
 from hashlib import sha256
 from uuid import uuid4
+from fastapi.middleware.cors import CORSMiddleware
 
 import json
 import os
@@ -13,6 +14,14 @@ app = FastAPI(
     title="BenjiLLM API",
     description="Agentic fitness recommendation system",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or restrict to your frontend URL like ["http://localhost:5500"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 benji = BenjiLLM()

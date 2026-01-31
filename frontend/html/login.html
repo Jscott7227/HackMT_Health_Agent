@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,7 +8,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap"
+    rel="stylesheet">
 
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
@@ -29,16 +32,12 @@
     <header class="Benji-header" style="margin-bottom: var(--space-sm);">
       <div class="header-content">
         <h1 class="Benji-title" style="flex-direction: column; gap: 4px; margin-bottom: 0;">
-          <img
-            src="../assets/img/benji_logo.png"
-            alt="Benji logo"
-            style="
+          <img src="../assets/img/benji_logo.png" alt="Benji logo" style="
               width: 56px;
               height: 56px;
               object-fit: contain;
               filter: drop-shadow(0 3px 8px rgba(79, 62, 47, 0.14));
-            "
-          />
+            " />
           <span style="font-size: 2.3rem; line-height: 1;">Benji</span>
         </h1>
         <p class="Benji-subtitle" style="margin-top: 2px;">
@@ -61,15 +60,8 @@
         <!-- Email -->
         <div class="form-group" style="margin-bottom: var(--space-md);">
           <label class="form-label" for="email">Email</label>
-          <input
-            class="text-input"
-            type="email"
-            id="email"
-            name="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            required
-          />
+          <input class="text-input" type="email" id="email" name="email" autocomplete="email"
+            placeholder="you@example.com" required />
           <div class="help-text" id="emailError" style="display:none; color: var(--terracotta); font-weight: 500;">
             Please enter a valid email.
           </div>
@@ -80,42 +72,27 @@
           <label class="form-label" for="password">Password</label>
 
           <div style="display:flex; gap: var(--space-xs); align-items: stretch;">
-            <input
-              class="text-input"
-              type="password"
-              id="password"
-              name="password"
-              autocomplete="current-password"
-              placeholder="Your password"
-              required
-              style="flex: 1;"
-            />
+            <input class="text-input" type="password" id="password" name="password" autocomplete="current-password"
+              placeholder="Your password" required style="flex: 1;" />
 
             <!-- Eye icon button (SVG) -->
-            <button
-              type="button"
-              class="option-btn"
-              id="togglePassword"
-              aria-label="Show password"
-              style="
+            <button type="button" class="option-btn" id="togglePassword" aria-label="Show password" style="
                 flex: 0 0 44px;
                 min-width: 44px;
                 padding: 0;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-              "
-            >
+              ">
               <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                   xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" />
                 <!-- slash line (hidden by default; used when showing text) -->
-                <path id="eyeSlash" d="M4 4l16 16"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      style="display:none;"/>
+                <path id="eyeSlash" d="M4 4l16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  style="display:none;" />
               </svg>
             </button>
           </div>
@@ -134,23 +111,24 @@
               <span>Remember me</span>
             </label>
 
-            <a
-              href="../html/forgot-password.html"
-              style="color: var(--sage-dark); text-decoration: none; font-weight: 600; font-size: 0.9rem;"
-            >
+            <a href="../html/forgot-password.html"
+              style="color: var(--sage-dark); text-decoration: none; font-weight: 600; font-size: 0.9rem;">
               Forgot?
             </a>
           </div>
         </div>
 
         <!-- Actions -->
-        <div class="form-actions" style="margin-top: var(--space-md); display:flex; flex-direction: column; gap: var(--space-sm); align-items: stretch;">
+        <div class="form-actions"
+          style="margin-top: var(--space-md); display:flex; flex-direction: column; gap: var(--space-sm); align-items: stretch;">
           <!-- SAME width as Create account: force both to full width -->
-          <button type="submit" class="secondary-btn" id="loginBtn" style="width:100%; margin-right:0; margin-bottom:0;">
+          <button type="submit" class="secondary-btn" id="loginBtn"
+            style="width:100%; margin-right:0; margin-bottom:0;">
             Log In
           </button>
 
-          <button type="button" class="secondary-btn" id="goSignup" style="width:100%; margin-right:0; margin-bottom:0;">
+          <button type="button" class="secondary-btn" id="goSignup"
+            style="width:100%; margin-right:0; margin-bottom:0;">
             Create account
           </button>
 
@@ -227,11 +205,24 @@
 
         setOverlay(true);
         try {
-          // UI-only “login”: store session + go to index.html
-          await new Promise(r => setTimeout(r, 400));
+          // Call FastAPI /login endpoint
+          const response = await fetch("http://localhost:8000/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: email, password: pwd })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json();
+            alert(`Login failed: ${errData.detail || "Unknown error"}`);
+            return;
+          }
+
+          const data = await response.json(); // { user_id, message }
 
           const remember = $("#rememberMe")?.checked ?? false;
           const session = {
+            user_id: data.user_id,
             email,
             loggedIn: true,
             remember,
@@ -246,7 +237,11 @@
             localStorage.removeItem("sanctuary_session");
           }
 
+          // Redirect to index.html after login
           window.location.href = "../html/index.html";
+        } catch (err) {
+          console.error("Login error:", err);
+          alert("An error occurred during login. Please try again.");
         } finally {
           setOverlay(false);
         }
@@ -254,4 +249,5 @@
     })();
   </script>
 </body>
+
 </html>
