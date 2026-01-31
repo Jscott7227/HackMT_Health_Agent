@@ -1,8 +1,20 @@
 /* ====================================
-   CSS Variables - Warm, Earthy Palette
+   CSS Variables - Forest Green Theme
    ==================================== */
 :root {
-    /* Earthy color palette */
+    /* Primary forest green palette */
+    --forest-50: #e6f5ef;
+    --forest-100: #c2e8d9;
+    --forest-200: #99dac0;
+    --forest-300: #6fcca6;
+    --forest-400: #4fc193;
+    --forest-500: #016844;
+    --forest-600: #015d3d;
+    --forest-700: #014f33;
+    --forest-800: #01412a;
+    --forest-900: #002b1b;
+
+    /* Complementary earthy tones */
     --clay-50: #faf8f5;
     --clay-100: #f3ede3;
     --clay-200: #e8dcc8;
@@ -15,14 +27,16 @@
     --clay-900: #3a2e23;
 
     /* Accent colors - nature inspired */
-    --sage: #8b9d83;
-    --sage-dark: #6b7d63;
+    --sage: #016844;
+    --sage-dark: #014f33;
+    --sage-light: #4fc193;
     --terracotta: #c77e5d;
     --terracotta-light: #d89e87;
     --moss: #5a6c52;
     --sunset: #e8a87c;
     --lavender: #b4a5c4;
     --cream: #fff9f0;
+    --mint: #99dac0;
 
     /* Semantic colors */
     --bg-primary: var(--cream);
@@ -133,7 +147,7 @@ body {
 .orb-1 {
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(232, 168, 124, 0.4) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(1, 104, 68, 0.15) 0%, transparent 70%);
     top: -200px;
     right: -200px;
     animation-delay: 0s;
@@ -142,7 +156,7 @@ body {
 .orb-2 {
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle, rgba(139, 157, 131, 0.3) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(79, 193, 147, 0.2) 0%, transparent 70%);
     bottom: -150px;
     left: -150px;
     animation-delay: 1s;
@@ -151,7 +165,7 @@ body {
 .orb-3 {
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, rgba(180, 165, 196, 0.25) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(153, 218, 192, 0.15) 0%, transparent 70%);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -183,7 +197,7 @@ body {
    ==================================== */
 .sanctuary-header {
     text-align: center;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
     animation: fadeInDown 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -236,6 +250,63 @@ body {
     font-size: 0.9375rem;
     color: var(--text-muted);
     font-weight: 500;
+}
+
+/* ====================================
+   Top Navigation (Main Pages)
+   ==================================== */
+.top-nav {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    gap: var(--space-xs);
+    overflow-x: auto;
+    animation: fadeInDown 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s backwards;
+}
+
+.top-nav-item {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    font-family: var(--font-body);
+    color: var(--text-secondary);
+    text-decoration: none;
+    min-width: 90px;
+}
+
+.top-nav-item:hover {
+    background: var(--forest-50);
+    color: var(--forest-700);
+    transform: translateY(-2px);
+}
+
+.top-nav-item.active {
+    background: linear-gradient(135deg, var(--sage), var(--sage-dark));
+    color: white;
+    box-shadow: 0 4px 12px rgba(1, 104, 68, 0.3);
+}
+
+.top-nav-icon {
+    font-size: 1.75rem;
+}
+
+.top-nav-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
 }
 
 /* ====================================
@@ -322,7 +393,7 @@ body {
 }
 
 /* ====================================
-   Navigation Tabs
+   Navigation Tabs (Domain Sub-tabs)
    ==================================== */
 .sanctuary-nav {
     display: flex;
@@ -330,11 +401,12 @@ body {
     background: white;
     padding: var(--space-xs);
     border-radius: var(--radius-lg);
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
     overflow-x: auto;
     animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s backwards;
+    -webkit-overflow-scrolling: touch;
 }
 
 .nav-tab {
@@ -352,17 +424,18 @@ body {
     transition: all var(--transition-base);
     font-family: var(--font-body);
     color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 .nav-tab:hover {
-    background: var(--clay-50);
-    color: var(--text-primary);
+    background: var(--forest-50);
+    color: var(--forest-700);
 }
 
 .nav-tab.active {
-    background: linear-gradient(135deg, var(--sage), var(--sage-dark));
+    background: linear-gradient(135deg, var(--sage-light), var(--sage));
     color: white;
-    box-shadow: 0 2px 8px rgba(139, 157, 131, 0.3);
+    box-shadow: 0 2px 8px rgba(1, 104, 68, 0.25);
 }
 
 .tab-icon {
@@ -390,9 +463,104 @@ body {
     display: block;
 }
 
+.domain-section {
+    display: none;
+    animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.domain-section.active {
+    display: block;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+/* ====================================
+   Progress Indicator
+   ==================================== */
+.progress-indicator {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.progress-text {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+    text-align: center;
+    font-weight: 500;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--clay-100);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sage), var(--sage-light));
+    border-radius: 10px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+}
+
+/* ====================================
+   Domain Navigation
+   ==================================== */
+.domain-navigation {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: space-between;
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-xl);
+}
+
+.nav-arrow-btn {
+    flex: 1;
+    max-width: 200px;
+    padding: var(--space-md) var(--space-lg);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.nav-arrow-btn:hover:not(:disabled) {
+    background: var(--forest-50);
+    color: var(--forest-700);
+    border-color: var(--sage);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.nav-arrow-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.nav-arrow-btn.primary {
+    background: linear-gradient(135deg, var(--sage-light), var(--sage));
+    color: white;
+    border-color: var(--sage);
+}
+
+.nav-arrow-btn.primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(1, 104, 68, 0.3);
 }
 
 .section-intro {
@@ -1130,6 +1298,69 @@ body {
         flex: 1;
     }
 }
+
+
+/* ====================================
+   TOP BAR
+   ==================================== */
+@media print {
+
+    .benji-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 28px;
+    backdrop-filter: blur(14px);
+    background: rgba(255, 255, 255, 0.75);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .benji-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    }
+
+    .benji-brand h1 {
+    font-size: 1.2rem;
+    margin: 0;
+    }
+
+    .benji-brand p {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin: 0;
+    }
+
+    .benji-nav {
+    display: flex;
+    gap: 20px;
+    }
+
+    .benji-nav a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    font-weight: 500;
+    }
+
+    .benji-nav a.active {
+    background: rgba(0,0,0,0.08);
+    }
+
+    .benji-date {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    }
+}
+
 
 /* ====================================
    Print Styles
