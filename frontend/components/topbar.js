@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // You are visiting:
   // http://127.0.0.1:5500/frontend/html/check-in.html
   // So this MUST be absolute:
-  const HEADER_URL = "/frontend/components/benji.html";
+  const HEADER_URL = "/frontend/components/topbar.html";
 
   try {
     const res = await fetch(HEADER_URL, { cache: "no-store" });
@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
   } catch (err) {
-    console.error("Benji/Sanctuary header failed:", err);
+    console.error("Benji/Benji header failed:", err);
     root.innerHTML = `
       <div style="
         padding:12px;
@@ -77,8 +77,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         <strong>Header failed to load.</strong><br><br>
         Tried loading:<br>
         <code>${HEADER_URL}</code><br><br>
-        Open DevTools → Network → look for <code>benji.html</code>.
+        Open DevTools → Network → look for <code>topbar.html</code>.
       </div>
     `;
   }
 });
+

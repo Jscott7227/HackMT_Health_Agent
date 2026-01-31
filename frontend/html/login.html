@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login • Sanctuary</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/frontend/css/styles.css" />
+</head>
+
+<body data-page="login">
+  <div id="benji-root"></div>
+
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <div class="container" style="max-width: 560px; padding-top: var(--space-md);">
+
+    <!-- Header -->
+    <header class="Benji-header" style="margin-bottom: var(--space-sm);">
+      <div class="header-content">
+        <h1 class="Benji-title" style="flex-direction: column; gap: 4px; margin-bottom: 0;">
+          <img
+            src="/frontend/assets/img/benji_logo.png"
+            alt="Benji logo"
+            style="
+              width: 56px;
+              height: 56px;
+              object-fit: contain;
+              filter: drop-shadow(0 3px 8px rgba(79, 62, 47, 0.14));
+            "
+          />
+          <span style="font-size: 2.3rem; line-height: 1;">Benji</span>
+        </h1>
+        <p class="Benji-subtitle" style="margin-top: 2px;">
+          Welcome back — let’s get you signed in.
+        </p>
+      </div>
+    </header>
+
+    <!-- Login Card -->
+    <div class="form-domain" style="padding: var(--space-md);">
+
+      <div class="domain-header" style="margin-bottom: var(--space-md); padding-bottom: var(--space-sm);">
+        <h2 class="domain-title" style="font-size: 1.5rem;">
+          Login
+        </h2>
+      </div>
+
+      <form id="loginForm" novalidate>
+
+        <!-- Email -->
+        <div class="form-group" style="margin-bottom: var(--space-md);">
+          <label class="form-label" for="email">Email</label>
+          <input
+            class="text-input"
+            type="email"
+            id="email"
+            name="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+          />
+          <div class="help-text" id="emailError" style="display:none; color: var(--terracotta); font-weight: 500;">
+            Please enter a valid email.
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group" style="margin-bottom: var(--space-md);">
+          <label class="form-label" for="password">Password</label>
+
+          <div style="display:flex; gap: var(--space-xs); align-items: stretch;">
+            <input
+              class="text-input"
+              type="password"
+              id="password"
+              name="password"
+              autocomplete="current-password"
+              placeholder="Your password"
+              required
+              style="flex: 1;"
+            />
+
+            <!-- Eye icon button (SVG) -->
+            <button
+              type="button"
+              class="option-btn"
+              id="togglePassword"
+              aria-label="Show password"
+              style="
+                flex: 0 0 44px;
+                min-width: 44px;
+                padding: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                   xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- slash line (hidden by default; used when showing text) -->
+                <path id="eyeSlash" d="M4 4l16 16"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      style="display:none;"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="help-text" id="passwordError" style="display:none; color: var(--terracotta); font-weight: 500;">
+            Password is required.
+          </div>
+        </div>
+
+        <!-- Remember + Forgot -->
+        <div class="form-group" style="margin-bottom: var(--space-sm);">
+          <div style="display:flex; justify-content: space-between; align-items: center;">
+            <label class="checkbox-label" style="padding: 0;">
+              <input type="checkbox" id="rememberMe" />
+              <span class="checkbox-custom"></span>
+              <span>Remember me</span>
+            </label>
+
+            <a
+              href="/frontend/html/forgot-password.html"
+              style="color: var(--sage-dark); text-decoration: none; font-weight: 600; font-size: 0.9rem;"
+            >
+              Forgot?
+            </a>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions" style="margin-top: var(--space-md); display:flex; flex-direction: column; gap: var(--space-sm); align-items: stretch;">
+          <!-- SAME width as Create account: force both to full width -->
+          <button type="submit" class="secondary-btn" id="loginBtn" style="width:100%; margin-right:0; margin-bottom:0;">
+            Log In
+          </button>
+
+          <button type="button" class="secondary-btn" id="goSignup" style="width:100%; margin-right:0; margin-bottom:0;">
+            Create account
+          </button>
+
+          <p class="help-text" style="margin-top: 0; font-size: 0.8rem;">
+            By continuing, you agree to our
+            <a href="/frontend/html/terms.html" style="color: var(--sage-dark); font-weight: 600;">Terms</a>
+            and
+            <a href="/frontend/html/privacy.html" style="color: var(--sage-dark); font-weight: 600;">Privacy Policy</a>.
+          </p>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Signing you in...</p>
+    </div>
+  </div>
+
+  <!-- Scripts (inline so it DEFINITELY works, no dependency on other file) -->
+  <script>
+    (function () {
+      const $ = (sel) => document.querySelector(sel);
+
+      const form = $("#loginForm");
+      const emailEl = $("#email");
+      const passEl = $("#password");
+      const emailError = $("#emailError");
+      const passError = $("#passwordError");
+      const toggleBtn = $("#togglePassword");
+      const eyeSlash = $("#eyeSlash");
+      const overlay = $("#loadingOverlay");
+      const goSignup = $("#goSignup");
+
+      const show = (el) => { if (el) el.style.display = "block"; };
+      const hide = (el) => { if (el) el.style.display = "none"; };
+
+      const validEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+      toggleBtn?.addEventListener("click", () => {
+        const isHidden = passEl.type === "password";
+        passEl.type = isHidden ? "text" : "password";
+        // show slash when password is visible
+        if (eyeSlash) eyeSlash.style.display = isHidden ? "block" : "none";
+        toggleBtn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+      });
+
+      goSignup?.addEventListener("click", () => {
+        window.location.href = "/frontend/html/signup.html";
+      });
+
+      const setOverlay = (on) => {
+        if (!overlay) return;
+        overlay.classList.toggle("active", on);
+      };
+
+      form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        hide(emailError);
+        hide(passError);
+
+        const email = (emailEl?.value || "").trim();
+        const pwd = (passEl?.value || "").trim();
+
+        let ok = true;
+        if (!validEmail(email)) { show(emailError); ok = false; }
+        if (!pwd) { show(passError); ok = false; }
+        if (!ok) return;
+
+        setOverlay(true);
+        try {
+          // UI-only “login”: store session + go to index.html
+          await new Promise(r => setTimeout(r, 400));
+
+          const remember = $("#rememberMe")?.checked ?? false;
+          const session = {
+            email,
+            loggedIn: true,
+            remember,
+            timestamp: new Date().toISOString()
+          };
+
+          if (remember) {
+            localStorage.setItem("sanctuary_session", JSON.stringify(session));
+            sessionStorage.removeItem("sanctuary_session");
+          } else {
+            sessionStorage.setItem("sanctuary_session", JSON.stringify(session));
+            localStorage.removeItem("sanctuary_session");
+          }
+
+          window.location.href = "/frontend/html/index.html";
+        } finally {
+          setOverlay(false);
+        }
+      });
+    })();
+  </script>
+
+  <script src="/frontend/components/topbar.js"></script>
+</body>
+</html>
