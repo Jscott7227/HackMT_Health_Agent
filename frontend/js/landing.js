@@ -4,7 +4,7 @@
   const $$ = (sel) => document.querySelectorAll(sel);
 
   const API_BASE = "http://localhost:8000";
-  const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
 
   const overlay = $("#loadingOverlay");
   const loadingText = $("#loadingText");
@@ -60,7 +60,7 @@
   // LOGIN
   // ─────────────────────────────────────────
   // LOGIN submit
-document.querySelector('#loginForm').addEventListener('submit', async (e) => {
+document.querySelector('#loginForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const email = (document.querySelector('#login-email').value || '').trim();
@@ -106,7 +106,7 @@ document.querySelector('#loginForm').addEventListener('submit', async (e) => {
   // SIGNUP
   // ─────────────────────────────────────────
   // SIGNUP submit
-    document.querySelector('#signupForm').addEventListener('submit', async (e) => {
+    document.querySelector('#signupForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const firstName = (document.querySelector('#signup-firstName').value || '').trim();
@@ -117,9 +117,10 @@ document.querySelector('#loginForm').addEventListener('submit', async (e) => {
     const agree     = !!document.querySelector('#signup-agree').checked;
 
     if (!firstName || !lastName) { alert("Both names are required"); return; }
+    if (!validEmail(email)) { alert("Please enter a valid email address"); return; }
     if (pwd.length < 8) { alert("Password must be at least 8 characters"); return; }
     if (pwd !== confirm) { alert("Passwords do not match"); return; }
-    if (!agree) { alert("Please accept Terms & Privac   y"); return; }
+    if (!agree) { alert("Please accept Terms & Privacy"); return; }
 
     const response = await fetch("http://localhost:8000/signup", {
         method: "POST",
@@ -146,7 +147,7 @@ document.querySelector('#loginForm').addEventListener('submit', async (e) => {
         timestamp: new Date().toISOString()
     }));
 
-    window.location.href = './index.html';
+    window.location.href = './setup.html';
     });
 
 })();

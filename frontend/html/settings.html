@@ -565,6 +565,10 @@
       gap: 8px;
     }
 
+    .compact-field {
+      gap: 4px;
+    }
+
     .form-label {
       font-size: 13px;
       font-weight: 500;
@@ -1487,19 +1491,19 @@
         <div class="settings-group">
           <h3 class="settings-group-title">Account Details</h3>
           
-          <div class="form-field">
-            <label class="form-label">Email Address</label>
-            <input type="email" class="form-input" value="john@email.com" />
-          </div>
-
-          <div class="form-field" style="margin-top: 16px;">
-            <label class="form-label">Username</label>
-            <input type="text" class="form-input" value="john_doe" />
-          </div>
-
-          <div class="form-field" style="margin-top: 16px;">
-            <label class="form-label">Change Password</label>
-            <input type="password" class="form-input" placeholder="New password" />
+          <div class="form-grid account-grid">
+            <div class="form-field compact-field">
+              <label class="form-label">First Name</label>
+              <input type="text" class="form-input" id="accountFirstName" value="John" />
+            </div>
+            <div class="form-field compact-field">
+              <label class="form-label">Last Name</label>
+              <input type="text" class="form-input" id="accountLastName" value="Doe" />
+            </div>
+            <div class="form-field compact-field full-width">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-input" id="accountEmail" value="john@email.com" />
+            </div>
           </div>
         </div>
 
@@ -1932,6 +1936,55 @@
         setTimeout(() => notification.remove(), 300);
       }, 3000);
     }
+
+    /* --------------------------------------------------------
+       Load account + profile info from backend
+    -------------------------------------------------------- */
+    const API_BASE = "http://127.0.0.1:8000";
+    const getSession = () => {
+      const s1 = localStorage.getItem("sanctuary_session");
+      if (s1) return JSON.parse(s1);
+      const s2 = sessionStorage.getItem("sanctuary_session");
+      if (s2) return JSON.parse(s2);
+      return null;
+    };
+
+    async function loadAccountData() {
+      try {
+        const session = getSession();
+        if (!session || !session.user_id) return;
+
+        const [userRes, profileRes] = await Promise.allSettled([
+          fetch(`${API_BASE}/user/${session.user_id}`),
+          fetch(`${API_BASE}/profileinfo/${session.user_id}`)
+        ]);
+
+        if (userRes.status === "fulfilled" && userRes.value.ok) {
+          const user = await userRes.value.json();
+          const emailEl = document.getElementById("accountEmail");
+          const firstEl = document.getElementById("accountFirstName");
+          const lastEl = document.getElementById("accountLastName");
+          const first = user.first_name || "";
+          const last = user.last_name || "";
+          if (firstEl) firstEl.value = first || firstEl.value;
+          if (lastEl) lastEl.value = last || lastEl.value;
+          if (emailEl && user.email) emailEl.value = user.email;
+        }
+
+        if (profileRes.status === "fulfilled" && profileRes.value.ok) {
+          const profile = await profileRes.value.json();
+          const heightEl = document.getElementById("fitness-height");
+          const weightEl = document.getElementById("fitness-weight");
+          if (heightEl && profile.height) heightEl.value = profile.height;
+          if (weightEl && profile.weight) weightEl.value = profile.weight;
+          if (typeof calculateBMI === "function") calculateBMI();
+        }
+      } catch (err) {
+        console.error("Failed to load settings profile:", err);
+      }
+    }
+
+    loadAccountData();
 
     // Add animation styles
     const style = document.createElement('style');

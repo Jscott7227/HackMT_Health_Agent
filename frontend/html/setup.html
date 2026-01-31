@@ -30,6 +30,9 @@
         ============================================================ -->
     <div class="onboarding-shell">
         <div class="onboarding-card">
+            <button class="ob-back" id="obBackBtn" type="button" onclick="goBack()" aria-label="Go back">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+            </button>
 
             <div class="ob-progress-strip">
                 <div class="ob-progress-fill" id="progressFill"></div>
@@ -82,7 +85,7 @@
                     </button>
                 </div>
                 <p class="ob-microcopy">We'll adapt your plan based on this.</p>
-                <button class="ob-cta" id="cta-2" onclick="goTo(3)" disabled>Continue</button>
+                <button class="ob-cta" id="cta-2" onclick="handleContinue(3)">Continue</button>
             </div>
 
             <!-- ================================================
@@ -112,7 +115,7 @@
                     </button>
                 </div>
                 <p class="ob-disclaimer">This is completely optional. Your answers stay private and are never shared.</p>
-                <button class="ob-cta" id="cta-3" onclick="advanceFrom(3)" disabled>Continue</button>
+                <button class="ob-cta" id="cta-3" onclick="handleAdvanceFrom(3)" disabled>Continue</button>
             </div>
 
             <!-- ================================================
@@ -147,7 +150,7 @@
                         <span class="ob-option-check"></span>
                     </button>
                 </div>
-                <button class="ob-cta" id="cta-4" onclick="goTo(5)" disabled>Continue</button>
+                <button class="ob-cta" id="cta-4" onclick="handleContinue(5)">Continue</button>
             </div>
 
             <!-- ================================================
@@ -194,7 +197,7 @@
                 </div>
 
                 <p class="ob-disclaimer">This information is used only to personalise your experience. We never diagnose.</p>
-                <button class="ob-cta" id="cta-5" onclick="goTo(6)" disabled>Continue</button>
+                <button class="ob-cta" id="cta-5" onclick="handleContinue(6)">Continue</button>
             </div>
 
             <!-- ================================================
@@ -220,7 +223,7 @@
                     <span class="ob-imperial-label">in</span>
                 </div>
                 <p class="ob-microcopy">This helps us estimate healthy ranges.</p>
-                <button class="ob-cta" id="cta-6" onclick="goTo(7)" disabled>Continue</button>
+                <button class="ob-cta" id="cta-6" onclick="handleContinue(7)">Continue</button>
             </div>
 
             <!-- ================================================
@@ -244,8 +247,7 @@
                     <span class="ob-imperial-label">lb</span>
                 </div>
                 <p class="ob-microcopy">Used only to personalize recommendations. No judgments.</p>
-                <button class="ob-cta" id="cta-7" onclick="goTo(8)">Continue</button>
-                <p class="ob-microcopy"><button class="ob-skip-link" onclick="skipWeight()">Prefer not to say</button></p>
+                <button class="ob-cta" id="cta-7" onclick="handleContinue(8)">Continue</button>
             </div>
 
             <!-- ================================================
@@ -293,7 +295,7 @@
                 </div>
 
                 <p class="ob-microcopy">Think about the last 4 weeks.</p>
-                <button class="ob-cta" onclick="goTo(9)">Continue</button>
+                <button class="ob-cta" onclick="handleContinue(9)">Continue</button>
             </div>
 
             <!-- ================================================
@@ -330,7 +332,7 @@
                     </button>
                 </div>
                 <p class="ob-microcopy">This helps us keep your plan sustainable.</p>
-                <button class="ob-cta" onclick="goTo(10)">Continue</button>
+                <button class="ob-cta" onclick="handleContinue(10)">Continue</button>
             </div>
 
             <!-- ================================================
@@ -367,7 +369,7 @@
                     </button>
                 </div>
                 <p class="ob-disclaimer">We don't provide medical diagnoses. This helps us avoid unsafe advice.</p>
-                <button class="ob-cta" onclick="goTo(11)">Continue</button>
+                <button class="ob-cta" onclick="handleContinue(11)">Continue</button>
             </div>
 
             <!-- ================================================
@@ -382,7 +384,7 @@
                     <button class="ob-scale-btn" data-value="very" onclick="selectConfidence(this)">Very confident</button>
                 </div>
                 <div class="ob-affirmation" id="affirmation" style="display:none;"></div>
-                <button class="ob-cta" id="cta-11" onclick="goToReview()" disabled>Continue</button>
+                <button class="ob-cta" id="cta-11" onclick="handleContinue(12)">Continue</button>
             </div>
 
             <!-- ================================================
@@ -393,7 +395,7 @@
                 <h1 class="ob-headline">Here's what we<br>understand so far</h1>
                 <div class="ob-review-grid" id="reviewGrid"></div>
                 <button class="ob-cta" onclick="goTo(13)">Create my plan</button>
-                <button class="ob-cta-secondary" onclick="goTo(2)">Edit answers</button>
+                <button class="ob-cta-secondary" onclick="goToEdit(2)">Edit a section</button>
             </div>
 
             <!-- ================================================

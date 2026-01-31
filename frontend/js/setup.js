@@ -4,6 +4,8 @@ Screen 5 (mental health detail) is spliced in or out
 at runtime based on the consent answer on screen 3.
 -------------------------------------------------------- */
 var ROUTE = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13];
+var returnToReview = false;
+var currentRouteIndex = 0;
 
 /* --------------------------------------------------------
 STATE – mirrors the profile schema from the handoff doc
@@ -25,7 +27,11 @@ var state = {
     sleep: null,
     constraints: [],
     health: [],
-    confidence: null
+    confidence: null,
+    weightTouched: false,
+    activityTouched: false,
+    constraintsTouched: false,
+    healthTouched: false
 };
 
 /* --------------------------------------------------------
@@ -55,6 +61,29 @@ var EXP_LABELS = {
 
 var GENERIC_SCALE = { 1:'Very low', 2:'Low', 3:'Moderate', 4:'Good', 5:'Very high' };
 var SLEEP_LABELS  = { 1:'Terrible',  2:'Poor', 3:'Okay',    4:'Good', 5:'Great' };
+
+/* --------------------------------------------------------
+BACKEND HELPERS
+-------------------------------------------------------- */
+var API_BASE = "http://127.0.0.1:8000";
+
+function getSession() {
+    var s1 = localStorage.getItem("sanctuary_session");
+    if (s1) return JSON.parse(s1);
+    var s2 = sessionStorage.getItem("sanctuary_session");
+    if (s2) return JSON.parse(s2);
+    return null;
+}
+
+function buildBenjiFacts() {
+    var parts = [];
+    if (state.goal) parts.push("Goal: " + (GOAL_LABELS[state.goal] || state.goal));
+    if (state.experience) parts.push("Experience: " + (EXP_LABELS[state.experience] || state.experience));
+    if (state.constraints && state.constraints.length) parts.push("Constraints: " + state.constraints.join(", "));
+    if (state.health && state.health.length) parts.push("Health: " + state.health.join(", "));
+    if (state.mentalReflection) parts.push("Notes: " + state.mentalReflection);
+    return parts.join(" | ");
+}
 
 /* --------------------------------------------------------
 ROUTE HELPERS – dynamic step counting
@@ -110,6 +139,7 @@ function goTo(n) {
     var pct = idx <= 0 ? 0 : Math.round(idx / (ROUTE.length - 1) * 100);
     if (pct > 100) pct = 100;
     document.getElementById('progressFill').style.width = pct + '%';
+    if (idx >= 0) currentRouteIndex = idx;
 
     // re-trigger ring on analysis screen
     /*
@@ -135,6 +165,8 @@ function goTo(n) {
         }, 3000);
     }
 
+    updateCtaForScreen(n);
+    updateBackVisibility(n);
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -146,6 +178,80 @@ function advanceFrom(fromScreen) {
 }
 
 function goToReview() { goTo(12); }
+
+function handleContinue(nextId) {
+    if (returnToReview) {
+        returnToReview = false;
+        goTo(12);
+    } else {
+        goTo(nextId);
+    }
+}
+
+function handleAdvanceFrom(screenId) {
+    if (returnToReview) {
+        returnToReview = false;
+        goTo(12);
+    } else {
+        advanceFrom(screenId);
+    }
+}
+
+function goToEdit(screenId) {
+    returnToReview = true;
+    goTo(screenId);
+}
+
+function goBack() {
+    if (currentRouteIndex > 0) {
+        goTo(ROUTE[currentRouteIndex - 1]);
+    }
+}
+
+function updateBackVisibility(screenId) {
+    var btn = document.getElementById('obBackBtn');
+    if (!btn) return;
+    btn.style.display = (screenId && screenId > 1) ? 'inline-flex' : 'none';
+}
+
+/* --------------------------------------------------------
+CTA LABELS – allow skipping any question
+-------------------------------------------------------- */
+function setCtaLabel(cta, hasData) {
+    if (!cta) return;
+    cta.textContent = hasData ? 'Continue' : 'Skip for now';
+    cta.classList.toggle('is-skip', !hasData);
+    cta.removeAttribute('disabled');
+}
+
+function updateCtaForScreen(screenId) {
+    var id = screenId || (function () {
+        var active = document.querySelector('.ob-screen.active');
+        if (!active) return null;
+        var m = active.id && active.id.match(/screen-(\d+)/);
+        return m ? parseInt(m[1], 10) : null;
+    })();
+    if (!id) return;
+
+    if (id === 2) return setCtaLabel(document.getElementById('cta-2'), !!state.goal);
+    if (id === 3) {
+        var cta3 = document.getElementById('cta-3');
+        if (!cta3) return;
+        cta3.textContent = 'Continue';
+        cta3.classList.remove('is-skip');
+        if (state.mentalConsent) cta3.removeAttribute('disabled');
+        else cta3.setAttribute('disabled', '');
+        return;
+    }
+    if (id === 4) return setCtaLabel(document.getElementById('cta-4'), !!state.experience);
+    if (id === 5) return setCtaLabel(document.getElementById('cta-5'), !!(state.mood || state.stress || state.mentalReflection));
+    if (id === 6) return setCtaLabel(document.getElementById('cta-6'), !!state.height);
+    if (id === 7) return setCtaLabel(document.getElementById('cta-7'), !!(state.weight || state.weightSkipped));
+    if (id === 8) return setCtaLabel(document.querySelector('#screen-8 .ob-cta'), !!(state.activityTouched || state.energy || state.sleep));
+    if (id === 9) return setCtaLabel(document.querySelector('#screen-9 .ob-cta'), !!state.constraintsTouched);
+    if (id === 10) return setCtaLabel(document.querySelector('#screen-10 .ob-cta'), !!state.healthTouched);
+    if (id === 11) return setCtaLabel(document.getElementById('cta-11'), !!state.confidence);
+}
 
 /* --------------------------------------------------------
 CONSENT GATING
@@ -171,22 +277,24 @@ function selectOption(el) {
     for (var i = 0; i < cards.length; i++) cards[i].classList.remove('selected');
     el.classList.add('selected');
     state[group] = el.dataset.value;
-    enableCurrentCTA();
+    updateCtaForScreen();
 }
 
 function enableCurrentCTA() {
-    var active = document.querySelector('.ob-screen.active');
-    if (!active) return;
-    var cta = active.querySelector('.ob-cta[disabled]');
-    if (!cta) return;
-    if (active.querySelector('.ob-option-card.selected')) cta.removeAttribute('disabled');
+    updateCtaForScreen();
 }
 
 /* --------------------------------------------------------
 MULTI-SELECT CARDS
 -------------------------------------------------------- */
 function toggleMulti(el) {
+    var list = el.closest('.ob-multiselect-list');
+    if (list) {
+        var noneCards = list.querySelectorAll('[data-value*="none"], [data-value*="prefer-not"]');
+        for (var i = 0; i < noneCards.length; i++) noneCards[i].classList.remove('selected');
+    }
     el.classList.toggle('selected');
+    syncMultiState();
 }
 
 function toggleMultiNone(el, listId) {
@@ -195,6 +303,7 @@ function toggleMultiNone(el, listId) {
     var cards = list.querySelectorAll('.ob-multi-card');
     for (var i = 0; i < cards.length; i++) cards[i].classList.remove('selected');
     if (!wasOn) el.classList.add('selected');
+    syncMultiState();
 }
 
 /* --------------------------------------------------------
@@ -209,12 +318,7 @@ function selectScale(field, value, el) {
     }
     el.classList.add('selected');
     state[field] = value;
-
-    // Screen 5 CTA gates on both mood AND stress
-    if (field === 'mood' || field === 'stress') {
-        var cta5 = document.getElementById('cta-5');
-        if (cta5 && state.mood && state.stress) cta5.removeAttribute('disabled');
-    }
+    updateCtaForScreen();
 }
 
 /* --------------------------------------------------------
@@ -257,10 +361,7 @@ function validateMetric() {
         var cm = document.getElementById('heightCm').value;
         state.height = cm ? (cm + ' cm') : null;
     }
-    if (hCta) {
-        if (state.height) hCta.removeAttribute('disabled');
-        else hCta.setAttribute('disabled','');
-    }
+    if (hCta) setCtaLabel(hCta, !!state.height);
 
     if (state.weightUnit === 'imperial') {
         var lb = document.getElementById('weightLb').value;
@@ -269,11 +370,14 @@ function validateMetric() {
         var kg = document.getElementById('weightKg').value;
         state.weight = kg ? (kg + ' kg') : null;
     }
+    state.weightTouched = !!state.weight;
+    setCtaLabel(document.getElementById('cta-7'), !!(state.weight || state.weightSkipped));
 }
 
 function skipWeight() {
     state.weightSkipped = true;
     state.weight = null;
+    setCtaLabel(document.getElementById('cta-7'), true);
     goTo(8);
 }
 
@@ -283,6 +387,8 @@ ACTIVITY SLIDER
 function updateActivity() {
     state.activity = parseInt(document.getElementById('activitySlider').value);
     document.getElementById('activityLabel').textContent = ACTIVITY_LABELS[state.activity];
+    state.activityTouched = true;
+    updateCtaForScreen(8);
 }
 
 /* --------------------------------------------------------
@@ -297,7 +403,7 @@ function selectConfidence(el) {
     var aff = document.getElementById('affirmation');
     aff.style.display = 'block';
     aff.innerHTML = '<p>' + AFFIRMATIONS[state.confidence] + '</p>';
-    document.getElementById('cta-11').removeAttribute('disabled');
+    updateCtaForScreen(11);
 }
 
 /* --------------------------------------------------------
@@ -307,45 +413,39 @@ function buildReview() {
     var grid = document.getElementById('reviewGrid');
     grid.innerHTML = '';
     var items = [];
+    var confMap = { 'not-confident':'Not confident', 'somewhat':'Somewhat confident', 'very':'Very confident' };
+    var consentLabel = state.mentalConsent === 'yes' ? 'Yes' : state.mentalConsent === 'no' ? 'No' : 'N/A';
 
-    if (state.goal)
-        items.push({ icon:'<i class="fa-solid fa-bullseye"></i>', key:'Goal', value: GOAL_LABELS[state.goal] || state.goal });
-    if (state.experience)
-        items.push({ icon:'<i class="fa-solid fa-chart-simple"></i>', key:'Experience', value: EXP_LABELS[state.experience] });
+    function addItem(icon, key, value, editId) {
+        items.push({ icon: icon, key: key, value: value || 'N/A', editId: editId });
+    }
+
+    addItem('<i class="fa-solid fa-bullseye"></i>', 'Goal', state.goal ? (GOAL_LABELS[state.goal] || state.goal) : 'N/A', 2);
+    addItem('<i class="fa-solid fa-brain"></i>', 'Mental health consent', consentLabel, 3);
+    addItem('<i class="fa-solid fa-chart-simple"></i>', 'Experience', state.experience ? EXP_LABELS[state.experience] : 'N/A', 4);
 
     if (state.mentalConsent === 'yes') {
-        if (state.mood)   items.push({ icon:'<i class="fa-solid fa-face-smile"></i>', key:'Mood',   value: GENERIC_SCALE[state.mood] });
-        if (state.stress) items.push({ icon:'<i class="fa-solid fa-spa"></i>', key:'Stress', value: GENERIC_SCALE[state.stress] });
+        addItem('<i class="fa-solid fa-face-smile"></i>', 'Mood', state.mood ? GENERIC_SCALE[state.mood] : 'N/A', 5);
+        addItem('<i class="fa-solid fa-spa"></i>', 'Stress', state.stress ? GENERIC_SCALE[state.stress] : 'N/A', 5);
+    } else {
+        addItem('<i class="fa-solid fa-face-smile"></i>', 'Mood', 'N/A', 5);
+        addItem('<i class="fa-solid fa-spa"></i>', 'Stress', 'N/A', 5);
     }
 
-    if (state.height)
-        items.push({ icon:'<i class="fa-solid fa-ruler-vertical"></i>', key:'Height', value: state.height });
-    if (state.weightSkipped)
-        items.push({ icon:'<i class="fa-solid fa-weight-scale"></i>', key:'Weight', value: 'Not provided' });
-    else if (state.weight)
-        items.push({ icon:'<i class="fa-solid fa-weight-scale"></i>', key:'Weight', value: state.weight });
-
-    items.push({ icon:'<i class="fa-solid fa-person-running"></i>', key:'Activity', value: ACTIVITY_LABELS[state.activity] });
-    if (state.energy) items.push({ icon:'<i class="fa-solid fa-bolt"></i>', key:'Energy', value: GENERIC_SCALE[state.energy] });
-    if (state.sleep)  items.push({ icon:'<i class="fa-solid fa-moon"></i>', key:'Sleep',  value: SLEEP_LABELS[state.sleep] });
-
-    var cCards = document.querySelectorAll('#constraintList .ob-multi-card.selected');
-    if (cCards.length) {
-        var cL = [];
-        for (var i = 0; i < cCards.length; i++) cL.push(cCards[i].querySelector('span:last-child').textContent.trim());
-        items.push({ icon:'<i class="fa-solid fa-clock"></i>', key:'Lifestyle', value: cL.join(', ') });
+    addItem('<i class="fa-solid fa-ruler-vertical"></i>', 'Height', state.height || 'N/A', 6);
+    if (state.weightSkipped) {
+        addItem('<i class="fa-solid fa-weight-scale"></i>', 'Weight', 'Not provided', 7);
+    } else {
+        addItem('<i class="fa-solid fa-weight-scale"></i>', 'Weight', state.weight || 'N/A', 7);
     }
 
-    var hCards = document.querySelectorAll('#healthList .ob-multi-card.selected');
-    if (hCards.length) {
-        var hL = [];
-        for (var i = 0; i < hCards.length; i++) hL.push(hCards[i].querySelector('span:last-child').textContent.trim());
-        items.push({ icon:'<i class="fa-solid fa-heart-pulse"></i>', key:'Health', value: hL.join(', ') });
-    }
+    addItem('<i class="fa-solid fa-person-running"></i>', 'Activity', state.activityTouched ? ACTIVITY_LABELS[state.activity] : 'N/A', 8);
+    addItem('<i class="fa-solid fa-bolt"></i>', 'Energy', state.energy ? GENERIC_SCALE[state.energy] : 'N/A', 8);
+    addItem('<i class="fa-solid fa-moon"></i>', 'Sleep', state.sleep ? SLEEP_LABELS[state.sleep] : 'N/A', 8);
 
-    var confMap = { 'not-confident':'Not confident', 'somewhat':'Somewhat confident', 'very':'Very confident' };
-    if (state.confidence)
-        items.push({ icon:'<i class="fa-solid fa-comment"></i>', key:'Confidence', value: confMap[state.confidence] });
+    addItem('<i class="fa-solid fa-clock"></i>', 'Lifestyle', state.constraints && state.constraints.length ? state.constraints.join(', ') : 'N/A', 9);
+    addItem('<i class="fa-solid fa-heart-pulse"></i>', 'Health', state.health && state.health.length ? state.health.join(', ') : 'N/A', 10);
+    addItem('<i class="fa-solid fa-comment"></i>', 'Confidence', state.confidence ? confMap[state.confidence] : 'N/A', 11);
 
     for (var i = 0; i < items.length; i++) {
         var it = items[i];
@@ -356,8 +456,26 @@ function buildReview() {
                     '<span class="ob-review-key">'  + it.key  + '</span>' +
                 '</div>' +
                 '<span class="ob-review-value">' + it.value + '</span>' +
+                (it.editId ? ('<button class="ob-review-edit" type="button" onclick="goToEdit(' + it.editId + ')">Edit</button>') : '') +
             '</div>';
     }
+}
+
+function syncMultiState() {
+    var cCards = document.querySelectorAll('#constraintList .ob-multi-card.selected');
+    var hCards = document.querySelectorAll('#healthList .ob-multi-card.selected');
+    state.constraints = [];
+    state.health = [];
+    for (var i = 0; i < cCards.length; i++) {
+        state.constraints.push(cCards[i].querySelector('span:last-child').textContent.trim());
+    }
+    for (var j = 0; j < hCards.length; j++) {
+        state.health.push(hCards[j].querySelector('span:last-child').textContent.trim());
+    }
+    state.constraintsTouched = state.constraints.length > 0;
+    state.healthTouched = state.health.length > 0;
+    updateCtaForScreen(9);
+    updateCtaForScreen(10);
 }
 
 /* --------------------------------------------------------
@@ -368,19 +486,59 @@ document.getElementById('heightImperial').style.display = 'flex';
 document.getElementById('weightMetric').style.display  = 'none';
 document.getElementById('weightImperial').style.display = 'flex';
 updateStepLabels();
+updateCtaForScreen(2);
+updateBackVisibility(1);
+
+var reflectionInput = document.getElementById('mentalReflection');
+if (reflectionInput) {
+    reflectionInput.addEventListener('input', function () {
+        state.mentalReflection = reflectionInput.value.trim() || null;
+        updateCtaForScreen(5);
+    });
+}
 
 /* --------------------------------------------------------
 COMPLETE SETUP - Redirect to main app
 -------------------------------------------------------- */
-function completeSetup() {
+async function completeSetup() {
     // Save onboarding data to localStorage
     localStorage.setItem('onboardingComplete', 'true');
     localStorage.setItem('userProfile', JSON.stringify(state));
-    
+
     // Add a small delay for user feedback (optional)
     var btn = document.querySelector('#screen-12 .ob-cta');
     btn.textContent = 'Redirecting...';
     btn.disabled = true;
+
+    // Persist profile info to backend if available
+    try {
+        var session = getSession();
+        if (session && session.user_id) {
+            var payload = {};
+            if (state.height) payload.height = state.height;
+            if (state.weight) payload.weight = state.weight;
+            var facts = buildBenjiFacts();
+            if (facts) payload.benji_facts = facts;
+
+            if (Object.keys(payload).length) {
+                var res = await fetch(API_BASE + "/profileinfo/" + session.user_id, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.status === 404) {
+                    await fetch(API_BASE + "/profileinfo/" + session.user_id, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Profile sync failed:", err);
+    }
     
     // Redirect to main chat page after brief delay
     setTimeout(function() {

@@ -98,6 +98,31 @@
     border: 1px solid var(--border-color);
     overflow: hidden;
     animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.ob-back {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--clay-700);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: all var(--transition-base);
+}
+
+.ob-back:hover {
+    color: var(--clay-800);
+    box-shadow: 0 4px 10px rgba(79, 62, 47, 0.12);
+    transform: translateY(-1px);
 }
 
 /* ====================================
@@ -636,6 +661,24 @@
     color: var(--clay-800);
 }
 
+.ob-review-edit {
+    margin-left: var(--space-sm);
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--sage-dark);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.ob-review-edit:hover {
+    background: var(--forest-50);
+    transform: translateY(-1px);
+}
+
 /* ====================================
    Onboarding Disclaimer
    ==================================== */
@@ -683,6 +726,18 @@
     box-shadow: none;
     cursor: not-allowed;
     transform: none;
+}
+
+.ob-cta.is-skip {
+    background: var(--clay-100);
+    color: var(--clay-700);
+    box-shadow: none;
+}
+
+.ob-cta.is-skip:hover {
+    background: var(--clay-200);
+    color: var(--clay-800);
+    transform: translateY(-1px);
 }
 
 .ob-cta-secondary {

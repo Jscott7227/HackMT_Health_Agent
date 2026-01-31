@@ -64,23 +64,11 @@ class ProfileInfoOut(BaseModel):
     height: Optional[str] = None
     weight: Optional[str] = None
 
-class ProfileInfoOut(BaseModel):
-    profile_id: str
+class UserInfoOut(BaseModel):
     user_id: str
-    benji_facts: Optional[str] = None
-    height: Optional[str] = None
-    weight: Optional[str] = None
-
-
-class CreateProfileInfoRequest(BaseModel):
-    user_id: str
-    benji_facts: Optional[str] = None
-    height: str
-    weight: str
-
-class CreateProfileInfoResponse(BaseModel):
-    profile_id: str
-    message: str
+    first_name: str
+    last_name: str
+    email: str
 
 
 class RunGoalsRequest(BaseModel):
@@ -257,6 +245,21 @@ def login(request: LoginRequest):
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     return LoginResponse(user_id=user_id, message="Login successful")
+
+
+@app.get("/user/{user_id}", response_model=UserInfoOut)
+def get_user_info(user_id: str):
+    """Retrieve basic user info (name, email) from Firestore."""
+    snap = db.collection("User").document(user_id).get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    d = snap.to_dict() or {}
+    return UserInfoOut(
+        user_id=user_id,
+        first_name=d.get("first_name", ""),
+        last_name=d.get("last_name", ""),
+        email=d.get("email", ""),
+    )
 
 
 @app.post("/update_facts")
