@@ -77,12 +77,12 @@ if not os.path.exists(USERS_DB_FILE):
         json.dump({}, f)
         
 class SignupRequest(BaseModel):
-    username: str
-    name: str
+    email: str
     password: str
+    name: str
 
 class LoginRequest(BaseModel):
-    username: str
+    email: str
     password: str
 
 class LoginResponse(BaseModel):
@@ -145,6 +145,25 @@ class RunRequest(BaseModel):
 class RunResponse(BaseModel):
     response: str
     
+def authenticate(email: str, password: str) -> Optional[str]:
+    docs = (
+        db.collection("User")
+          .where("email", "==", email)
+          .limit(1)
+          .stream()
+    )
+
+    doc = next(docs, None)
+    if not doc:
+        return None
+
+    user = doc.to_dict() or {}
+    if user.get("password") != hash_password(password):
+        return None
+
+    return doc.id
+
+
 
 def load_users() -> dict:
     try:
@@ -179,27 +198,42 @@ def get_user_by_id(user_id: str) -> Optional[dict]:
 
 @app.post("/signup", response_model=LoginResponse)
 def signup(request: SignupRequest):
-    users = load_users()
-    # Check for existing username
-    if any(user["username"] == request.username for user in users.values()):
+    # 1) Enforce unique email
+    existing_email = (
+        db.collection("User")
+          .where("email", "==", request.email)
+          .limit(1)
+          .stream()
+    )
+    if next(existing_email, None) is not None:
+        raise HTTPException(status_code=400, detail="Email already exists")
+
+    # 2) Enforce unique username
+    existing_username = (
+        db.collection("User")
+          .where("username", "==", request.username)
+          .limit(1)
+          .stream()
+    )
+    if next(existing_username, None) is not None:
         raise HTTPException(status_code=400, detail="Username already exists")
-    
-    # Create user_id
-    user_id = str(uuid4())
-    users[user_id] = {
+
+    # 3) Create Firestore doc with auto-generated ID
+    doc_ref = db.collection("User").document()
+    doc_ref.set({
+        "email": request.email,
         "username": request.username,
-        "password": hash_password(request.password),
-        "user_name": request.name,
-        "user_facts": {}
-    }
-    save_users(users)
-    return LoginResponse(user_id=user_id, message="User created successfully")
+        "password": hash_password(request.password)  # store hash (recommended)
+    })
+
+    return LoginResponse(user_id=doc_ref.id, message="User created successfully")
+
 
 @app.post("/login", response_model=LoginResponse)
 def login(request: LoginRequest):
-    user_id = authenticate(request.username, request.password)
+    user_id = authenticate(request.email, request.password)
     if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     return LoginResponse(user_id=user_id, message="Login successful")
 
 @app.post("/update_facts")
@@ -214,7 +248,6 @@ def update_facts(update: UpdateUserFacts):
     users[update.user_id] = user
     save_users(users)
     return {"message": "User facts updated successfully", "user_facts": user["user_facts"]}
-
 
 
 @app.post("/run", response_model=RunResponse)
