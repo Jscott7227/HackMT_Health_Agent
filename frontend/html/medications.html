@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medications • Benji</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body data-page="medications">
+
+  <div id="benji-root"></div>
+
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+
+    <div class="content-wrapper">
+      
+      <!-- Page Header -->
+      <div class="section-intro">
+        <h2 class="section-title">Medication Manager</h2>
+        <p class="section-description">Track your medications and get a personalized schedule with safety checks.</p>
+      </div>
+
+      <!-- Medication List Section -->
+      <div class="form-domain" style="margin-bottom: var(--space-lg);">
+        <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="domain-title">Your Medications</h3>
+          <button class="btn btn-primary" id="addMedBtn">
+            <span>+ Add Medication</span>
+          </button>
+        </div>
+
+        <!-- Medication List -->
+        <div id="medicationList" class="medication-list">
+          <!-- Medications will be rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <p style="text-align: center; color: var(--text-secondary); padding: var(--space-lg);">
+            No medications yet. Click "Add Medication" to get started.
+          </p>
+        </div>
+      </div>
+
+      <!-- Add/Edit Medication Form -->
+      <div id="medicationForm" class="form-domain" style="display: none; margin-bottom: var(--space-lg);">
+        <div class="domain-header">
+          <h3 class="domain-title" id="formTitle">Add Medication</h3>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Medication Name *</label>
+          <input type="text" id="medName" class="text-input" placeholder="e.g., Lisinopril" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Strength *</label>
+          <input type="text" id="medStrength" class="text-input" placeholder="e.g., 10 mg" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">How Often / Frequency *</label>
+          <input type="text" id="medFrequency" class="text-input" placeholder="e.g., once daily in morning, twice daily with meals" required>
+        </div>
+
+        <div class="button-group" style="margin-top: var(--space-md);">
+          <button class="btn btn-primary" id="saveMedBtn">
+            <span id="saveBtnText">Save Medication</span>
+          </button>
+          <button class="btn" id="cancelMedBtn">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Schedule Section -->
+      <div class="form-domain">
+        <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="domain-title">Medication Schedule</h3>
+          <button class="btn btn-primary" id="generateScheduleBtn">
+            <span>Generate Schedule</span>
+          </button>
+        </div>
+
+        <!-- Schedule Display -->
+        <div id="scheduleDisplay" class="schedule-display">
+          <p style="text-align: center; color: var(--text-secondary); padding: var(--space-lg);">
+            Add medications and click "Generate Schedule" to see your personalized medication schedule with safety checks.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Generating your schedule...</p>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/medications.js"></script>
+  <script src="../components/topbar.js"></script>
+</body>
+</html>
