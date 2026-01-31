@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,18 +8,112 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap"
+    rel="stylesheet">
 
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
+
 <body data-page="home">
 
   <div id="benji-root"></div>
 
-  <div class="container">
-    <!-- Home content goes here -->
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
   </div>
 
+  <div class="container">
+
+    <!-- ===== LLM CHAT (stays on top) ===== -->
+    <div class="benji-llm-section">
+      <textarea id="llmInput" placeholder="Ask Benji anything about your fitness or wellness..."></textarea>
+      <button id="sendBtn">Ask Benji</button>
+      <div id="llmResponse"></div>
+    </div>
+
+    <!-- ===== CHECK-IN BANNER (shown when not completed today) ===== -->
+    <div class="home-banner" id="checkinBanner" style="display:none;">
+      <div class="banner-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="banner-text">
+        <strong>Complete your daily check-in</strong>
+        <span>Track your progress and let Benji help you stay on course.</span>
+      </div>
+      <a href="check-in.html" class="banner-cta">Check in now</a>
+    </div>
+
+    <!-- ===== RECOVERY DAY MESSAGE ===== -->
+    <div class="home-recovery-card" id="recoveryCard" style="display:none;">
+      <div class="recovery-header">
+        <span class="recovery-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <h3>Recovery Day</h3>
+      </div>
+      <p class="recovery-message" id="recoveryMessage"></p>
+      <div class="recovery-tips" id="recoveryTips"></div>
+    </div>
+
+    <!-- ===== INJURY / SORENESS WARNINGS (only when relevant) ===== -->
+    <div class="home-warning-card" id="injuryWarning" style="display:none;">
+      <div class="warning-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="warning-text" id="injuryWarningText"></div>
+    </div>
+
+    <!-- ===== TODAY AT A GLANCE ===== -->
+    <section class="home-section" id="glanceSection" style="display:none;">
+      <h2 class="home-section-title">Today at a Glance</h2>
+      <div class="glance-grid" id="glanceGrid"></div>
+    </section>
+
+    <!-- ===== GOAL PROGRESS RINGS ===== -->
+    <section class="home-section" id="goalsSection">
+      <h2 class="home-section-title">Goal Progress</h2>
+      <div class="goals-ring-grid" id="goalsRingGrid"></div>
+    </section>
+
+    <!-- ===== TODAY / TOMORROW PREVIEW ===== -->
+    <section class="home-section" id="previewSection">
+      <h2 class="home-section-title">Upcoming</h2>
+      <div class="preview-cards" id="previewCards"></div>
+    </section>
+
+    <!-- ===== OVERALL TIMELINE VIEW ===== -->
+    <section class="home-section" id="timelineSection">
+      <h2 class="home-section-title">Wellness &amp; Fitness Overview</h2>
+      <div class="timeline-bars" id="timelineBars"></div>
+    </section>
+
+    <!-- ===== 3-DAY TREND + AGENT NOTES ===== -->
+    <section class="home-section" id="trendSection">
+      <h2 class="home-section-title">3-Day Trend</h2>
+      <div class="trend-cards" id="trendCards"></div>
+      <div class="trend-agent-notes" id="trendAgentNotes"></div>
+    </section>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="../components/topbar.js"></script>
+  <script src="../js/index.js"></script>
+  <script src="../js/home-dashboard.js"></script>
+
 </body>
+
 </html>
