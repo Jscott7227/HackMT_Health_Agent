@@ -25,58 +25,56 @@
   <div id="benji-root"></div>
 
   <div class="chat-page-wrapper">
-    <!-- Chat Header -->
-    <div class="chat-header">
-      <div class="chat-header-avatar">
-        <img src="../assets/img/benji_logo.png" alt="Benji" />
-      </div>
-      <div class="chat-header-info">
-        <h1 class="chat-header-title">Chat with Benji</h1>
-        <p class="chat-header-subtitle">Your personal wellness companion</p>
-      </div>
-      <div class="chat-header-status">
-        <span class="status-dot"></span>
-        <span class="status-text">Online</span>
-      </div>
-    </div>
-
     <!-- Main Chat Container -->
     <div class="chat-container">
-      <!-- Chat messages -->
-      <div id="chatHistory">
-        <!-- Welcome message -->
-        <div class="chat-welcome">
-          <div class="chat-welcome-icon">
-            <i class="fas fa-leaf"></i>
+      <div class="chat-layout">
+        <aside class="chat-sidebar">
+          <div class="history-header">
+            <h3>Chat history</h3>
+            <button id="clearHistoryBtn" class="history-clear-btn" type="button">Clear</button>
           </div>
-          <h2>Welcome to Benji</h2>
-          <p>I'm here to help with your health and wellness journey. Ask me anything about nutrition, fitness, sleep, mental wellness, or any health-related questions.</p>
-          <div class="chat-suggestions">
-            <button class="suggestion-chip" data-suggestion="How can I improve my sleep quality?">
-              <i class="fas fa-moon"></i> Improve sleep
-            </button>
-            <button class="suggestion-chip" data-suggestion="What are some healthy meal ideas?">
-              <i class="fas fa-utensils"></i> Meal ideas
-            </button>
-            <button class="suggestion-chip" data-suggestion="Can you suggest a quick workout routine?">
-              <i class="fas fa-dumbbell"></i> Quick workout
-            </button>
-            <button class="suggestion-chip" data-suggestion="How can I manage stress better?">
-              <i class="fas fa-spa"></i> Manage stress
-            </button>
+          <div id="chatHistorySaved" class="history-list">
+            <div class="history-empty">No saved messages yet.</div>
           </div>
-        </div>
-      </div>
+        </aside>
 
-      <!-- Input area -->
-      <div id="inputSection">
-        <div class="input-wrapper">
-          <textarea id="llmInput" placeholder="Ask Benji anything about your health..." rows="1"></textarea>
-          <button id="sendBtn" aria-label="Send message">
-            <i class="fas fa-paper-plane"></i>
-          </button>
+        <div class="chat-main">
+          <!-- Chat messages -->
+          <div id="chatHistory">
+            <!-- Welcome message -->
+            <div class="chat-welcome">
+            <div class="chat-welcome-icon">
+              <img src="../assets/img/benji_hippo.png" alt="Benji" />
+            </div>
+              <h2>Welcome to Benji</h2>
+              <p>I'm here to help with your health and wellness journey. Ask me anything about nutrition, fitness, sleep, mental wellness, or any health-related questions.</p>
+              <div class="chat-suggestions">
+                <button class="suggestion-chip" data-suggestion="How can I improve my sleep quality?">
+                  <i class="fas fa-moon"></i> Improve sleep
+                </button>
+                <button class="suggestion-chip" data-suggestion="What are some healthy meal ideas?">
+                  <i class="fas fa-utensils"></i> Meal ideas
+                </button>
+                <button class="suggestion-chip" data-suggestion="Can you suggest a quick workout routine?">
+                  <i class="fas fa-dumbbell"></i> Quick workout
+                </button>
+                <button class="suggestion-chip" data-suggestion="How can I manage stress better?">
+                  <i class="fas fa-spa"></i> Manage stress
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input area -->
+          <div id="inputSection">
+            <div class="input-wrapper">
+              <textarea id="llmInput" placeholder="Ask Benji anything about your health..." rows="1"></textarea>
+              <button id="sendBtn" aria-label="Send message">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
         </div>
-        <p class="input-hint">Press Enter to send, Shift+Enter for new line</p>
       </div>
     </div>
   </div>
