@@ -3731,6 +3731,77 @@ textarea:focus-visible {
     color: var(--text-primary);
 }
 
+/* ============================================================
+   MEDICATION MODAL POPUP
+   ============================================================ */
+.medication-modal-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.medication-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.medication-modal-body {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  padding: var(--space-lg);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.medication-modal-overlay.active .medication-modal-body {
+  transform: translateY(0) scale(1);
+}
+
+.medication-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 50%;
+  z-index: 2;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.medication-modal-close:hover {
+  color: var(--text-primary);
+  background: var(--clay-100);
+}
+
+.medication-modal-content .domain-title {
+  margin-bottom: var(--space-md);
+  padding-right: 36px;
+}
+
 /* Make the banner-cta button look like the original anchor */
 button.banner-cta {
     border: none;

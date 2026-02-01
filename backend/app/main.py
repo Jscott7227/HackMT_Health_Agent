@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
@@ -663,6 +664,11 @@ def update_user_name(user_id: str, payload: UpdateUserNameRequest):
 
     return UpdateUserNameResponse(user_id=user_id, message="User updated successfully")
 
+
+# Favicon: avoid 404 when browser requests /favicon.ico
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
 
 # Serve frontend static files (HTML, CSS, JS, assets) so /html/chat.html etc. work
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
