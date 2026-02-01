@@ -47,6 +47,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     root.innerHTML = html;
 
+    // Hide Cycle tab for male users
+    try {
+      const profileJson = localStorage.getItem("userProfile");
+      if (profileJson) {
+        const profile = JSON.parse(profileJson);
+        if (profile.gender === "male") {
+          const cycleLink = root.querySelector('.benji-nav a[data-page="cycle"]');
+          if (cycleLink) cycleLink.style.display = "none";
+        }
+      }
+    } catch (_) {}
+
     // Highlight active nav item
     const currentPage = document.body.dataset.page;
     document.querySelectorAll(".benji-nav a[data-page]").forEach((link) => {
