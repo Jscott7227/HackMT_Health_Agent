@@ -560,7 +560,7 @@
     <div class="journal-tab-content" id="fitnessTab" style="display: none;">
       <!-- Tab Intro -->
       <div class="tab-intro fitness-intro">
-        <p>Set goals for exercise, nutrition, and physical performance. Keep them measurable so you can track progress.</p>
+        <p>A SMART goal is a structured way to set goals so they are clear, achievable, and easy to track.</p>
       </div>
 
       <!-- Create Task Button -->
@@ -699,6 +699,7 @@
       </div>
 
       <!-- Phase 2: SMART fields (hidden until generated) -->
+      <!--
       <div id="goalPhaseSmart" style="display:none;">
         <div class="form-group">
           <label class="form-label" for="goalSpecific">Specific *</label>
@@ -729,6 +730,43 @@
           You can edit anything before saving.
         </small>
       </div>
+    -->
+
+    <div id="goalPhaseSmart" style="display:none;">
+
+      <div class="form-group">
+      <label class="form-label" for="goalSpecific">Specific *</label>
+      <small class="form-hint">What exactly do you want to achieve? Be clear and detailed.</small>
+      <textarea id="goalSpecific" class="form-input" rows="2" placeholder="e.g. Sleep 7+ hours most nights"></textarea>
+      </div>
+
+      <div class="form-group">
+      <label class="form-label" for="goalMeasurable">Measurable *</label>
+      <small class="form-hint">How will you track your progress?</small>
+      <textarea id="goalMeasurable" class="form-input" rows="2" placeholder="e.g. Track in check-ins or journal"></textarea>
+      </div>
+
+      <div class="form-group">
+      <label class="form-label" for="goalAttainable">Attainable *</label>
+      <small class="form-hint">What steps will you take to reach this goal?</small>
+      <textarea id="goalAttainable" class="form-input" rows="2" placeholder="e.g. Wind-down routine, limit screens"></textarea>
+      </div>
+
+      <div class="form-group">
+      <label class="form-label" for="goalRelevant">Relevant *</label>
+      <small class="form-hint">Why does this goal matter to you?</small>
+      <textarea id="goalRelevant" class="form-input" rows="2" placeholder="e.g. Better energy and mood"></textarea>
+      </div>
+
+      <div class="form-group">
+      <label class="form-label" for="goalTimeBound">Time-bound *</label>
+      <small class="form-hint">When will you achieve this goal by?</small>
+      <textarea id="goalTimeBound" class="form-input" rows="2" placeholder="e.g. For the next 4 weeks"></textarea>
+      </div>
+
+    </div>
+
+
 
       <div class="modal-actions">
         <button type="button" class="modal-btn modal-btn-secondary" id="cancelGoalBtn">Cancel</button>
