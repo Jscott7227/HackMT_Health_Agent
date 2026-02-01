@@ -110,6 +110,14 @@
       });
     },
 
+    postCheckinSense: function (body) {
+      // Generate "Benji's Notes" post check-in insights
+      return request("/checkin-sense", { method: "POST", body: body }).then(function (r) {
+        if (!r.ok) throw new Error("Failed to get check-in insights");
+        return r.json();
+      });
+    },
+
     getMedicationSchedule: function (userId, useAi) {
       // Build URL with optional use_ai query parameter
       var url = "/medication-schedule/" + userId;
