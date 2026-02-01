@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from hashlib import sha256
 from uuid import uuid4
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from datetime import datetime
 
@@ -94,15 +95,21 @@ class GoalEntryOut(BaseModel):
 class DeleteGoalEntryResponse(BaseModel):
     message: str
 
+class ProfileFields(BaseModel):
+    BenjiFacts: str = "{}"
+    Height: Optional[str] = None
+    Weight: Optional[str] = None
+
 class CreateProfileInfoRequest(BaseModel):
-    benji_facts: Optional[str] = None
-    height: Optional[str] = None
-    weight: Optional[str] = None
+    profile: ProfileFields
+
+class ProfileFieldsPatch(BaseModel):
+    BenjiFacts: Optional[str] = None
+    Height: Optional[str] = None
+    Weight: Optional[str] = None
 
 class UpdateProfileInfoRequest(BaseModel):
-    benji_facts: Optional[str] = None
-    height: Optional[str] = None
-    weight: Optional[str] = None
+    profile: ProfileFieldsPatch
 
 class ProfileInfoOut(BaseModel):
     user_id: str
@@ -437,24 +444,26 @@ def chat_endpoint(req: ChatRequest):
 
 @app.post("/profileinfo/{user_id}", response_model=ProfileInfoOut)
 def create_profileinfo(user_id: str, payload: CreateProfileInfoRequest):
-    # Optional: verify the User exists
     user_snap = db.collection("User").document(user_id).get()
     if not user_snap.exists:
         raise HTTPException(status_code=404, detail="User not found")
 
     doc_ref = db.collection("ProfileInfo").document(user_id)
-
     if doc_ref.get().exists:
         raise HTTPException(status_code=409, detail="ProfileInfo already exists for this user")
 
+    # Start with UserID, then merge every key from the JSON dict
     doc_data = {"UserID": user_id}
 
-    if payload.benji_facts is not None:
-        doc_data["BenjiFacts"] = payload.benji_facts
-    if payload.height is not None:
-        doc_data["Height"] = payload.height
-    if payload.weight is not None:
-        doc_data["Weight"] = payload.weight
+    safe_profile = payload.profile.model_dump()
+    safe_profile.pop("UserID", None)
+    doc_data.update(safe_profile)
+
+    if doc_data.get("BenjiFacts") is not None:
+        try:
+            json.loads(doc_data["BenjiFacts"])
+        except Exception:
+            raise HTTPException(status_code=400, detail="BenjiFacts must be a valid JSON string")
 
     doc_ref.set(doc_data)
 
@@ -488,7 +497,6 @@ def get_profileinfo(user_id: str):
         weight=d.get("Weight"),
     )
 
-
 @app.patch("/profileinfo/{user_id}", response_model=ProfileInfoOut)
 def update_profileinfo(user_id: str, payload: UpdateProfileInfoRequest):
     doc_ref = db.collection("ProfileInfo").document(user_id)
@@ -496,21 +504,24 @@ def update_profileinfo(user_id: str, payload: UpdateProfileInfoRequest):
     if not snap.exists:
         raise HTTPException(status_code=404, detail="ProfileInfo not found")
 
-    updates = {}
-    if payload.benji_facts is not None:
-        updates["BenjiFacts"] = payload.benji_facts
-    if payload.height is not None:
-        updates["Height"] = payload.height
-    if payload.weight is not None:
-        updates["Weight"] = payload.weight
+    if payload.profile is None or len(payload.profile) == 0:
+        raise HTTPException(status_code=400, detail="No fields provided to update")
+
+    updates = payload.profile.model_dump(exclude_none=True)
+    updates.pop("UserID", None)
+
+    if "BenjiFacts" in updates:
+        try:
+            json.loads(updates["BenjiFacts"])
+        except Exception:
+            raise HTTPException(status_code=400, detail="BenjiFacts must be a valid JSON string")
 
     if not updates:
         raise HTTPException(status_code=400, detail="No fields provided to update")
 
-    # UserID is untouched because we never update it
     doc_ref.update(updates)
 
-    d = (doc_ref.get().to_dict() or {})
+    d = doc_ref.get().to_dict() or {}
     return ProfileInfoOut(
         user_id=user_id,
         benji_facts=d.get("BenjiFacts"),
