@@ -329,6 +329,126 @@
   }
 
   /**
+ * Calculate days between two dates
+ */
+function daysBetween(date1, date2) {
+  const oneDay = 24 * 60 * 60 * 1000;
+  return Math.round(Math.abs((date1 - date2) / oneDay));
+}
+
+/**
+ * Format date as "Jan 15" or "Jan 15, 2026"
+ */
+function formatDate(date, includeYear = false) {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const month = months[date.getMonth()];
+  const day = date.getDate();
+  
+  if (includeYear) {
+    return `${month} ${day}, ${date.getFullYear()}`;
+  }
+  return `${month} ${day}`;
+}
+
+/**
+ * Render timeline with 5 nodes (0%, 25%, 50%, 75%, 100%)
+ */
+function renderTimeline(goal) {
+  const timelineContainer = document.getElementById("timelineContainer");
+  if (!timelineContainer) return;
+
+  // Parse dates
+  const startDate = goal.DateCreated ? new Date(goal.DateCreated) : new Date();
+  const endDate = goal.EndDate ? new Date(goal.EndDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const today = new Date();
+
+  // Calculate total days and elapsed days
+  const totalDays = daysBetween(startDate, endDate);
+  const elapsedDays = daysBetween(startDate, today);
+  const remainingDays = Math.max(0, daysBetween(today, endDate));
+  
+  // Calculate progress percentage (capped at 100%)
+  const progressPercent = Math.min(100, Math.max(0, (elapsedDays / totalDays) * 100));
+
+  // Define 5 milestone nodes
+  const milestones = [
+    { percent: 0, label: "Start", icon: "fa-flag" },
+    { percent: 25, label: "25%", icon: "fa-star" },
+    { percent: 50, label: "Halfway", icon: "fa-star" },
+    { percent: 75, label: "75%", icon: "fa-star" },
+    { percent: 100, label: "Goal", icon: "fa-trophy" }
+  ];
+
+  // Calculate milestone dates and states
+  const nodes = milestones.map(milestone => {
+    const daysFromStart = (milestone.percent / 100) * totalDays;
+    const milestoneDate = new Date(startDate.getTime() + daysFromStart * 24 * 60 * 60 * 1000);
+    
+    // Determine node state
+    let state = "future";
+    if (progressPercent >= milestone.percent) {
+      state = "completed";
+    } else if (Math.abs(progressPercent - milestone.percent) < 5) {
+      state = "current";
+    }
+
+    return {
+      ...milestone,
+      date: milestoneDate,
+      state: state
+    };
+  });
+
+  // Build HTML
+  let html = `
+    <div class="timeline-track">
+      <div class="timeline-progress" style="width: ${progressPercent}%;"></div>
+    </div>
+    <div class="timeline-nodes">
+  `;
+
+  nodes.forEach((node, index) => {
+    const isFirst = index === 0;
+    const isLast = index === nodes.length - 1;
+    const displayIcon = node.state === "completed" ? "fa-check" : node.icon;
+    
+    html += `
+      <div class="timeline-node ${node.state}" data-percent="${node.percent}">
+        <div class="timeline-node-circle">
+          <i class="fas ${displayIcon}"></i>
+        </div>
+        <div class="timeline-node-label">
+          <div class="timeline-node-title">${escapeHtml(node.label)}</div>
+          <div class="timeline-node-date">
+            ${formatDate(node.date, isFirst || isLast)}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `
+    </div>
+    <div class="timeline-stats">
+      <div class="timeline-stat">
+        <div class="timeline-stat-value">${Math.round(progressPercent)}%</div>
+        <div class="timeline-stat-label">Complete</div>
+      </div>
+      <div class="timeline-stat">
+        <div class="timeline-stat-value">${elapsedDays}</div>
+        <div class="timeline-stat-label">Days In</div>
+      </div>
+      <div class="timeline-stat">
+        <div class="timeline-stat-value">${remainingDays}</div>
+        <div class="timeline-stat-label">Days Left</div>
+      </div>
+    </div>
+  `;
+
+  timelineContainer.innerHTML = html;
+}
+
+  /**
    * Initialize the page
    */
   async function init() {
@@ -350,6 +470,7 @@
     // Render goal header and SMART details
     renderGoalHeader(goal);
     renderSmartDetails(goal);
+    renderTimeline(goal);
 
     // Fetch profile info
     const profileInfo = await fetchProfileInfo(session.user_id);
