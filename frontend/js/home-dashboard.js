@@ -188,13 +188,28 @@
   function renderGoals() {
     var grid = el("goalsRingGrid");
     if (!grid) return;
+
+    if (fauxGoals.length === 0) {
+      grid.innerHTML = '<div class="no-goals-message" style="text-align: center; padding: 2rem; color: var(--text-muted);">' +
+        '<p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No goals yet!</p>' +
+        '<p>Visit the Goals page to set up your wellness and fitness goals.</p>' +
+      '</div>';
+      return;
+    }
+
     var html = "";
     for (var i = 0; i < fauxGoals.length; i++) {
       var g = fauxGoals[i];
       var pct = Math.min(100, Math.max(0, g.progressPct));
-      var weeksLeft = g.weekTotal - g.weekCurrent;
+      var weeksLeft = Math.max(0, g.weekTotal - g.weekCurrent);
+
+      var typeIcon = g.type === 'fitness' ? '' : '';
+      var typeBadge = '<span class="goal-type-badge" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: rgba(0,0,0,0.05); border-radius: 4px; margin-bottom: 0.5rem; display: inline-block;">' +
+        typeIcon + ' ' + (g.type || 'wellness').charAt(0).toUpperCase() + (g.type || 'wellness').slice(1) +
+      '</span>';
+
       html +=
-        '<div class="goal-ring-card" data-goal-id="' + g.id + '">' +
+        '<div class="goal-ring-card" data-goal-id="' + g.id + '" data-goal-type="' + (g.type || 'wellness') + '">' +
           '<div class="ring-wrap">' +
             buildSVGRing(pct, g.color, 110) +
             '<div class="ring-inner-label">' +
@@ -203,8 +218,9 @@
             '</div>' +
           '</div>' +
           '<div class="ring-meta">' +
-            '<strong>' + g.label + '</strong>' +
-            '<span class="ring-measurable">' + g.currentValue + ' / ' + g.targetValue + ' ' + g.unit + '</span>' +
+            typeBadge +
+            '<strong>' + escapeHtml(g.label) + '</strong>' +
+            '<span class="ring-measurable">' + escapeHtml(g.measurable) + '</span>' +
             '<span class="ring-timeline">Week ' + g.weekCurrent + ' of ' + g.weekTotal + '</span>' +
             '<span class="ring-dates">' + shortDate(g.startDate) + ' — ' + shortDate(g.endDate) + '</span>' +
             '<span class="ring-remaining">' + weeksLeft + ' week' + (weeksLeft !== 1 ? 's' : '') + ' remaining</span>' +
@@ -505,24 +521,91 @@
     initCheckinModal();
   }
 
-  function mapApiGoalsToRings(accepted) {
-    if (!accepted || accepted.length === 0) return null;
-    var colors = ["#3a7d44", "#5a9a64", "#7ab884"];
-    return accepted.map(function (g, i) {
+  // Helper function to parse Firestore timestamps or date strings
+  function parseFirestoreDate(dateField) {
+    if (!dateField) return new Date();
+
+    // If it's a Firestore timestamp object with toDate method
+    if (dateField.toDate && typeof dateField.toDate === 'function') {
+      return dateField.toDate();
+    }
+
+    // If it's a Firestore timestamp object with _seconds
+    if (dateField._seconds) {
+      return new Date(dateField._seconds * 1000);
+    }
+
+    // If it's an object with seconds property
+    if (dateField.seconds) {
+      return new Date(dateField.seconds * 1000);
+    }
+
+    // Try parsing as ISO string or timestamp
+    var parsed = new Date(dateField);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+
+  function mapApiGoalsToRings(goals) {
+    if (!goals || goals.length === 0) return null;
+    var colors = ["#3a7d44", "#5a9a64", "#7ab884", "#9ad6a4", "#b8e6c4"];
+
+    return goals.map(function (g, i) {
+      // Extract numeric values from Measurable field (e.g., "5 oz" -> 5)
+      var measurableStr = g.Measurable || "";
+      var targetMatch = measurableStr.match(/(\d+(\.\d+)?)/);
+      var targetValue = targetMatch ? parseFloat(targetMatch[1]) : 100;
+
+      // Calculate progress based on check-ins
+      var checkIns = (g.CheckIns && g.CheckIns.checkins) || [];
+      var currentValue = checkIns.length || 0;
+
+      // Calculate progress percentage
+      var progressPct = 0;
+      if (targetValue > 0) {
+        progressPct = Math.min(100, Math.round((currentValue / targetValue) * 100));
+      }
+
+      // Calculate weeks using robust date parsing
+      var now = new Date();
+      var startDate = parseFirestoreDate(g.DateCreated);
+      var endDate = parseFirestoreDate(g.EndDate);
+
+      var totalWeeks = Math.ceil((endDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+      var currentWeek = Math.ceil((now - startDate) / (7 * 24 * 60 * 60 * 1000));
+
+      // Ensure valid week numbers
+      totalWeeks = totalWeeks > 0 ? totalWeeks : 12;
+      currentWeek = Math.max(1, Math.min(currentWeek, totalWeeks));
+
+      // Extract unit from Measurable (e.g., "5 oz" -> "oz", "5 times a week" -> "times/week")
+      var unit = "times";
+      if (measurableStr) {
+        // Check for common patterns
+        if (measurableStr.toLowerCase().includes("times")) {
+          unit = "times";
+        } else {
+          var unitMatch = measurableStr.match(/\d+(\.\d+)?\s*([a-zA-Z]+)/);
+          if (unitMatch && unitMatch[2]) {
+            unit = unitMatch[2];
+          }
+        }
+      }
+
       return {
-        id: g.id || "goal_" + i,
-        label: g.title || g.label || "Goal " + (i + 1),
-        specific: g.description || g.specific || "",
-        measurable: g.measurable || g.description || "",
-        currentValue: g.currentValue != null ? g.currentValue : 0,
-        targetValue: g.targetValue != null ? g.targetValue : 100,
-        unit: g.unit || "",
-        progressPct: g.progressPct != null ? g.progressPct : 0,
-        weekCurrent: g.weekCurrent != null ? g.weekCurrent : 1,
-        weekTotal: g.weekTotal != null ? g.weekTotal : 12,
-        startDate: g.startDate || new Date().toISOString().slice(0, 10),
-        endDate: g.endDate || "",
-        color: g.color || colors[i % colors.length],
+        id: g.goal_id || "goal_" + i,
+        label: g.Specific || "Goal " + (i + 1),
+        specific: g.Description || g.Specific || "",
+        measurable: g.Measurable || "",
+        currentValue: currentValue,
+        targetValue: targetValue,
+        unit: unit,
+        progressPct: progressPct,
+        weekCurrent: currentWeek,
+        weekTotal: totalWeeks,
+        startDate: startDate.toISOString().slice(0, 10),
+        endDate: endDate.toISOString().slice(0, 10),
+        color: colors[i % colors.length],
+        type: g.type || "wellness"
       };
     });
   }
@@ -561,15 +644,25 @@
     if (window.BenjiAPI && window.BenjiAPI.getSession) {
       var session = window.BenjiAPI.getSession();
       if (session && session.user_id) {
+        console.log("Fetching goals for user:", session.user_id);
         // Fetch goals and medication schedule in parallel
         var goalsPromise = window.BenjiAPI.getGoals(session.user_id)
           .then(function (data) {
-            var fromApi = mapApiGoalsToRings(data.accepted);
+            console.log("Goals API response:", data);
+            // Try to use the 'goals' array first (new format), then fall back to 'accepted' (legacy)
+            var goalsArray = data.goals && data.goals.length > 0 ? data.goals : data.accepted;
+            console.log("Using goals array:", goalsArray);
+            var fromApi = mapApiGoalsToRings(goalsArray);
+            console.log("Mapped goals to rings:", fromApi);
             if (fromApi && fromApi.length > 0) {
               fauxGoals = fromApi;
+              console.log("Successfully loaded", fromApi.length, "goals from database");
+            } else {
+              console.log("No goals found, using default faux data");
             }
           })
-          .catch(function () {
+          .catch(function (err) {
+            console.error("Goals fetch failed:", err);
             // Goals fetch failed, use faux data
           });
 
