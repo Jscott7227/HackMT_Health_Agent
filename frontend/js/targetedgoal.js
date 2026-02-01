@@ -215,19 +215,28 @@
 
   /**
    * Fetch and render upcoming plan
+   * @param {string} userId - The user's ID
+   * @param {object} selectedGoal - Optional: the currently selected goal for a targeted plan
    */
-  async function loadUpcomingPlan(userId) {
+  async function loadUpcomingPlan(userId, selectedGoal = null) {
     if (!upcomingPlanContent) return;
 
     try {
+      const requestBody = {
+        user_id: userId
+      };
+      
+      // Pass the selected goal for a fitness/wellness-specific plan
+      if (selectedGoal) {
+        requestBody.selected_goal = selectedGoal;
+      }
+      
       const response = await fetch(`${API_BASE}/upcoming`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          user_id: userId
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -346,9 +355,10 @@
     const profileInfo = await fetchProfileInfo(session.user_id);
 
     // Load AI insights and upcoming plan in parallel
+    // Pass the selected goal to loadUpcomingPlan for a goal-specific 2-day plan
     await Promise.all([
       loadAiInsights(goal, session.user_id, profileInfo),
-      loadUpcomingPlan(session.user_id)
+      loadUpcomingPlan(session.user_id, goal)
     ]);
   }
 
