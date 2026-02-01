@@ -5149,6 +5149,54 @@ body[data-page="chat"] #sendBtn:active {
     transform: scale(0.95);
 }
 
+/* Voice Button */
+body[data-page="chat"] #voiceBtn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--clay-200);
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    flex-shrink: 0;
+}
+
+body[data-page="chat"] #voiceBtn:hover {
+    background: var(--clay-300);
+    transform: scale(1.05);
+}
+
+body[data-page="chat"] #voiceBtn:active {
+    transform: scale(0.95);
+}
+
+/* Voice Button Listening State */
+body[data-page="chat"] #voiceBtn.listening {
+    background: linear-gradient(135deg, var(--terracotta-light), var(--terracotta));
+    color: white;
+    animation: voice-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes voice-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(199, 126, 93, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(199, 126, 93, 0);
+    }
+}
+
+/* Input wrapper listening state */
+.input-wrapper.listening {
+    border-color: var(--terracotta);
+    box-shadow: 0 0 0 4px rgba(199, 126, 93, 0.15);
+}
+
 .input-hint {
     font-size: 0.75rem;
     color: var(--text-muted);
@@ -5220,6 +5268,13 @@ body[data-page="chat"] #chatHistory:has(.message) .chat-welcome {
     }
 
     .chat-welcome p {
+        font-size: 0.9rem;
+    }
+
+    body[data-page="chat"] #voiceBtn,
+    body[data-page="chat"] #sendBtn {
+        width: 40px;
+        height: 40px;
         font-size: 0.9rem;
     }
 }

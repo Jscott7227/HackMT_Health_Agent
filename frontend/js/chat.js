@@ -1,9 +1,97 @@
 document.addEventListener("DOMContentLoaded", () => {
   const inputEl = document.getElementById("llmInput");
   const btn = document.getElementById("sendBtn");
+  const voiceBtn = document.getElementById("voiceBtn");
+  const inputWrapper = document.querySelector(".input-wrapper");
   const chatHistoryEl = document.getElementById("chatHistory");
 
   let conversationHistory = [];
+
+  // ─────────────────────────────────────────────────────────────
+  // Web Speech API for voice input
+  // ─────────────────────────────────────────────────────────────
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
+  let isListening = false;
+  let textBeforeRecording = "";  // Store text that existed before recording
+
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;       // Stop after one phrase
+    recognition.interimResults = true;    // Show partial results for live feedback
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => {
+      isListening = true;
+      // Capture any text already in the input before we start recording
+      textBeforeRecording = inputEl.value.trim();
+      voiceBtn.classList.add("listening");
+      inputWrapper.classList.add("listening");
+    };
+
+    recognition.onresult = (event) => {
+      // Build the FULL transcript from all results (not just new ones)
+      let fullTranscript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        fullTranscript += event.results[i][0].transcript;
+      }
+      // Replace input with: original text + space + full transcript
+      inputEl.value = textBeforeRecording 
+        ? textBeforeRecording + " " + fullTranscript 
+        : fullTranscript;
+      // Auto-resize textarea
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 150) + "px";
+    };
+
+    recognition.onerror = (event) => {
+      console.warn("Speech recognition error:", event.error);
+      stopListening();
+    };
+
+    recognition.onend = () => {
+      stopListening();
+    };
+  } else {
+    // Browser doesn't support speech recognition – hide the button
+    if (voiceBtn) {
+      voiceBtn.style.display = "none";
+    }
+    console.warn("Web Speech API not supported in this browser.");
+  }
+
+  function startListening() {
+    if (!recognition) return;
+    try {
+      recognition.start();
+    } catch (err) {
+      console.warn("Could not start speech recognition:", err);
+    }
+  }
+
+  function stopListening() {
+    isListening = false;
+    voiceBtn.classList.remove("listening");
+    inputWrapper.classList.remove("listening");
+    if (recognition) {
+      try {
+        recognition.stop();
+      } catch (err) {
+        // ignore
+      }
+    }
+  }
+
+  if (voiceBtn) {
+    voiceBtn.addEventListener("click", () => {
+      if (isListening) {
+        stopListening();
+      } else {
+        startListening();
+      }
+    });
+  }
+  // ─────────────────────────────────────────────────────────────
 
   // Load user session
   const session = JSON.parse(
