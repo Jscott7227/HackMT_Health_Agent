@@ -464,7 +464,15 @@ function validateMetric() {
     var hCta = document.getElementById('cta-6');
     if (state.heightUnit === 'imperial') {
         var ft = document.getElementById('heightFt').value;
-        var inch = document.getElementById('heightIn').value;
+        var inchInput = document.getElementById('heightIn');
+        var inch = inchInput.value;
+
+        // Validate inches are 0-11
+        if (inch !== '' && (parseInt(inch) < 0 || parseInt(inch) > 11)) {
+            inchInput.value = Math.min(11, Math.max(0, parseInt(inch) || 0));
+            inch = inchInput.value;
+        }
+
         state.height = (ft || inch) ? ((ft || '0') + ' ft ' + (inch || '0') + ' in') : null;
     } else {
         var cm = document.getElementById('heightCm').value;
