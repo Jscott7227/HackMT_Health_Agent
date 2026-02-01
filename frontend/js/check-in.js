@@ -468,9 +468,13 @@
         }
       }
 
-      // Close the modal if we're inside one (home page)
+      // Close the modal and update banner/glance if we're inside one (home page)
       if (window.BenjiCheckinModal) {
-        window.BenjiCheckinModal.close();
+        if (window.BenjiCheckinModal.onComplete) {
+          window.BenjiCheckinModal.onComplete(data);
+        } else {
+          window.BenjiCheckinModal.close();
+        }
       }
 
       const agentMsg = $("#agentMessage");

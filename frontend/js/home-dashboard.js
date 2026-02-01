@@ -58,39 +58,7 @@
     }
   ];
 
-  var fauxGlance = [
-    { icon: "🔥", label: "Calories",   value: "1,820 / 2,200" },
-    { icon: "💧", label: "Water",      value: "6 / 8 cups" },
-    { icon: "🏋️", label: "Workout",   value: "Upper Body – done" },
-    { icon: "😴", label: "Sleep",      value: "7.2 hrs" }
-  ];
 
-  var fauxPreview = [
-    { day: "Today",    items: ["Upper Body Strength", "20 min walk", "Stretch routine"] },
-    { day: "Tomorrow", items: ["Lower Body Strength", "Yoga flow", "Meal prep day"] }
-  ];
-
-  var fauxTimeline = [
-    { label: "Mon", fitness: 80, wellness: 70 },
-    { label: "Tue", fitness: 65, wellness: 75 },
-    { label: "Wed", fitness: 90, wellness: 60 },
-    { label: "Thu", fitness: 50, wellness: 85 },
-    { label: "Fri", fitness: 75, wellness: 72 },
-    { label: "Sat", fitness: 40, wellness: 90 },
-    { label: "Sun", fitness: 0,  wellness: 0  }
-  ];
-
-  var fauxTrend = [
-    { day: "Yesterday",     sleep: 6.8, energy: 3, mood: 4, workout: "Cardio 30 min" },
-    { day: "2 days ago",    sleep: 7.5, energy: 4, mood: 4, workout: "Upper Body" },
-    { day: "3 days ago",    sleep: 5.9, energy: 2, mood: 3, workout: "Rest day" }
-  ];
-
-  var fauxAgentNotes = [
-    "Sleep has been trending down — consider an earlier wind-down routine.",
-    "Energy was low on days following poor sleep. Try limiting screen time before bed.",
-    "Great consistency with workouts this week!"
-  ];
 
   /* Recovery day – set to false for normal view, true to test recovery card */
   var isRecoveryDay = false;
@@ -102,6 +70,29 @@
 
   /* Whether today's check-in is completed */
   var checkinDone = false;
+
+  /* Store today's check-in data (if available) for rendering glance */
+  var todayCheckinData = null;
+
+  /* Helper: Check if a date string or timestamp is "today" (same calendar day) */
+  function isToday(dateValue) {
+    if (!dateValue) return false;
+    var d;
+    if (typeof dateValue === 'string') {
+      d = new Date(dateValue);
+    } else if (dateValue.seconds) {
+      d = new Date(dateValue.seconds * 1000);
+    } else if (dateValue._seconds) {
+      d = new Date(dateValue._seconds * 1000);
+    } else {
+      d = new Date(dateValue);
+    }
+    if (isNaN(d.getTime())) return false;
+    var now = new Date();
+    return d.getFullYear() === now.getFullYear() &&
+           d.getMonth() === now.getMonth() &&
+           d.getDate() === now.getDate();
+  }
 
   /* ---------- HELPERS ---------- */
 
@@ -163,10 +154,65 @@
     var grid = el("glanceGrid");
     if (!section || !grid) return;
     if (!checkinDone) { section.style.display = "none"; return; }
+
+    // Build glance cards from today's check-in data if available
+    var glanceItems = [];
+    if (todayCheckinData) {
+      // Nutrition (from eatScore 1-5)
+      var eatScore = todayCheckinData.eatScore || 0;
+      var nutritionLabel = eatScore <= 2 ? "Needs work" : eatScore === 3 ? "Balanced" : "Great";
+      glanceItems.push({
+        icon: "🍽️",
+        label: "Nutrition",
+        value: nutritionLabel + " (" + eatScore + "/5)"
+      });
+
+      // Hydration (from drinkScore 1-5)
+      var drinkScore = todayCheckinData.drinkScore || 0;
+      var hydrationLabel = drinkScore <= 2 ? "Low" : drinkScore === 3 ? "Okay" : "Good";
+      glanceItems.push({
+        icon: "💧",
+        label: "Hydration",
+        value: hydrationLabel + " (" + drinkScore + "/5)"
+      });
+
+      // Movement (from fitnessScore + fitnessNotes or recoveryDay)
+      var fitnessScore = todayCheckinData.fitnessScore || 0;
+      var fitnessNotes = todayCheckinData.fitnessNotes || "";
+      var isRecovery = todayCheckinData.recoveryDay === true;
+      var movementValue;
+      if (isRecovery) {
+        movementValue = "Recovery Day";
+      } else if (fitnessNotes && fitnessNotes.trim()) {
+        movementValue = fitnessNotes.trim().substring(0, 25) + (fitnessNotes.length > 25 ? "…" : "");
+      } else {
+        movementValue = fitnessScore + "/5";
+      }
+      glanceItems.push({
+        icon: "🏃",
+        label: "Movement",
+        value: movementValue
+      });
+
+      // Sleep (from sleepScore 1-5)
+      var sleepScore = todayCheckinData.sleepScore || 0;
+      var sleepLabel = sleepScore <= 2 ? "Poor" : sleepScore === 3 ? "Fair" : "Good";
+      glanceItems.push({
+        icon: "😴",
+        label: "Sleep",
+        value: sleepLabel + " (" + sleepScore + "/5)"
+      });
+    } else {
+      // Fallback: use fauxGlance (static demo values) or hide section
+      // For now, hide the section if no real data
+      section.style.display = "none";
+      return;
+    }
+
     section.style.display = "block";
     var html = "";
-    for (var i = 0; i < fauxGlance.length; i++) {
-      var g = fauxGlance[i];
+    for (var i = 0; i < glanceItems.length; i++) {
+      var g = glanceItems[i];
       html +=
         '<div class="glance-card">' +
           '<span class="glance-icon">' + g.icon + '</span>' +
@@ -230,77 +276,6 @@
     grid.innerHTML = html;
   }
 
-  /* ---------- RENDER: TODAY / TOMORROW PREVIEW ---------- */
-  function renderPreview() {
-    var container = el("previewCards");
-    if (!container) return;
-    var html = "";
-    for (var i = 0; i < fauxPreview.length; i++) {
-      var p = fauxPreview[i];
-      html += '<div class="preview-card">';
-      html += '<h3>' + p.day + '</h3><ul>';
-      for (var j = 0; j < p.items.length; j++) {
-        html += '<li>' + p.items[j] + '</li>';
-      }
-      html += '</ul></div>';
-    }
-    container.innerHTML = html;
-  }
-
-  /* ---------- RENDER: TIMELINE BARS ---------- */
-  function renderTimeline() {
-    var container = el("timelineBars");
-    if (!container) return;
-    var html = '<div class="timeline-legend">' +
-      '<span class="legend-dot fitness-dot"></span> Fitness ' +
-      '<span class="legend-dot wellness-dot"></span> Wellness' +
-      '</div>';
-    html += '<div class="timeline-chart">';
-    for (var i = 0; i < fauxTimeline.length; i++) {
-      var t = fauxTimeline[i];
-      html +=
-        '<div class="timeline-col">' +
-          '<div class="timeline-bar-group">' +
-            '<div class="timeline-bar fitness-bar" style="height:' + t.fitness + '%"></div>' +
-            '<div class="timeline-bar wellness-bar" style="height:' + t.wellness + '%"></div>' +
-          '</div>' +
-          '<span class="timeline-label">' + t.label + '</span>' +
-        '</div>';
-    }
-    html += '</div>';
-    container.innerHTML = html;
-  }
-
-  /* ---------- RENDER: 3-DAY TREND ---------- */
-  function renderTrend() {
-    var cardsEl = el("trendCards");
-    var notesEl = el("trendAgentNotes");
-    if (!cardsEl) return;
-
-    var html = "";
-    for (var i = 0; i < fauxTrend.length; i++) {
-      var t = fauxTrend[i];
-      html +=
-        '<div class="trend-card">' +
-          '<h4>' + t.day + '</h4>' +
-          '<div class="trend-row"><span>Sleep</span><span>' + t.sleep + ' hrs</span></div>' +
-          '<div class="trend-row"><span>Energy</span><span>' + t.energy + ' / 5</span></div>' +
-          '<div class="trend-row"><span>Mood</span><span>' + t.mood + ' / 5</span></div>' +
-          '<div class="trend-row"><span>Workout</span><span>' + t.workout + '</span></div>' +
-        '</div>';
-    }
-    cardsEl.innerHTML = html;
-
-    if (notesEl && fauxAgentNotes.length) {
-      var nhtml = '<h4>Benji\'s Notes</h4><ul>';
-      for (var j = 0; j < fauxAgentNotes.length; j++) {
-        nhtml += '<li>' + fauxAgentNotes[j] + '</li>';
-      }
-      nhtml += '</ul>';
-      notesEl.innerHTML = nhtml;
-    }
-  }
-
   /* ---------- CHECK-IN MODAL ---------- */
   function initCheckinModal() {
     var modal = document.getElementById("checkinModal");
@@ -331,7 +306,18 @@
     });
 
     // Expose for check-in.js to call after successful submit
-    window.BenjiCheckinModal = { close: closeModal };
+    window.BenjiCheckinModal = {
+      close: closeModal,
+      // Called by check-in.js after successful check-in submit
+      onComplete: function (checkinData) {
+        checkinDone = true;
+        todayCheckinData = checkinData || null;
+        console.log("Check-in completed, updating banner and glance");
+        renderBanner();
+        renderGlance();
+        closeModal();
+      }
+    };
   }
 
   /* ---------- RENDER: MEDICATION SCHEDULE (generalized plan) ---------- */
@@ -515,9 +501,6 @@
     renderMedicationSchedule();
     renderGlance();
     renderGoals();
-    renderPreview();
-    renderTimeline();
-    renderTrend();
     initCheckinModal();
   }
 
@@ -645,7 +628,7 @@
       var session = window.BenjiAPI.getSession();
       if (session && session.user_id) {
         console.log("Fetching goals for user:", session.user_id);
-        // Fetch goals and medication schedule in parallel
+        // Fetch goals, medication schedule, and check-ins in parallel
         var goalsPromise = window.BenjiAPI.getGoals(session.user_id)
           .then(function (data) {
             console.log("Goals API response:", data);
@@ -669,7 +652,34 @@
         // Fetch medication schedule using persisted mode (standard or AI)
         var medsPromise = fetchMedicationSchedule(session.user_id);
 
-        Promise.all([goalsPromise, medsPromise])
+        // Fetch check-ins and determine if today's check-in is done
+        var checkinsPromise = window.BenjiAPI.getCheckins(session.user_id)
+          .then(function (checkins) {
+            console.log("Checkins API response:", checkins);
+            if (checkins && checkins.length > 0) {
+              // Check if any check-in is from today
+              for (var i = 0; i < checkins.length; i++) {
+                var c = checkins[i];
+                // Check createdAt or timestamp field
+                var dateField = c.createdAt || c.timestamp || c.date;
+                if (isToday(dateField)) {
+                  checkinDone = true;
+                  todayCheckinData = c;
+                  console.log("Found today's check-in:", c);
+                  break;
+                }
+              }
+            }
+            if (!checkinDone) {
+              console.log("No check-in found for today");
+            }
+          })
+          .catch(function (err) {
+            console.error("Checkins fetch failed:", err);
+            // checkinDone stays false
+          });
+
+        Promise.all([goalsPromise, medsPromise, checkinsPromise])
           .then(function () {
             initDashboard();
           })
