@@ -258,13 +258,13 @@
                     </div>
                 </div>
                 <div id="heightMetric" class="ob-metric-row" style="display:none;">
-                    <input type="number" class="ob-metric-input" id="heightCm" placeholder="170" min="60" max="280" oninput="validateMetric()" />
+                    <input type="number" class="ob-metric-input" id="heightCm" placeholder="170" min="60" max="280" inputmode="numeric" oninput="digitsOnly(this); validateMetric()" />
                     <span class="ob-imperial-label">cm</span>
                 </div>
                 <div id="heightImperial" class="ob-imperial-row" style="display:flex;">
-                    <input type="number" class="ob-metric-input" id="heightFt" placeholder="5" min="1" max="8" oninput="validateMetric()" />
+                    <input type="number" class="ob-metric-input" id="heightFt" placeholder="5" min="1" max="8" inputmode="numeric" oninput="digitsOnly(this); validateMetric()" />
                     <span class="ob-imperial-label">ft</span>
-                    <input type="number" class="ob-metric-input" id="heightIn" placeholder="7" min="0" max="11" oninput="validateMetric()" />
+                    <input type="number" class="ob-metric-input" id="heightIn" placeholder="7" min="0" max="11" inputmode="numeric" oninput="digitsOnly(this); validateMetric()" />
                     <span class="ob-imperial-label">in</span>
                 </div>
                 <p class="ob-microcopy">This helps us estimate healthy ranges.</p>
@@ -285,11 +285,11 @@
                     </div>
                 </div>
                 <div id="weightMetric" class="ob-metric-row" style="display:none;">
-                    <input type="number" class="ob-metric-input" id="weightKg" placeholder="70" min="20" max="300" oninput="validateMetric()" />
+                    <input type="number" class="ob-metric-input" id="weightKg" placeholder="70" min="20" max="300" inputmode="numeric" oninput="digitsOnly(this); validateMetric()" />
                     <span class="ob-imperial-label">kg</span>
                 </div>
                 <div id="weightImperial" class="ob-metric-row" style="display:flex;">
-                    <input type="number" class="ob-metric-input" id="weightLb" placeholder="155" min="44" max="660" oninput="validateMetric()" />
+                    <input type="number" class="ob-metric-input" id="weightLb" placeholder="155" min="44" max="660" inputmode="numeric" oninput="digitsOnly(this); validateMetric()" />
                     <span class="ob-imperial-label">lb</span>
                 </div>
                 <p class="ob-microcopy">Used only to personalize recommendations. No judgments.</p>
