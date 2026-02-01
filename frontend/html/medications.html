@@ -178,6 +178,38 @@
       <p class="loading-text">Generating your schedule...</p>
     </div>
   </div>
+  <!-- Custom Confirmation Dialog -->
+  <div class="custom-dialog-overlay" id="confirmDialog" aria-hidden="true">
+    <div class="custom-dialog-body" role="alertdialog" aria-labelledby="confirmTitle" aria-modal="true">
+      <div class="custom-dialog-content">
+        <div class="custom-dialog-icon">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <h3 class="custom-dialog-title" id="confirmTitle">Confirm Action</h3>
+        <p class="custom-dialog-message" id="confirmMessage"></p>
+        <div class="custom-dialog-buttons">
+          <button class="btn" id="confirmCancelBtn">Cancel</button>
+          <button class="btn btn-danger" id="confirmOkBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Alert Dialog -->
+  <div class="custom-dialog-overlay" id="alertDialog" aria-hidden="true">
+    <div class="custom-dialog-body" role="alertdialog" aria-labelledby="alertTitle" aria-modal="true">
+      <div class="custom-dialog-content">
+        <div class="custom-dialog-icon alert-icon">
+          <i class="fas fa-info-circle"></i>
+        </div>
+        <h3 class="custom-dialog-title" id="alertTitle">Notice</h3>
+        <p class="custom-dialog-message" id="alertMessage"></p>
+        <div class="custom-dialog-buttons">
+          <button class="btn btn-primary" id="alertOkBtn">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="../js/api.js"></script>

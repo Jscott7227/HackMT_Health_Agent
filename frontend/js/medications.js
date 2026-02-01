@@ -68,6 +68,99 @@
     }
   }
 
+  function showAlert(message, title = "Notice") {
+    return new Promise((resolve) => {
+      const alertDialog = $("#alertDialog");
+      const alertTitle = $("#alertTitle");
+      const alertMessage = $("#alertMessage");  
+      const alertOkBtn = $("#alertOkBtn");
+
+      if (!alertDialog) return resolve();
+
+      alertTitle.textContent = title;
+      alertMessage.textContent = message;
+
+      alertDialog.classList.add("active");
+      alertDialog.setAttribute("aria-hidden", "false");
+
+      const handleOk = () => {
+        alertDialog.classList.remove("active");
+        alertDialog.setAttribute("aria-hidden", "true");
+        alertOkBtn.removeEventListener("click", handleOk);
+        resolve();
+      };
+
+      alertOkBtn.addEventListener("click", handleOk);
+
+      // Close on Escape
+      const handleEscape = (e) => {
+        if (e.key === "Escape") {
+          handleOk();
+          document.removeEventListener("keydown", handleEscape);
+        }
+      };
+      document.addEventListener("keydown", handleEscape);
+
+      // Close on overlay click
+      alertDialog.addEventListener("click", (e) => {
+        if (e.target === alertDialog) {
+          handleOk();
+        }
+      });
+    });
+  }
+
+  // Custom Confirm Dialog
+  function showConfirm(message, title = "Confirm Action", okText = "Confirm", cancelText = "Cancel") {
+    return new Promise((resolve) => {
+      const confirmDialog = $("#confirmDialog");
+      const confirmTitle = $("#confirmTitle");
+      const confirmMessage = $("#confirmMessage");
+      const confirmOkBtn = $("#confirmOkBtn");
+      const confirmCancelBtn = $("#confirmCancelBtn");
+
+      if (!confirmDialog) return resolve(false);
+
+      confirmTitle.textContent = title;
+      confirmMessage.textContent = message;
+      confirmOkBtn.textContent = okText;
+      confirmCancelBtn.textContent = cancelText;
+
+      confirmDialog.classList.add("active");
+      confirmDialog.setAttribute("aria-hidden", "false");
+
+      const handleConfirm = (result) => {
+        confirmDialog.classList.remove("active");
+        confirmDialog.setAttribute("aria-hidden", "true");
+        confirmOkBtn.removeEventListener("click", handleOk);
+        confirmCancelBtn.removeEventListener("click", handleCancel);
+        resolve(result);
+      };
+
+      const handleOk = () => handleConfirm(true);
+      const handleCancel = () => handleConfirm(false);
+
+      confirmOkBtn.addEventListener("click", handleOk);
+      confirmCancelBtn.addEventListener("click", handleCancel);
+
+      // Close on Escape
+      const handleEscape = (e) => {
+        if (e.key === "Escape") {
+          handleCancel();
+          document.removeEventListener("keydown", handleEscape);
+        }
+      };
+      document.addEventListener("keydown", handleEscape);
+
+      // Close on overlay click
+      confirmDialog.addEventListener("click", (e) => {
+        if (e.target === confirmDialog) {
+          handleCancel();
+        }
+      });
+    });
+  }
+
   function showMessage(text, type = "info") {
     console.log(`[${type.toUpperCase()}]`, text);
   }
@@ -222,7 +315,14 @@
     const med = medications.find(m => m.id === id);
     if (!med) return;
 
-    if (confirm(`Delete ${med.name}?`)) {
+    const confirmed = await showConfirm(
+      `Are you sure you want to delete ${med.name}? This action cannot be undone.`,
+      "Delete Medication",
+      "Delete",
+      "Cancel"
+    );
+
+    if (confirmed) {
       medications = medications.filter(m => m.id !== id);
       await saveMedicationsToAPI();
       renderMedications();
@@ -549,7 +649,10 @@
   async function saveCompliance() {
     const userId = getUserId();
     if (!userId) {
-      alert("Please log in to save compliance");
+      await showAlert(
+        "Please log in to save your compliance tracking data.",
+        "Login Required"
+      );
       return;
     }
 
