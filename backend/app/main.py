@@ -765,6 +765,290 @@ def update_user_name(user_id: str, payload: UpdateUserNameRequest):
     return UpdateUserNameResponse(user_id=user_id, message="User updated successfully")
 
 
+# ---------- Medications (Firestore) ----------
+class MedicationItem(BaseModel):
+    id: str
+    name: str
+    strength: str
+    frequency: str
+    foodInstruction: Optional[str] = None  # "with_food", "empty_stomach", "no_preference"
+    notes: Optional[str] = None
+
+
+class MedicationsListRequest(BaseModel):
+    list: List[MedicationItem]
+
+
+class MedicationsListResponse(BaseModel):
+    user_id: str
+    list: List[Dict[str, Any]]
+
+
+@app.get("/medications/{user_id}", response_model=MedicationsListResponse)
+def get_medications(user_id: str):
+    """Get user's medication list from Firestore."""
+    # Validate user exists
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get medications document
+    doc_ref = db.collection("Medications").document(user_id)
+    snap = doc_ref.get()
+    
+    if not snap.exists:
+        return MedicationsListResponse(user_id=user_id, list=[])
+    
+    data = snap.to_dict()
+    return MedicationsListResponse(user_id=user_id, list=data.get("list", []))
+
+
+@app.put("/medications/{user_id}", response_model=MedicationsListResponse)
+def update_medications(user_id: str, payload: MedicationsListRequest):
+    """Create or update user's medication list in Firestore."""
+    # Validate user exists
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Convert to dict list for Firestore storage
+    meds_list = [med.model_dump() for med in payload.list]
+    
+    # Upsert medications document
+    doc_ref = db.collection("Medications").document(user_id)
+    doc_ref.set({
+        "UserID": user_id,
+        "list": meds_list,
+        "updatedAt": datetime.utcnow().isoformat() + "Z"
+    })
+    
+    return MedicationsListResponse(user_id=user_id, list=meds_list)
+
+
+# ---------- Medication Schedule (structured) ----------
+class MedicationScheduleResponse(BaseModel):
+    timeSlots: Dict[str, List[str]]
+    foodInstructions: List[str]
+    warnings: List[str]
+    spacingNotes: List[str]
+
+
+@app.get("/medication-schedule/{user_id}", response_model=MedicationScheduleResponse)
+def get_medication_schedule(user_id: str):
+    """
+    Generate a structured medication schedule with contraindication warnings.
+    Uses MedicationScheduleTool and ContraindicationCheckTool from tools.py.
+    """
+    from backend.llm.tools import MedicationScheduleTool, ContraindicationCheckTool
+    
+    # Validate user exists
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get medications from Firestore
+    doc_ref = db.collection("Medications").document(user_id)
+    snap = doc_ref.get()
+    
+    if not snap.exists:
+        return MedicationScheduleResponse(
+            timeSlots={"morning": [], "afternoon": [], "evening": [], "night": []},
+            foodInstructions=[],
+            warnings=["No medications found. Add medications to generate a schedule."],
+            spacingNotes=[]
+        )
+    
+    data = snap.to_dict()
+    medications = data.get("list", [])
+    
+    if not medications:
+        return MedicationScheduleResponse(
+            timeSlots={"morning": [], "afternoon": [], "evening": [], "night": []},
+            foodInstructions=[],
+            warnings=["No medications found. Add medications to generate a schedule."],
+            spacingNotes=[]
+        )
+    
+    # Build facts dict for the tools
+    facts = {"medications": medications}
+    
+    # Get schedule from tool
+    schedule_result = MedicationScheduleTool(facts)
+    
+    # Get contraindication warnings from tool
+    contraindication_result = ContraindicationCheckTool(facts)
+    
+    # Also check explicit foodInstruction field from medication model
+    food_instructions = schedule_result.get("food_instructions", [])
+    for med in medications:
+        food_inst = med.get("foodInstruction")
+        name = med.get("name", "Unknown")
+        if food_inst == "with_food":
+            instruction = f"{name}: Take with food"
+            if instruction not in food_instructions:
+                food_instructions.append(instruction)
+        elif food_inst == "empty_stomach":
+            instruction = f"{name}: Take on empty stomach"
+            if instruction not in food_instructions:
+                food_instructions.append(instruction)
+    
+    return MedicationScheduleResponse(
+        timeSlots={
+            "morning": schedule_result.get("morning", []),
+            "afternoon": schedule_result.get("afternoon", []),
+            "evening": schedule_result.get("evening", []),
+            "night": schedule_result.get("night", [])
+        },
+        foodInstructions=food_instructions,
+        warnings=contraindication_result.get("warnings", []),
+        spacingNotes=schedule_result.get("spacing_notes", [])
+    )
+
+
+# ---------- Medication Compliance ----------
+class ComplianceEntry(BaseModel):
+    medication_id: str
+    medication_name: Optional[str] = None
+    taken: bool
+    time_taken: Optional[str] = None  # "HH:mm" format
+
+
+class ComplianceRequest(BaseModel):
+    user_id: str
+    date: str  # "YYYY-MM-DD"
+    entries: List[ComplianceEntry]
+
+
+class ComplianceResponse(BaseModel):
+    user_id: str
+    date: str
+    entries: List[Dict[str, Any]]
+
+
+class HealthHistoryResponse(BaseModel):
+    days: List[Dict[str, Any]]
+
+
+@app.get("/compliance/{user_id}")
+def get_compliance(user_id: str, date: Optional[str] = None, from_date: Optional[str] = None, to_date: Optional[str] = None):
+    """
+    Get medication compliance for a specific date or date range.
+    - If 'date' is provided, return compliance for that single day.
+    - If 'from_date' and 'to_date' are provided, return compliance for that range.
+    - If no date params, return today's compliance.
+    """
+    # Validate user exists
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Default to today if no date provided
+    if not date and not from_date:
+        date = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    if date:
+        # Single day query
+        doc_id = f"{user_id}_{date}"
+        doc_ref = db.collection("MedicationCompliance").document(doc_id)
+        snap = doc_ref.get()
+        
+        if not snap.exists:
+            return ComplianceResponse(user_id=user_id, date=date, entries=[])
+        
+        data = snap.to_dict()
+        return ComplianceResponse(user_id=user_id, date=date, entries=data.get("entries", []))
+    
+    # Date range query (filter/sort in Python to avoid composite index)
+    if from_date and to_date:
+        docs = db.collection("MedicationCompliance") \
+            .where("user_id", "==", user_id) \
+            .limit(200) \
+            .stream()
+        
+        results = []
+        for doc in docs:
+            d = doc.to_dict()
+            doc_date = d.get("date") or ""
+            if from_date <= doc_date <= to_date:
+                results.append({
+                    "date": doc_date,
+                    "entries": d.get("entries", [])
+                })
+        
+        results.sort(key=lambda x: x["date"], reverse=True)
+        results = results[:100]
+        return {"user_id": user_id, "days": results}
+    
+    return ComplianceResponse(user_id=user_id, date=date or "", entries=[])
+
+
+@app.post("/compliance", response_model=ComplianceResponse)
+def save_compliance(payload: ComplianceRequest):
+    """Save/update medication compliance for a specific date."""
+    # Validate user exists
+    user_snap = db.collection("User").document(payload.user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Document ID is user_id + date for easy lookup
+    doc_id = f"{payload.user_id}_{payload.date}"
+    
+    # Convert entries to dict list
+    entries_list = [entry.model_dump() for entry in payload.entries]
+    
+    # Enrich entries with medication names from Medications collection if not provided
+    meds_doc = db.collection("Medications").document(payload.user_id).get()
+    if meds_doc.exists:
+        meds_data = meds_doc.to_dict()
+        meds_list = {m.get("id"): m.get("name", "Unknown") for m in meds_data.get("list", [])}
+        for entry in entries_list:
+            if not entry.get("medication_name"):
+                entry["medication_name"] = meds_list.get(entry.get("medication_id"), "Unknown")
+    
+    # Upsert compliance document
+    doc_ref = db.collection("MedicationCompliance").document(doc_id)
+    doc_ref.set({
+        "user_id": payload.user_id,
+        "date": payload.date,
+        "entries": entries_list,
+        "updatedAt": datetime.utcnow().isoformat() + "Z"
+    })
+    
+    return ComplianceResponse(user_id=payload.user_id, date=payload.date, entries=entries_list)
+
+
+@app.get("/health-history/{user_id}", response_model=HealthHistoryResponse)
+def get_health_history(user_id: str, limit: int = 30):
+    """
+    Get health history (medication compliance) for the journal.
+    Returns the last N days of compliance data.
+    """
+    # Validate user exists
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Query compliance documents for this user (no order_by to avoid composite index)
+    docs = db.collection("MedicationCompliance") \
+        .where("user_id", "==", user_id) \
+        .limit(100) \
+        .stream()
+    
+    days = []
+    for doc in docs:
+        d = doc.to_dict()
+        days.append({
+            "date": d.get("date"),
+            "entries": d.get("entries", [])
+        })
+    
+    # Sort by date descending in Python and take up to limit
+    days.sort(key=lambda x: x["date"] or "", reverse=True)
+    days = days[:limit]
+    
+    return HealthHistoryResponse(days=days)
+
+
 # Favicon: avoid 404 when browser requests /favicon.ico
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():

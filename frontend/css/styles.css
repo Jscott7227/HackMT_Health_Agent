@@ -3955,6 +3955,325 @@ textarea:focus-visible {
     color: var(--text-primary);
 }
 
+/* ──────────────────────────────────────────────────────────
+   Structured Schedule (time slots, food instructions, warnings)
+   ────────────────────────────────────────────────────────── */
+.schedule-time-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.schedule-time-slot {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+}
+
+.time-slot-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-weight: 600;
+    color: var(--sage-dark);
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.time-slot-header i {
+    font-size: 1rem;
+}
+
+.time-slot-meds {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.time-slot-meds li {
+    padding: var(--space-xs) 0;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.time-slot-meds li:last-child {
+    border-bottom: none;
+}
+
+.schedule-section {
+    margin-bottom: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.schedule-section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--sage-dark);
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.schedule-section-title i {
+    font-size: 0.9rem;
+}
+
+.schedule-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.schedule-list li {
+    padding: var(--space-xs) 0;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.schedule-warnings {
+    background: rgba(199, 126, 93, 0.08);
+    border-color: var(--terracotta);
+}
+
+.schedule-warnings .schedule-section-title {
+    color: var(--terracotta);
+}
+
+.schedule-warnings .schedule-list li {
+    color: var(--terracotta);
+}
+
+.schedule-tips {
+    background: rgba(1, 104, 68, 0.05);
+    border-color: var(--sage-light);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Compliance List and Toggles
+   ────────────────────────────────────────────────────────── */
+.compliance-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md) 0;
+}
+
+.compliance-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.compliance-item.taken {
+    background: rgba(1, 104, 68, 0.05);
+    border-color: var(--sage-light);
+}
+
+.compliance-item.not-taken {
+    background: var(--bg-primary);
+}
+
+.compliance-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.compliance-med-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.compliance-med-strength {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.compliance-actions {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.compliance-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 8px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.compliance-toggle:hover {
+    border-color: var(--sage);
+}
+
+.compliance-toggle.taken {
+    background: var(--sage);
+    border-color: var(--sage);
+    color: white;
+}
+
+.compliance-toggle.taken i {
+    color: white;
+}
+
+.compliance-toggle.not-taken {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.compliance-date-picker input {
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Health History (Journal Tab)
+   ────────────────────────────────────────────────────────── */
+.journal-health-history {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.health-history-day {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+}
+
+.health-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.health-history-date {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.health-history-summary {
+    display: flex;
+    align-items: center;
+}
+
+.compliance-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.compliance-badge.complete {
+    background: rgba(1, 104, 68, 0.1);
+    color: var(--sage-dark);
+}
+
+.compliance-badge.partial {
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+}
+
+.compliance-badge.low {
+    background: rgba(199, 126, 93, 0.1);
+    color: var(--terracotta);
+}
+
+.health-history-entries {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.health-history-entry {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.health-history-entry.taken {
+    background: rgba(1, 104, 68, 0.05);
+}
+
+.health-history-entry.taken i {
+    color: var(--sage);
+}
+
+.health-history-entry.not-taken {
+    background: rgba(199, 126, 93, 0.05);
+}
+
+.health-history-entry.not-taken i {
+    color: var(--terracotta);
+}
+
+.health-history-entry .entry-med-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.health-history-entry .entry-status {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+/* Responsive Health History */
+@media (max-width: 600px) {
+    .health-history-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-xs);
+    }
+
+    .compliance-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .compliance-actions {
+        width: 100%;
+    }
+
+    .compliance-toggle {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
 /* Button Styles */
 .btn {
     display: inline-flex;

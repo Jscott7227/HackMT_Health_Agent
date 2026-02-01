@@ -10,6 +10,7 @@
   const journalTabs = document.getElementById("journalTabs");
   const wellnessTab = document.getElementById("wellnessTab");
   const conversationsTab = document.getElementById("conversationsTab");
+  const healthHistoryTab = document.getElementById("healthHistoryTab");
 
   // DOM Elements - Wellness Tab
   const journalContainer = document.getElementById("journalContainer");
@@ -21,13 +22,20 @@
   const conversationsEmptyState = document.getElementById("conversationsEmptyState");
   const conversationsLoadingState = document.getElementById("conversationsLoadingState");
 
+  // DOM Elements - Health History Tab
+  const healthHistoryContainer = document.getElementById("healthHistoryContainer");
+  const healthHistoryEmptyState = document.getElementById("healthHistoryEmptyState");
+  const healthHistoryLoadingState = document.getElementById("healthHistoryLoadingState");
+
   // DOM Elements - Shared
   const notLoggedInState = document.getElementById("notLoggedInState");
 
   // State
   let currentTab = "wellness";
   let conversationsLoaded = false;
+  let healthHistoryLoaded = false;
   let cachedChatHistory = null;
+  let cachedHealthHistory = null;
 
   /**
    * Get user session from storage
@@ -63,6 +71,15 @@
   }
 
   /**
+   * Show a specific state for health history tab, hide others
+   */
+  function showHealthHistoryState(state) {
+    if (healthHistoryContainer) healthHistoryContainer.style.display = state === "entries" ? "block" : "none";
+    if (healthHistoryEmptyState) healthHistoryEmptyState.style.display = state === "empty" ? "block" : "none";
+    if (healthHistoryLoadingState) healthHistoryLoadingState.style.display = state === "loading" ? "block" : "none";
+  }
+
+  /**
    * Switch between tabs
    */
   function switchTab(tabName) {
@@ -82,13 +99,24 @@
     if (tabName === "wellness") {
       wellnessTab.style.display = "block";
       conversationsTab.style.display = "none";
+      if (healthHistoryTab) healthHistoryTab.style.display = "none";
     } else if (tabName === "conversations") {
       wellnessTab.style.display = "none";
       conversationsTab.style.display = "block";
+      if (healthHistoryTab) healthHistoryTab.style.display = "none";
 
       // Load conversations if not already loaded
       if (!conversationsLoaded) {
         loadConversations();
+      }
+    } else if (tabName === "healthHistory") {
+      wellnessTab.style.display = "none";
+      conversationsTab.style.display = "none";
+      if (healthHistoryTab) healthHistoryTab.style.display = "block";
+
+      // Load health history if not already loaded
+      if (!healthHistoryLoaded) {
+        loadHealthHistory();
       }
     }
   }
@@ -111,6 +139,17 @@
     const response = await fetch(`${API_BASE}/chat-history/${userId}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch chat history: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Fetch health history (medication compliance) from API
+   */
+  async function fetchHealthHistory(userId, limit = 30) {
+    const response = await fetch(`${API_BASE}/health-history/${userId}?limit=${limit}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch health history: ${response.statusText}`);
     }
     return response.json();
   }
@@ -452,6 +491,112 @@
   }
 
   /**
+   * Load and render health history
+   */
+  async function loadHealthHistory() {
+    const session = getSession();
+    if (!session || !session.user_id) {
+      return;
+    }
+
+    showHealthHistoryState("loading");
+
+    try {
+      const data = await fetchHealthHistory(session.user_id);
+      cachedHealthHistory = data.days || [];
+      renderHealthHistory(cachedHealthHistory);
+      healthHistoryLoaded = true;
+    } catch (error) {
+      console.error("Error loading health history:", error);
+      if (healthHistoryContainer) {
+        healthHistoryContainer.innerHTML = `
+          <div class="form-domain">
+            <div class="empty-state">
+              <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+              <p>Unable to load health history.</p>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">${escapeHtml(error.message)}</p>
+              <button class="ob-cta" style="max-width: 180px; margin-top: var(--space-md);" onclick="location.reload()">
+                Try Again
+              </button>
+            </div>
+          </div>
+        `;
+      }
+      showHealthHistoryState("entries");
+    }
+  }
+
+  /**
+   * Render health history (medication compliance by date)
+   */
+  function renderHealthHistory(days) {
+    if (!healthHistoryContainer) return;
+
+    healthHistoryContainer.innerHTML = "";
+
+    if (!days || days.length === 0) {
+      showHealthHistoryState("empty");
+      return;
+    }
+
+    days.forEach(day => {
+      const dateStr = day.date;
+      const entries = day.entries || [];
+
+      // Create date card
+      const dayCard = document.createElement("div");
+      dayCard.className = "health-history-day";
+
+      // Format the date
+      const formattedDate = formatDate(dateStr);
+
+      // Calculate summary
+      const totalMeds = entries.length;
+      const takenCount = entries.filter(e => e.taken).length;
+      const compliancePercent = totalMeds > 0 ? Math.round((takenCount / totalMeds) * 100) : 0;
+
+      // Build entries HTML
+      let entriesHtml = "";
+      if (entries.length > 0) {
+        entriesHtml = entries.map(entry => {
+          const takenClass = entry.taken ? "taken" : "not-taken";
+          const takenIcon = entry.taken ? "fa-check-circle" : "fa-times-circle";
+          const takenText = entry.taken ? "Taken" : "Not taken";
+          const timeText = entry.time_taken ? ` at ${entry.time_taken}` : "";
+
+          return `
+            <div class="health-history-entry ${takenClass}">
+              <i class="fas ${takenIcon}"></i>
+              <span class="entry-med-name">${escapeHtml(entry.medication_name || entry.medication_id)}</span>
+              <span class="entry-status">${takenText}${timeText}</span>
+            </div>
+          `;
+        }).join("");
+      } else {
+        entriesHtml = '<p class="text-muted">No medications recorded</p>';
+      }
+
+      dayCard.innerHTML = `
+        <div class="health-history-header">
+          <div class="health-history-date">${formattedDate}</div>
+          <div class="health-history-summary">
+            <span class="compliance-badge ${compliancePercent === 100 ? 'complete' : compliancePercent >= 50 ? 'partial' : 'low'}">
+              ${takenCount}/${totalMeds} taken (${compliancePercent}%)
+            </span>
+          </div>
+        </div>
+        <div class="health-history-entries">
+          ${entriesHtml}
+        </div>
+      `;
+
+      healthHistoryContainer.appendChild(dayCard);
+    });
+
+    showHealthHistoryState("entries");
+  }
+
+  /**
    * Initialize journal page
    */
   async function init() {
@@ -468,9 +613,10 @@
     }
 
     if (!session || !session.user_id) {
-      // Hide both tab contents and show not logged in state
+      // Hide all tab contents and show not logged in state
       wellnessTab.style.display = "none";
       conversationsTab.style.display = "none";
+      if (healthHistoryTab) healthHistoryTab.style.display = "none";
       notLoggedInState.style.display = "block";
       return;
     }

@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 
@@ -72,6 +73,37 @@
         </div>
       </div>
 
+      <!-- Compliance Check Section -->
+      <div class="form-domain" style="margin-top: var(--space-lg);">
+        <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="domain-title">Today's Compliance</h3>
+          <div class="compliance-date-picker">
+            <input type="date" id="complianceDate" class="text-input" style="width: auto;">
+          </div>
+        </div>
+
+        <!-- Compliance List -->
+        <div id="complianceList" class="compliance-list">
+          <!-- Compliance items will be rendered here -->
+        </div>
+
+        <!-- Compliance Empty State -->
+        <div id="complianceEmptyState" class="empty-state" style="display: none;">
+          <p style="text-align: center; color: var(--text-secondary); padding: var(--space-lg);">
+            <i class="fas fa-pills" style="font-size: 2rem; margin-bottom: var(--space-sm); display: block; opacity: 0.5;"></i>
+            Add medications to track your daily compliance.
+          </p>
+        </div>
+
+        <!-- Compliance Loading State -->
+        <div id="complianceLoadingState" style="display: none;">
+          <div style="text-align: center; padding: var(--space-lg);">
+            <div class="loading-spinner" style="margin: 0 auto var(--space-sm);"></div>
+            <p style="color: var(--text-secondary);">Loading compliance...</p>
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -98,6 +130,20 @@
         <div class="form-group">
           <label class="form-label" for="medFrequency">How Often / Frequency *</label>
           <input type="text" id="medFrequency" class="text-input" placeholder="e.g., once daily in morning, twice daily with meals" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="medFoodInstruction">Food Instructions</label>
+          <select id="medFoodInstruction" class="text-input">
+            <option value="no_preference">No preference</option>
+            <option value="with_food">Take with food</option>
+            <option value="empty_stomach">Take on empty stomach</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="medNotes">Notes (optional)</label>
+          <textarea id="medNotes" class="text-input" rows="2" placeholder="e.g., special instructions, side effects to watch for"></textarea>
         </div>
 
         <div class="button-group" style="margin-top: var(--space-md);">

@@ -9,6 +9,8 @@
   // ---- State ----
   let medications = [];
   let editingId = null;
+  let complianceData = {};
+  let currentComplianceDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
   // ---- DOM Elements ----
   const medicationList = $("#medicationList");
@@ -28,6 +30,14 @@
   const medName = $("#medName");
   const medStrength = $("#medStrength");
   const medFrequency = $("#medFrequency");
+  const medFoodInstruction = $("#medFoodInstruction");
+  const medNotes = $("#medNotes");
+
+  // Compliance elements
+  const complianceList = $("#complianceList");
+  const complianceEmptyState = $("#complianceEmptyState");
+  const complianceLoadingState = $("#complianceLoadingState");
+  const complianceDateInput = $("#complianceDate");
 
   // ---- Helper Functions ----
   function generateId() {
@@ -35,7 +45,6 @@
   }
 
   function getUserId() {
-    // Get user_id from localStorage session
     try {
       const session = localStorage.getItem("sanctuary_session");
       if (session) {
@@ -55,12 +64,74 @@
   }
 
   function showMessage(text, type = "info") {
-    // Simple console log for now; could enhance with toast notifications
     console.log(`[${type.toUpperCase()}]`, text);
   }
 
-  // ---- CRUD Operations ----
-  function loadMedications() {
+  function escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function getFoodInstructionLabel(value) {
+    const labels = {
+      "with_food": "Take with food",
+      "empty_stomach": "Take on empty stomach",
+      "no_preference": "No preference"
+    };
+    return labels[value] || "No preference";
+  }
+
+  // ---- API Operations ----
+  async function loadMedicationsFromAPI() {
+    const userId = getUserId();
+    if (!userId) {
+      // Not logged in, load from localStorage
+      loadMedicationsFromStorage();
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/medications/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.list && data.list.length > 0) {
+          medications = data.list;
+          // Update localStorage as backup
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
+        } else {
+          // No data in API, check localStorage for migration
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            medications = JSON.parse(stored);
+            if (medications.length > 0) {
+              // Migrate to API
+              await saveMedicationsToAPI();
+            }
+          } else {
+            medications = [];
+          }
+        }
+      } else if (response.status === 404) {
+        // User exists but no medications doc - load from localStorage for migration
+        loadMedicationsFromStorage();
+        if (medications.length > 0) {
+          await saveMedicationsToAPI();
+        }
+      } else {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+    } catch (e) {
+      console.error("Error loading from API, falling back to localStorage:", e);
+      loadMedicationsFromStorage();
+    }
+
+    renderMedications();
+    renderComplianceList();
+  }
+
+  function loadMedicationsFromStorage() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -72,85 +143,81 @@
       console.error("Error loading medications:", e);
       medications = [];
     }
-    renderMedications();
   }
 
-  function saveMedications() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
-      syncWithBackend();
-    } catch (e) {
-      console.error("Error saving medications:", e);
-      showMessage("Failed to save medications", "error");
-    }
-  }
-
-  async function syncWithBackend() {
+  async function saveMedicationsToAPI() {
     const userId = getUserId();
     if (!userId) {
-      console.log("No user_id found, skipping backend sync");
+      // Not logged in, save to localStorage only
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
       return;
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/update_facts`, {
-        method: "POST",
+      const response = await fetch(`${BACKEND_URL}/medications/${userId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          user_facts: {
-            medications: medications
-          }
-        })
+        body: JSON.stringify({ list: medications })
       });
 
       if (!response.ok) {
-        throw new Error(`Backend sync failed: ${response.statusText}`);
+        throw new Error(`API error: ${response.statusText}`);
       }
 
-      console.log("Medications synced with backend");
+      // Also update localStorage as backup
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
+      console.log("Medications saved to API");
     } catch (e) {
-      console.error("Error syncing with backend:", e);
-      // Don't show error to user - localStorage is primary storage
+      console.error("Error saving to API:", e);
+      // Still save to localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
     }
   }
 
-  function addMedication(med) {
+  // ---- CRUD Operations ----
+  async function addMedication(med) {
     const newMed = {
       id: generateId(),
       name: med.name.trim(),
       strength: med.strength.trim(),
-      frequency: med.frequency.trim()
+      frequency: med.frequency.trim(),
+      foodInstruction: med.foodInstruction || "no_preference",
+      notes: med.notes ? med.notes.trim() : ""
     };
     medications.push(newMed);
-    saveMedications();
+    await saveMedicationsToAPI();
     renderMedications();
+    renderComplianceList();
     showMessage("Medication added successfully", "success");
   }
 
-  function editMedication(id, med) {
+  async function editMedication(id, med) {
     const index = medications.findIndex(m => m.id === id);
     if (index !== -1) {
       medications[index] = {
         id: id,
         name: med.name.trim(),
         strength: med.strength.trim(),
-        frequency: med.frequency.trim()
+        frequency: med.frequency.trim(),
+        foodInstruction: med.foodInstruction || "no_preference",
+        notes: med.notes ? med.notes.trim() : ""
       };
-      saveMedications();
+      await saveMedicationsToAPI();
       renderMedications();
+      renderComplianceList();
       showMessage("Medication updated successfully", "success");
     }
   }
 
-  function deleteMedication(id) {
+  async function deleteMedication(id) {
     const med = medications.find(m => m.id === id);
     if (!med) return;
 
     if (confirm(`Delete ${med.name}?`)) {
       medications = medications.filter(m => m.id !== id);
-      saveMedications();
+      await saveMedicationsToAPI();
       renderMedications();
+      renderComplianceList();
       showMessage("Medication deleted", "info");
     }
   }
@@ -164,32 +231,40 @@
     }
 
     emptyState.style.display = "none";
-    
-    medicationList.innerHTML = medications.map(med => `
-      <div class="medication-card" data-id="${med.id}">
-        <div class="medication-info">
-          <h4 class="medication-name">${escapeHtml(med.name)}</h4>
-          <p class="medication-details">
-            <strong>Strength:</strong> ${escapeHtml(med.strength)}<br>
-            <strong>Frequency:</strong> ${escapeHtml(med.frequency)}
-          </p>
+
+    medicationList.innerHTML = medications.map(med => {
+      const foodLabel = getFoodInstructionLabel(med.foodInstruction);
+      const notesHtml = med.notes ? `<br><strong>Notes:</strong> ${escapeHtml(med.notes)}` : "";
+      const foodHtml = med.foodInstruction && med.foodInstruction !== "no_preference" 
+        ? `<br><strong>Food:</strong> ${foodLabel}` 
+        : "";
+
+      return `
+        <div class="medication-card" data-id="${med.id}">
+          <div class="medication-info">
+            <h4 class="medication-name">${escapeHtml(med.name)}</h4>
+            <p class="medication-details">
+              <strong>Strength:</strong> ${escapeHtml(med.strength)}<br>
+              <strong>Frequency:</strong> ${escapeHtml(med.frequency)}${foodHtml}${notesHtml}
+            </p>
+          </div>
+          <div class="medication-actions">
+            <button class="btn-icon edit-btn" data-id="${med.id}" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="btn-icon delete-btn" data-id="${med.id}" title="Delete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
         </div>
-        <div class="medication-actions">
-          <button class="btn-icon edit-btn" data-id="${med.id}" title="Edit">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-          </button>
-          <button class="btn-icon delete-btn" data-id="${med.id}" title="Delete">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
 
     // Attach event listeners
     $$(".edit-btn").forEach(btn => {
@@ -205,12 +280,6 @@
         deleteMedication(id);
       });
     });
-  }
-
-  function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
   }
 
   // ---- Form Management (Modal Popup) ----
@@ -232,6 +301,8 @@
     medName.value = "";
     medStrength.value = "";
     medFrequency.value = "";
+    if (medFoodInstruction) medFoodInstruction.value = "no_preference";
+    if (medNotes) medNotes.value = "";
     editingId = null;
     formTitle.textContent = "Add Medication";
     saveBtnText.textContent = "Save Medication";
@@ -245,6 +316,8 @@
     medName.value = med.name;
     medStrength.value = med.strength;
     medFrequency.value = med.frequency;
+    if (medFoodInstruction) medFoodInstruction.value = med.foodInstruction || "no_preference";
+    if (medNotes) medNotes.value = med.notes || "";
     formTitle.textContent = "Edit Medication";
     saveBtnText.textContent = "Update Medication";
     showForm();
@@ -269,7 +342,7 @@
     return true;
   }
 
-  // ---- Schedule Generation ----
+  // ---- Schedule Generation (Structured API) ----
   async function fetchSchedule() {
     if (medications.length === 0) {
       alert("Please add at least one medication first");
@@ -283,26 +356,16 @@
     }
 
     showLoading(true);
-    
+
     try {
-      const response = await fetch(`${BACKEND_URL}/run`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          user_input: "Generate my medication schedule with contraindication checks and timing recommendations",
-          user_facts: {
-            medications: medications
-          }
-        })
-      });
+      const response = await fetch(`${BACKEND_URL}/medication-schedule/${userId}`);
 
       if (!response.ok) {
         throw new Error(`Failed to generate schedule: ${response.statusText}`);
       }
 
       const data = await response.json();
-      displaySchedule(data.response);
+      displayStructuredSchedule(data);
       showMessage("Schedule generated successfully", "success");
     } catch (e) {
       console.error("Error generating schedule:", e);
@@ -317,43 +380,220 @@
     }
   }
 
-  function displaySchedule(scheduleText) {
-    // Format the schedule response from the LLM
+  function displayStructuredSchedule(schedule) {
+    const { timeSlots, foodInstructions, warnings, spacingNotes } = schedule;
+
+    // Build time slots HTML
+    const timeSlotIcons = {
+      morning: '<i class="fas fa-sun" style="color: #f59e0b;"></i>',
+      afternoon: '<i class="fas fa-cloud-sun" style="color: #3b82f6;"></i>',
+      evening: '<i class="fas fa-moon" style="color: #8b5cf6;"></i>',
+      night: '<i class="fas fa-star" style="color: #6366f1;"></i>'
+    };
+
+    const timeSlotLabels = {
+      morning: "Morning",
+      afternoon: "Afternoon",
+      evening: "Evening",
+      night: "Night"
+    };
+
+    let timeSlotsHtml = '<div class="schedule-time-slots">';
+    for (const [slot, meds] of Object.entries(timeSlots)) {
+      if (meds.length > 0) {
+        timeSlotsHtml += `
+          <div class="schedule-time-slot">
+            <div class="time-slot-header">
+              ${timeSlotIcons[slot] || ''} <span>${timeSlotLabels[slot] || slot}</span>
+            </div>
+            <ul class="time-slot-meds">
+              ${meds.map(med => `<li>${escapeHtml(med)}</li>`).join("")}
+            </ul>
+          </div>
+        `;
+      }
+    }
+    timeSlotsHtml += '</div>';
+
+    // Check if any time slots have medications
+    const hasScheduledMeds = Object.values(timeSlots).some(meds => meds.length > 0);
+    if (!hasScheduledMeds) {
+      timeSlotsHtml = '<p style="text-align: center; color: var(--text-secondary);">No medications scheduled.</p>';
+    }
+
+    // Build food instructions HTML
+    let foodHtml = '';
+    if (foodInstructions && foodInstructions.length > 0) {
+      foodHtml = `
+        <div class="schedule-section">
+          <h4 class="schedule-section-title"><i class="fas fa-utensils"></i> Food Instructions</h4>
+          <ul class="schedule-list">
+            ${foodInstructions.map(inst => `<li>${escapeHtml(inst)}</li>`).join("")}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Build warnings HTML
+    let warningsHtml = '';
+    if (warnings && warnings.length > 0) {
+      const hasWarning = warnings.some(w => w.includes("CAUTION") || w.includes("WARNING"));
+      const warningClass = hasWarning ? "schedule-warnings" : "schedule-tips";
+      const warningIcon = hasWarning ? "fa-exclamation-triangle" : "fa-info-circle";
+      warningsHtml = `
+        <div class="schedule-section ${warningClass}">
+          <h4 class="schedule-section-title"><i class="fas ${warningIcon}"></i> ${hasWarning ? "Warnings" : "Tips"}</h4>
+          <ul class="schedule-list">
+            ${warnings.map(w => `<li>${escapeHtml(w)}</li>`).join("")}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Build spacing notes HTML
+    let spacingHtml = '';
+    if (spacingNotes && spacingNotes.length > 0) {
+      spacingHtml = `
+        <div class="schedule-section">
+          <h4 class="schedule-section-title"><i class="fas fa-clock"></i> Spacing Notes</h4>
+          <ul class="schedule-list">
+            ${spacingNotes.map(note => `<li>${escapeHtml(note)}</li>`).join("")}
+          </ul>
+        </div>
+      `;
+    }
+
     scheduleDisplay.innerHTML = `
       <div class="schedule-content">
-        <div class="schedule-text">
-          ${formatScheduleText(scheduleText)}
-        </div>
+        ${timeSlotsHtml}
+        ${foodHtml}
+        ${warningsHtml}
+        ${spacingHtml}
       </div>
     `;
   }
 
-  function formatScheduleText(text) {
-    // Convert newlines to <br> and wrap in paragraphs
-    const lines = text.split('\n').filter(line => line.trim());
-    
-    let html = '';
-    lines.forEach(line => {
-      const trimmed = line.trim();
-      
-      // Detect headers (lines that end with : or are all caps)
-      if (trimmed.endsWith(':') || (trimmed === trimmed.toUpperCase() && trimmed.length < 50)) {
-        html += `<h4 style="margin-top: 1em; margin-bottom: 0.5em; color: var(--primary);">${escapeHtml(trimmed)}</h4>`;
+  // ---- Compliance ----
+  async function loadCompliance(date) {
+    const userId = getUserId();
+    if (!userId) {
+      renderComplianceList();
+      return;
+    }
+
+    if (complianceLoadingState) complianceLoadingState.style.display = "block";
+    if (complianceList) complianceList.style.display = "none";
+    if (complianceEmptyState) complianceEmptyState.style.display = "none";
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/compliance/${userId}?date=${date}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Build map of medication_id -> compliance entry
+        complianceData = {};
+        (data.entries || []).forEach(entry => {
+          complianceData[entry.medication_id] = entry;
+        });
+      } else {
+        complianceData = {};
       }
-      // Detect warnings (lines with WARNING, CAUTION, etc.)
-      else if (trimmed.match(/warning|caution|contraindication|avoid|do not/i)) {
-        html += `<p class="warning-text" style="color: var(--terracotta); margin: 0.5em 0;">${escapeHtml(trimmed)}</p>`;
+    } catch (e) {
+      console.error("Error loading compliance:", e);
+      complianceData = {};
+    }
+
+    if (complianceLoadingState) complianceLoadingState.style.display = "none";
+    renderComplianceList();
+  }
+
+  async function saveCompliance() {
+    const userId = getUserId();
+    if (!userId) {
+      alert("Please log in to save compliance");
+      return;
+    }
+
+    const entries = medications.map(med => ({
+      medication_id: med.id,
+      medication_name: med.name,
+      taken: complianceData[med.id]?.taken || false,
+      time_taken: complianceData[med.id]?.time_taken || null
+    }));
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/compliance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          date: currentComplianceDate,
+          entries: entries
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save compliance: ${response.statusText}`);
       }
-      // Regular lines
-      else if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
-        html += `<p style="margin: 0.5em 0; padding-left: 1em;">${escapeHtml(trimmed)}</p>`;
-      }
-      else {
-        html += `<p style="margin: 0.5em 0;">${escapeHtml(trimmed)}</p>`;
-      }
+
+      showMessage("Compliance saved", "success");
+    } catch (e) {
+      console.error("Error saving compliance:", e);
+      showMessage("Failed to save compliance", "error");
+    }
+  }
+
+  function renderComplianceList() {
+    if (medications.length === 0) {
+      if (complianceList) complianceList.style.display = "none";
+      if (complianceEmptyState) complianceEmptyState.style.display = "block";
+      return;
+    }
+
+    if (complianceEmptyState) complianceEmptyState.style.display = "none";
+    if (complianceList) complianceList.style.display = "block";
+
+    if (!complianceList) return;
+
+    complianceList.innerHTML = medications.map(med => {
+      const entry = complianceData[med.id] || {};
+      const isTaken = entry.taken || false;
+      const takenClass = isTaken ? "taken" : "not-taken";
+      const takenIcon = isTaken ? "fa-check-circle" : "fa-circle";
+      const takenText = isTaken ? "Taken" : "Not taken";
+
+      return `
+        <div class="compliance-item ${takenClass}" data-med-id="${med.id}">
+          <div class="compliance-info">
+            <span class="compliance-med-name">${escapeHtml(med.name)}</span>
+            <span class="compliance-med-strength">${escapeHtml(med.strength)}</span>
+          </div>
+          <div class="compliance-actions">
+            <button class="compliance-toggle ${takenClass}" data-med-id="${med.id}" title="${takenText}">
+              <i class="fas ${takenIcon}"></i>
+              <span>${takenText}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // Attach toggle event listeners
+    $$(".compliance-toggle").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const medId = btn.dataset.medId;
+        const currentEntry = complianceData[medId] || {};
+        const newTaken = !currentEntry.taken;
+
+        complianceData[medId] = {
+          medication_id: medId,
+          taken: newTaken,
+          time_taken: newTaken ? new Date().toTimeString().slice(0, 5) : null
+        };
+
+        renderComplianceList();
+        await saveCompliance();
+      });
     });
-    
-    return html || '<p>No schedule information available.</p>';
   }
 
   // ---- Event Listeners ----
@@ -384,19 +624,21 @@
     }
   });
 
-  saveMedBtn?.addEventListener("click", () => {
+  saveMedBtn?.addEventListener("click", async () => {
     if (!validateForm()) return;
 
     const med = {
       name: medName.value,
       strength: medStrength.value,
-      frequency: medFrequency.value
+      frequency: medFrequency.value,
+      foodInstruction: medFoodInstruction?.value || "no_preference",
+      notes: medNotes?.value || ""
     };
 
     if (editingId) {
-      editMedication(editingId, med);
+      await editMedication(editingId, med);
     } else {
-      addMedication(med);
+      await addMedication(med);
     }
 
     hideForm();
@@ -406,6 +648,20 @@
     fetchSchedule();
   });
 
+  // Compliance date picker
+  if (complianceDateInput) {
+    complianceDateInput.value = currentComplianceDate;
+    complianceDateInput.addEventListener("change", (e) => {
+      currentComplianceDate = e.target.value;
+      loadCompliance(currentComplianceDate);
+    });
+  }
+
   // ---- Initialization ----
-  loadMedications();
+  async function init() {
+    await loadMedicationsFromAPI();
+    await loadCompliance(currentComplianceDate);
+  }
+
+  init();
 })();

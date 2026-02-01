@@ -41,6 +41,9 @@
       <button class="journal-tab" data-tab="conversations">
         <i class="fas fa-comments"></i> Conversations
       </button>
+      <button class="journal-tab" data-tab="healthHistory">
+        <i class="fas fa-pills"></i> Health History
+      </button>
     </div>
 
     <!-- Wellness Tab Content -->
@@ -99,6 +102,36 @@
         <div class="empty-state">
           <div class="loading-spinner" style="margin: 0 auto var(--space-md);"></div>
           <p>Loading your conversation history...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health History Tab Content -->
+    <div class="journal-tab-content" id="healthHistoryTab" style="display: none;">
+      <!-- Health History Container -->
+      <div class="journal-health-history" id="healthHistoryContainer">
+        <!-- Health history rendered by JS -->
+      </div>
+
+      <!-- Empty State for Health History (hidden by default) -->
+      <div class="form-domain" id="healthHistoryEmptyState" style="display: none;">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fas fa-pills"></i></div>
+          <p>No health history yet.</p>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: var(--space-xs);">
+            Track your medication compliance to see your health history here.
+          </p>
+          <a href="medications.html" class="ob-cta" style="display: inline-block; max-width: 220px; margin-top: var(--space-md);">
+            <i class="fas fa-pills" style="margin-right: 8px;"></i> Manage Medications
+          </a>
+        </div>
+      </div>
+
+      <!-- Loading State for Health History -->
+      <div class="form-domain" id="healthHistoryLoadingState" style="display: none;">
+        <div class="empty-state">
+          <div class="loading-spinner" style="margin: 0 auto var(--space-md);"></div>
+          <p>Loading your health history...</p>
         </div>
       </div>
     </div>
