@@ -341,7 +341,7 @@ class BenjiLLM:
                 from backend.app.main import update_user_facts
                 update_user_facts(
                     user_id=user_id,
-                    user_facts={"upcoming_plan": facts["upcoming_plan"]}
+                    user_facts={"upcoming_plan": plan.get("upcoming", {})}
                 )
             except Exception as e:
                 print(f"Warning: failed to save upcoming plan for user {user_id}: {e}")
