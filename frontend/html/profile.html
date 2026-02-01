@@ -312,6 +312,16 @@
     </div>
 
     <div id="profileContent" style="display:none;">
+      <div class="profile-header">
+        <div class="profile-avatar" id="profileAvatar">U</div>
+        <h1 class="profile-name" id="profileName">User</h1>
+        <div class="profile-email" id="profileEmail">Loading...</div>
+        <div class="meta-row">
+          <span>Height: <strong id="metaHeight">None</strong></span>
+          <span>Weight: <strong id="metaWeight">None</strong></span>
+        </div>
+      </div>
+
       <div class="section-intro">
         <h2 class="section-title">Your Profile</h2>
         <p class="section-description">These are configurations set during your initial setup. Tailor to meet your needs.</p>
@@ -506,7 +516,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="cycleTrackingCard">
         <div class="card-title">Cycle Tracking</div>
         <div class="card-subtitle">Optional details to personalize guidance.</div>
         <div class="form-grid">
@@ -541,15 +551,6 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Benji Notes</div>
-        <div class="card-subtitle">A quick summary of your setup choices.</div>
-        <div id="setupSummary" class="summary-box">--</div>
-        <div class="form-field full" style="margin-top: 12px;">
-          <textarea id="benjiFacts" class="form-input" rows="3"></textarea>
-        </div>
-      </div>
-
       <div class="actions">
         <button class="btn primary" id="saveBtn">Save Profile</button>
         <button class="btn" id="resetBtn">Reset</button>
@@ -558,6 +559,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <script src="../js/api.js"></script>
   <script src="../components/topbar.js"></script>
   <script src="../js/profile.js"></script>
 </body>

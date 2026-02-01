@@ -91,6 +91,23 @@ function getSession() {
 }
 
 function buildBenjiFacts() {
+    var genderLabels = {
+        'male': 'Male',
+        'female': 'Female',
+        'other': 'Other',
+        'prefer-not-to-say': 'Prefer not to say'
+    };
+    var cycleLabels = {
+        'yes': 'Yes',
+        'no': 'No',
+        'not-applicable': 'Not applicable'
+    };
+    var confidenceLabels = {
+        'not-confident': 'Not confident',
+        'somewhat': 'Somewhat confident',
+        'very': 'Very confident'
+    };
+
     var factsObj = {};
     if (state.goal) factsObj.goal = GOAL_LABELS[state.goal] || state.goal;
     if (state.experience) factsObj.experience = EXP_LABELS[state.experience] || state.experience;
@@ -99,8 +116,8 @@ function buildBenjiFacts() {
         factsObj.health = state.health;
         if (state.healthDetail) factsObj.healthDetail = state.healthDetail;
     }
-    if (state.gender) factsObj.gender = state.gender;
-    if (state.cycleTracking) factsObj.cycleTracking = state.cycleTracking;
+    if (state.gender) factsObj.gender = genderLabels[state.gender] || state.gender;
+    if (state.cycleTracking) factsObj.cycleTracking = cycleLabels[state.cycleTracking] || state.cycleTracking;
     if (state.medTracking === 'yes') factsObj.medications = state.medList || 'Yes';
     if (state.mentalReflection) factsObj.notes = state.mentalReflection;
     if (state.mentalConsentNote) factsObj.mentalConsentNote = state.mentalConsentNote;
@@ -109,7 +126,7 @@ function buildBenjiFacts() {
     if (state.energy) factsObj.energy = GENERIC_SCALE[state.energy];
     if (state.sleep) factsObj.sleep = SLEEP_LABELS[state.sleep];
     if (state.activity !== undefined && state.activity !== null) factsObj.activity = ACTIVITY_LABELS[state.activity];
-    if (state.confidence) factsObj.confidence = state.confidence;
+    if (state.confidence) factsObj.confidence = confidenceLabels[state.confidence] || state.confidence;
     return factsObj;
 }
 
@@ -734,10 +751,41 @@ function safeValue(val) {
 /* --------------------------------------------------------
 COMPLETE SETUP - Redirect to main app
 -------------------------------------------------------- */
+// Helper function to build summary string in same format as profile.js
+function buildSummaryString(factsObj) {
+    var parts = [];
+    if (factsObj.goal) parts.push("Goal: " + factsObj.goal);
+    if (factsObj.experience) parts.push("Experience: " + factsObj.experience);
+    if (factsObj.constraints && factsObj.constraints.length) parts.push("Constraints: " + factsObj.constraints.join(", "));
+    if (factsObj.health && factsObj.health.length) {
+        var healthStr = factsObj.health.join(", ");
+        if (factsObj.healthDetail) healthStr += " (" + factsObj.healthDetail + ")";
+        parts.push("Health: " + healthStr);
+    }
+    if (factsObj.gender) parts.push("Gender: " + factsObj.gender);
+    if (factsObj.cycleTracking) parts.push("Cycle tracking: " + factsObj.cycleTracking);
+    if (factsObj.medications) parts.push("Medications: " + factsObj.medications);
+    if (factsObj.notes) parts.push("Notes: " + factsObj.notes);
+    if (factsObj.activity) parts.push("Activity: " + factsObj.activity);
+    if (factsObj.energy) parts.push("Energy: " + factsObj.energy);
+    if (factsObj.sleep) parts.push("Sleep: " + factsObj.sleep);
+    if (factsObj.mood) parts.push("Mood: " + factsObj.mood);
+    if (factsObj.stress) parts.push("Stress: " + factsObj.stress);
+    if (factsObj.confidence) parts.push("Confidence: " + factsObj.confidence);
+    return parts.join(", ");
+}
+
 async function completeSetup() {
-    // Save onboarding data to localStorage
+    // Save onboarding data to user-specific localStorage
+    var session = getSession();
     localStorage.setItem('onboardingComplete', 'true');
-    localStorage.setItem('userProfile', JSON.stringify(state));
+
+    // Save to user-specific key if we have a session
+    if (session && session.user_id) {
+        localStorage.setItem('userProfile_' + session.user_id, JSON.stringify(state));
+    } else {
+        localStorage.setItem('userProfile', JSON.stringify(state));
+    }
 
     // Add a small delay for user feedback (optional)
     var btn = document.querySelector('#screen-12 .ob-cta');
@@ -745,27 +793,30 @@ async function completeSetup() {
     btn.disabled = true;
 
     // Persist profile info to backend if available
-    // Backend expects: { benji_facts?, height?, weight? } (flat, lowercase snake_case)
     try {
-        var session = getSession();
         if (session && session.user_id) {
-            // Build BenjiFacts as a JSON object, then stringify it
+            console.log("Saving profile for user:", session.user_id);
+
+            // Build BenjiFacts object with proper labels
             var factsObj = buildBenjiFacts();
 
-            var benjiFactsString = "{}";
-            try {
-            benjiFactsString = JSON.stringify(factsObj);
-            console.log("BenjiFacts created:", benjiFactsString);
-            } catch (jsonError) {
-            console.error("Failed to stringify BenjiFacts:", jsonError);
-            benjiFactsString = "{}"; // fallback
-            }
+            // Build summary string in the format: "Goal: X | Experience: Y | ..."
+            var summaryString = buildSummaryString(factsObj);
+
+            // Create the benji_facts in the format expected by profile.js
+            // Format: { summary: "Goal: X | ...", text: "optional notes" }
+            var benjiFactsData = {
+                summary: summaryString,
+                text: state.mentalReflection || ""
+            };
 
             var payload = {
-                benji_facts: JSON.stringify(factsObj),
+                benji_facts: JSON.stringify(benjiFactsData),
                 height: state.height || null,
                 weight: state.weight || null
             };
+
+            console.log("Posting ProfileInfo:", payload);
 
             // Try POST first (during onboarding, profile shouldn't exist yet)
             var res = await fetch(API_BASE + "/profileinfo/" + session.user_id, {
@@ -776,7 +827,8 @@ async function completeSetup() {
 
             // If profile already exists (409), update it with PATCH
             if (res.status === 409) {
-                await fetch(API_BASE + "/profileinfo/" + session.user_id, {
+                console.log("Profile exists, updating with PATCH");
+                res = await fetch(API_BASE + "/profileinfo/" + session.user_id, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
@@ -784,7 +836,9 @@ async function completeSetup() {
             }
 
             if (!res.ok && res.status !== 409) {
-                console.error("ProfileInfo creation failed:", res.status, await res.text());
+                console.error("ProfileInfo save failed:", res.status, await res.text());
+            } else {
+                console.log("ProfileInfo saved successfully");
             }
         }
     } catch (err) {

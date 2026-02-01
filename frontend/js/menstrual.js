@@ -5,7 +5,6 @@
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
   /* ── Constants ──────────────────────────────────────── */
-  const FLOWLOG_KEY  = "Benji_flowLog";
   const CYCLE_LENGTH = 28;
   const BACKEND_URL = "http://127.0.0.1:8000";
 
@@ -20,10 +19,10 @@
 
   const RECOMMENDATIONS = {
     Menstrual: [
-      { icon: "fa-mug-hot",       title: "Rest & Recover",  text: "Prioritize rest. Gentle walks or yoga are ideal. Avoid intense workouts if cramps are strong." },
-      { icon: "fa-bowl-food",     title: "Iron-Rich Foods",  text: "Eat leafy greens, red meat, lentils, and dark chocolate to replenish iron lost during menstruation." },
-      { icon: "fa-droplet",       title: "Stay Hydrated",    text: "Drink warm water or herbal teas (ginger, chamomile) to ease bloating and cramps." },
-      { icon: "fa-bed",           title: "Sleep Well",       text: "Aim for 8+ hours. Use a heating pad on your lower abdomen to ease discomfort before sleep." },
+      { icon: "fa-mug-hot",       title: "Rest & Recover",  text: "Your body is working hard right now! Prioritize rest and gentle movement. Light walks or restorative yoga are perfect." },
+      { icon: "fa-bowl-food",     title: "Replenish & Fuel",  text: "Your body needs extra nutrition during your period! Eat iron-rich foods like leafy greens, red meat, lentils, and dark chocolate to restore what you're losing." },
+      { icon: "fa-droplet",       title: "Stay Hydrated",    text: "Hydration is KEY! Drink warm water or herbal teas (ginger, chamomile) to ease bloating and cramps." },
+      { icon: "fa-bed",           title: "Extra Sleep Needed",       text: "Your body is recovering! Aim for 8+ hours of sleep. Use a heating pad for comfort before bed." },
     ],
     Follicular: [
       { icon: "fa-dumbbell",      title: "Ramp Up Training", text: "Energy rises as estrogen climbs. Great time for strength training, HIIT, or trying new workouts." },
@@ -72,22 +71,11 @@
   }
 
   /* ── Persistence ────────────────────────────────────── */
-  function loadFlowLogFromStorage() {
-    try {
-      const raw = localStorage.getItem(FLOWLOG_KEY);
-      if (raw) flowLog = JSON.parse(raw);
-    } catch { /* ignore */ }
-  }
-
-  function saveFlowLogToStorage() {
-    localStorage.setItem(FLOWLOG_KEY, JSON.stringify(flowLog));
-  }
-
-  async function loadFlowLogFromAPI() {
+  async function loadFlowLog() {
     const userId = getUserId();
     if (!userId) {
-      // Not logged in, load from localStorage only
-      loadFlowLogFromStorage();
+      console.warn("No user ID found - cycle tracking requires login");
+      flowLog = {};
       return;
     }
 
@@ -95,43 +83,26 @@
       const response = await fetch(`${BACKEND_URL}/menstrual/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        if (data.entries && Object.keys(data.entries).length > 0) {
-          flowLog = data.entries;
-          // Update localStorage as backup
-          saveFlowLogToStorage();
-        } else {
-          // No data in API, check localStorage for migration
-          const stored = localStorage.getItem(FLOWLOG_KEY);
-          if (stored) {
-            flowLog = JSON.parse(stored);
-            if (Object.keys(flowLog).length > 0) {
-              // Migrate to API
-              await saveFlowLogToAPI();
-            }
-          } else {
-            flowLog = {};
-          }
-        }
+        flowLog = data.entries || {};
+        console.log("Loaded cycle data from API:", Object.keys(flowLog).length, "entries");
       } else if (response.status === 404) {
-        // User exists but no menstrual doc - load from localStorage for migration
-        loadFlowLogFromStorage();
-        if (Object.keys(flowLog).length > 0) {
-          await saveFlowLogToAPI();
-        }
+        // No data yet for this user
+        flowLog = {};
+        console.log("No cycle data found for user, starting fresh");
       } else {
         throw new Error(`API error: ${response.statusText}`);
       }
     } catch (e) {
-      console.error("Error loading from API, falling back to localStorage:", e);
-      loadFlowLogFromStorage();
+      console.error("Error loading cycle data from API:", e);
+      flowLog = {};
     }
   }
 
-  async function saveFlowLogToAPI() {
+  async function saveFlowLog() {
     const userId = getUserId();
     if (!userId) {
-      // Not logged in, save to localStorage only
-      saveFlowLogToStorage();
+      console.error("Cannot save cycle data - no user ID");
+      alert("Please log in to save your cycle data.");
       return;
     }
 
@@ -146,24 +117,11 @@
         throw new Error(`API error: ${response.statusText}`);
       }
 
-      // Also update localStorage as backup
-      saveFlowLogToStorage();
-      console.log("Flow log saved to API");
+      console.log("Cycle data saved to API successfully");
     } catch (e) {
-      console.error("Error saving to API:", e);
-      // Still save to localStorage
-      saveFlowLogToStorage();
+      console.error("Error saving cycle data to API:", e);
+      alert("Failed to save cycle data. Please check your connection and try again.");
     }
-  }
-
-  // Unified load function (async)
-  async function loadFlowLog() {
-    await loadFlowLogFromAPI();
-  }
-
-  // Unified save function (async)
-  async function saveFlowLog() {
-    await saveFlowLogToAPI();
   }
 
   /* ── Date helpers ───────────────────────────────────── */
@@ -185,7 +143,38 @@
   }
 
   /* ── Cycle derivation from flow log ─────────────────── */
-  function findLastPeriodStart() {
+  // Find the start of the current/most recent continuous period
+  // If referenceDate has flow, look back up to 6 days to find where the continuous flow started
+  function findPeriodStart(referenceDate = null) {
+    const refDate = referenceDate || new Date();
+    refDate.setHours(0, 0, 0, 0);
+    const refDateStr = toDateStr(refDate);
+    const refEntry = flowLog[refDateStr];
+
+    // If reference date has flow, trace backwards to find period start
+    if (refEntry && refEntry.flow && refEntry.flow !== "none") {
+      let periodStart = new Date(refDate);
+      let checkDate = new Date(refDate);
+
+      // Look back up to 6 days to find continuous flow
+      for (let i = 1; i <= 6; i++) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        const checkDateStr = toDateStr(checkDate);
+        const entry = flowLog[checkDateStr];
+
+        if (entry && entry.flow && entry.flow !== "none") {
+          // Found flow on previous day - this is part of the same period
+          periodStart = new Date(checkDate);
+        } else {
+          // Found a break (no flow) - stop looking back
+          break;
+        }
+      }
+
+      return periodStart;
+    }
+
+    // If reference date has no flow, fall back to finding the most recent period
     const flowDates = Object.keys(flowLog)
       .filter(d => flowLog[d].flow && flowLog[d].flow !== "none")
       .sort();
@@ -212,6 +201,11 @@
     const latest = clusters[0];
     latest.sort();
     return parseDate(latest[0]);
+  }
+
+  // Kept for backwards compatibility
+  function findLastPeriodStart() {
+    return findPeriodStart();
   }
 
   function getCycleDay(date) {
@@ -265,7 +259,23 @@
   /* ── Render: Phase overview ─────────────────────────── */
   function renderPhaseCard() {
     const today = new Date();
-    const cycleDay = getCycleDay(today);
+    const todayStr = toDateStr(today);
+    const todayEntry = flowLog[todayStr];
+    const hasFlowToday = todayEntry && todayEntry.flow && todayEntry.flow !== "none";
+
+    // If flow logged today, use intelligent period start detection
+    const periodStart = hasFlowToday ? findPeriodStart(today) : findLastPeriodStart();
+
+    let cycleDay = null;
+    if (periodStart) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const start = new Date(periodStart.getFullYear(), periodStart.getMonth(), periodStart.getDate());
+      const diffMs = d - start;
+      if (diffMs >= 0) {
+        cycleDay = (Math.floor(diffMs / 86400000) % CYCLE_LENGTH) + 1;
+      }
+    }
+
     const phase = getPhase(cycleDay);
 
     $("#cycleRing").innerHTML = buildPhaseRing(cycleDay);
@@ -291,6 +301,7 @@
     const firstDay = new Date(viewYear, viewMonth, 1).getDay();
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
     const todayStr = toDateStr(today);
 
     let html = "";
@@ -301,15 +312,18 @@
 
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(viewYear, viewMonth, d);
+      date.setHours(0, 0, 0, 0); // Normalize to start of day
       const dateStr = toDateStr(date);
       const isToday = dateStr === todayStr;
+      const isFuture = date > today;
       const cycleDay = getCycleDay(date);
       const phase = getPhase(cycleDay);
       const entry = flowLog[dateStr];
       const hasFlow = entry && entry.flow && entry.flow !== "none";
       const hasAnyData = !!entry;
 
-      let cls = "cal-day cal-day-clickable";
+      // Don't allow clicking future dates
+      let cls = isFuture ? "cal-day cal-day-disabled" : "cal-day cal-day-clickable";
       if (isToday) cls += " cal-day-today";
       if (hasFlow) {
         cls += " cal-day-has-flow";
@@ -331,7 +345,7 @@
         dots = '<span class="cal-data-dot"></span>';
       }
 
-      html += `<span class="${cls}" data-date="${dateStr}">
+      html += `<span class="${cls}" data-date="${dateStr}" ${isFuture ? 'data-future="true"' : ''}>
         <span class="cal-day-num">${d}</span>
         <span class="cal-day-indicators">${dots}</span>
       </span>`;
@@ -427,22 +441,19 @@
   }
 
   /* ── 7-Day Flow Reminder ───────────────────────────── */
-  const REMINDER_DISMISSED_KEY = "Benji_flowReminderDismissed";
+  let dismissedPeriodStart = null;
 
   function checkFlowReminder() {
     const banner = $("#flowReminderBanner");
     if (!banner) return;
-
-    // Don't show if dismissed for this period cluster
-    const dismissed = localStorage.getItem(REMINDER_DISMISSED_KEY);
 
     const periodStart = findLastPeriodStart();
     if (!periodStart) { banner.style.display = "none"; return; }
 
     const periodStartStr = toDateStr(periodStart);
 
-    // If user already dismissed for this specific period, skip
-    if (dismissed === periodStartStr) { banner.style.display = "none"; return; }
+    // If user already dismissed for this specific period (in current session), skip
+    if (dismissedPeriodStart === periodStartStr) { banner.style.display = "none"; return; }
 
     // Count consecutive flow days from the period start
     let consecutiveDays = 0;
@@ -471,16 +482,32 @@
   function dismissFlowReminder() {
     const periodStart = findLastPeriodStart();
     if (periodStart) {
-      localStorage.setItem(REMINDER_DISMISSED_KEY, toDateStr(periodStart));
+      dismissedPeriodStart = toDateStr(periodStart);
     }
     const banner = $("#flowReminderBanner");
     if (banner) banner.style.display = "none";
   }
 
   /* ── Render: Recommendations ────────────────────────── */
-  function renderRecommendations() {
+  async function renderRecommendations() {
     const today = new Date();
-    const cycleDay = getCycleDay(today);
+    const todayStr = toDateStr(today);
+    const todayEntry = flowLog[todayStr];
+    const hasFlowToday = todayEntry && todayEntry.flow && todayEntry.flow !== "none";
+
+    // If flow logged today, use intelligent period start detection
+    const periodStart = hasFlowToday ? findPeriodStart(today) : findLastPeriodStart();
+
+    let cycleDay = null;
+    if (periodStart) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const start = new Date(periodStart.getFullYear(), periodStart.getMonth(), periodStart.getDate());
+      const diffMs = d - start;
+      if (diffMs >= 0) {
+        cycleDay = (Math.floor(diffMs / 86400000) % CYCLE_LENGTH) + 1;
+      }
+    }
+
     const phase = getPhase(cycleDay);
 
     const title = $("#recTitle");
@@ -495,7 +522,65 @@
     title.textContent = `${phase.name} Phase Recommendations`;
     const recs = RECOMMENDATIONS[phase.name] || [];
 
-    grid.innerHTML = recs.map(r => `
+    // Get user profile to personalize intro
+    let personalizedIntro = "";
+    const userId = getUserId();
+    if (userId && window.BenjiAPI && window.BenjiAPI.getProfileInfo) {
+      try {
+        const profile = await window.BenjiAPI.getProfileInfo(userId);
+        if (profile?.benji_facts) {
+          const facts = typeof profile.benji_facts === "string"
+            ? JSON.parse(profile.benji_facts)
+            : profile.benji_facts;
+
+          if (facts?.summary) {
+            const summary = facts.summary.toLowerCase();
+            let goalText = "";
+            let activityText = "";
+
+            // Extract goal
+            if (summary.includes("goal: build muscle")) {
+              goalText = "building muscle";
+            } else if (summary.includes("goal: lose")) {
+              goalText = "losing body fat";
+            } else if (summary.includes("goal: endurance")) {
+              goalText = "improving endurance";
+            } else if (summary.includes("goal: feel healthier")) {
+              goalText = "feeling healthier";
+            }
+
+            // Extract activity level
+            if (summary.includes("activity: very active")) {
+              activityText = "You're very active";
+            } else if (summary.includes("activity: moderately active")) {
+              activityText = "You stay moderately active";
+            } else if (summary.includes("activity: lightly active")) {
+              activityText = "You keep moving regularly";
+            }
+
+            if (goalText || activityText) {
+              const parts = [];
+              if (activityText) parts.push(activityText);
+              if (goalText) parts.push(`working toward ${goalText}`);
+
+              personalizedIntro = `
+                <div style="padding: 12px 16px; background: linear-gradient(135deg, #fff9f0, #e6f5ef); border-radius: 12px; border-left: 3px solid ${phase.color}; margin-bottom: 16px;">
+                  <div style="display: flex; align-items: center; gap: 8px; color: #016844; font-weight: 600; margin-bottom: 4px;">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                    <span>Tailored for You</span>
+                  </div>
+                  <div style="font-size: 14px; color: #4f3e2f;">${parts.join(" and ")}! These recommendations consider your cycle phase, goals, and activity level.</div>
+                </div>
+              `;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Could not load profile for personalized intro:", e);
+      }
+    }
+
+    grid.innerHTML = personalizedIntro + recs.map(r => `
       <div class="cycle-rec-card" style="border-left: 3px solid ${phase.color}">
         <div class="cycle-rec-icon"><i class="fa-solid ${r.icon}"></i></div>
         <div class="cycle-rec-body">
@@ -539,10 +624,39 @@
     // Update recommendations grid if AI recommendations provided
     if (data.recommendations && data.recommendations.length > 0) {
       // Get phase color for styling
-      const phase = getPhase(getCycleDay(new Date()));
+      const today = new Date();
+      const todayStr = toDateStr(today);
+      const todayEntry = flowLog[todayStr];
+      const hasFlowToday = todayEntry && todayEntry.flow && todayEntry.flow !== "none";
+
+      // Use intelligent period start detection
+      const periodStart = hasFlowToday ? findPeriodStart(today) : findLastPeriodStart();
+
+      let cycleDay = null;
+      if (periodStart) {
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const start = new Date(periodStart.getFullYear(), periodStart.getMonth(), periodStart.getDate());
+        const diffMs = d - start;
+        if (diffMs >= 0) {
+          cycleDay = (Math.floor(diffMs / 86400000) % CYCLE_LENGTH) + 1;
+        }
+      }
+
+      const phase = getPhase(cycleDay);
       const phaseColor = phase ? phase.color : "#4fc193";
 
-      recGrid.innerHTML = data.recommendations.map(r => `
+      // Add personalized header
+      const personalizedHeader = `
+        <div style="padding: 12px 16px; background: linear-gradient(135deg, #e6f5ef, #fff9f0); border-radius: 12px; border-left: 3px solid ${phaseColor}; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px; color: #016844; font-weight: 600;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Personalized for you by Benji</span>
+          </div>
+          <div style="font-size: 13px; color: #8b6f53; margin-top: 4px;">Based on your cycle phase, goals, and profile</div>
+        </div>
+      `;
+
+      recGrid.innerHTML = personalizedHeader + data.recommendations.map(r => `
         <div class="cycle-rec-card" style="border-left: 3px solid ${phaseColor}">
           <div class="cycle-rec-icon"><i class="fa-solid ${r.icon || 'fa-heart-pulse'}"></i></div>
           <div class="cycle-rec-body">
@@ -654,6 +768,12 @@
     $("#calDays").addEventListener("click", (e) => {
       const dayEl = e.target.closest(".cal-day-clickable");
       if (!dayEl) return;
+
+      // Prevent clicking future dates
+      if (dayEl.dataset.future === "true") {
+        return;
+      }
+
       const dateStr = dayEl.dataset.date;
       if (dateStr) openFlowEditor(dateStr);
     });

@@ -47,17 +47,84 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     root.innerHTML = html;
 
-    // Hide Cycle tab for male users
-    try {
-      const profileJson = localStorage.getItem("userProfile");
-      if (profileJson) {
-        const profile = JSON.parse(profileJson);
-        if (profile.gender === "male") {
-          const cycleLink = root.querySelector('.benji-nav a[data-page="cycle"]');
-          if (cycleLink) cycleLink.style.display = "none";
-        }
+    // Hide Cycle tab unless cycle tracking is enabled
+    const checkCycleTab = async () => {
+      const cycleLink = root.querySelector('.benji-nav a[data-page="cycle"]');
+      if (!cycleLink) {
+        console.log("Cycle link not found in DOM");
+        return;
       }
-    } catch (_) {}
+
+      // Default: hide until we confirm it's enabled
+      cycleLink.style.display = "none";
+
+      try {
+        // Wait for BenjiAPI to be available (max 10 seconds)
+        let attempts = 0;
+        const maxAttempts = 100; // 100 * 100ms = 10 seconds
+
+        while (!window.BenjiAPI && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+
+        if (!window.BenjiAPI) {
+          console.warn("BenjiAPI not available after 10s, cycle tab stays hidden");
+          return;
+        }
+
+        // Wait for BenjiAPI.getSession to be available
+        attempts = 0;
+        while (!window.BenjiAPI.getSession && attempts < 50) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+
+        // Get user session
+        const session = window.BenjiAPI?.getSession?.();
+        if (!session || !session.user_id) {
+          return;
+        }
+
+        // Wait for BenjiAPI.getProfileInfo to be available
+        attempts = 0;
+        while (!window.BenjiAPI.getProfileInfo && attempts < 50) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+
+        // Fetch profile from backend
+        if (!window.BenjiAPI?.getProfileInfo) {
+          console.warn("BenjiAPI.getProfileInfo not available");
+          return;
+        }
+
+        const profile = await window.BenjiAPI.getProfileInfo(session.user_id);
+
+        if (profile?.benji_facts) {
+          const facts = typeof profile.benji_facts === "string"
+            ? JSON.parse(profile.benji_facts)
+            : profile.benji_facts;
+
+          if (facts?.summary) {
+            const summaryLower = facts.summary.toLowerCase();
+
+            // Only show if explicitly "Yes"
+            if (summaryLower.includes("cycle tracking: yes")) {
+              cycleLink.style.display = "";
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to check cycle tracking status:", err);
+      }
+    };
+
+    // Run the check
+    checkCycleTab();
+
+    // Also listen for a custom event in case BenjiAPI loads later
+    window.addEventListener('benjiapi-ready', checkCycleTab);
 
     // Highlight active nav item
     const currentPage = document.body.dataset.page;

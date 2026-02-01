@@ -11,14 +11,21 @@
   }
 
   const session = getSession();
-  const hasSetupData = !!localStorage.getItem("userProfile");
-  if (!session && !hasSetupData) {
+  if (!session || !session.user_id) {
     const loading = $("#profileLoading");
-    if (loading) loading.textContent = "No setup data yet. Please complete setup first.";
+    if (loading) loading.textContent = "Please log in to view your profile.";
     return;
   }
+
+  const userId = session.user_id;
   let originalProfile = { height: "", weight: "", benji_facts: "" };
   let originalSetup = {};
+
+  // Clear old non-user-specific localStorage to prevent conflicts
+  if (localStorage.getItem("userProfile")) {
+    console.log("Clearing old non-user-specific localStorage data");
+    localStorage.removeItem("userProfile");
+  }
 
   const CONSTRAINT_OPTIONS = [
     { value: "limited-time", label: "Limited time" },
@@ -271,6 +278,23 @@
     if (label) label.style.display = show ? "block" : "none";
   }
 
+  function toggleCycleTracking() {
+    const gender = $("#gender")?.value || "";
+    const card = $("#cycleTrackingCard");
+    if (!card) return;
+
+    // Hide cycle tracking card for males
+    if (gender === "male") {
+      card.style.display = "none";
+      // Set cycle tracking to "Not applicable" for males
+      const cycleSelect = $("#cycleTracking");
+      if (cycleSelect) cycleSelect.value = "not-applicable";
+    } else {
+      // Show for female, other, or not specified
+      card.style.display = "";
+    }
+  }
+
   function buildBenjiFactsFromState(setupState) {
     const parts = [];
     if (setupState.goal) parts.push(`Goal: ${GOAL_LABELS[setupState.goal] || setupState.goal}`);
@@ -294,7 +318,7 @@
     if (setupState.mood) parts.push(`Mood: ${SCALE_LABELS[setupState.mood] || setupState.mood}`);
     if (setupState.stress) parts.push(`Stress: ${SCALE_LABELS[setupState.stress] || setupState.stress}`);
     if (setupState.confidence) parts.push(`Confidence: ${CONFIDENCE_LABELS[setupState.confidence] || setupState.confidence}`);
-    return parts.join(" | ");
+    return parts.join(", ");
   }
 
   function showToast(msg, isError) {
@@ -307,63 +331,173 @@
   }
 
   async function loadProfile() {
+    console.log("Loading profile for user:", userId);
     try {
-      const onboardingRaw = localStorage.getItem("userProfile");
-      if (onboardingRaw) {
-        const onboarding = JSON.parse(onboardingRaw) || {};
-        originalSetup = { ...onboarding };
+      // Fetch user info (name, email) from backend
+      let userName = "User";
+      let userEmail = "Not available";
+      let userInitials = "U";
 
-        setHeightFromValue(onboarding.height || "");
-        setWeightFromValue(onboarding.weight || "");
-        $("#benjiFacts").value = onboarding.mentalReflection || "";
+      try {
+        const userRes = await fetch(`${API_BASE}/user/${userId}`);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          const firstName = userData.first_name || "";
+          const lastName = userData.last_name || "";
+          userName = (firstName + " " + lastName).trim() || "User";
+          userEmail = userData.email || "Not available";
+          userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || "U";
 
-        setSelect("goal", onboarding.goal);
-        setSelect("experience", onboarding.experience);
-        setSelect("mentalConsent", onboarding.mentalConsent);
-        setSelect("gender", onboarding.gender);
-        setSelect("activity", onboarding.activity !== null && onboarding.activity !== undefined ? String(onboarding.activity) : "");
-        setSelect("energy", onboarding.energy ? String(onboarding.energy) : "");
-        setSelect("sleep", onboarding.sleep ? String(onboarding.sleep) : "");
-        setSelect("mood", onboarding.mood ? String(onboarding.mood) : "");
-        setSelect("stress", onboarding.stress ? String(onboarding.stress) : "");
-        setSelect("confidence", onboarding.confidence);
-        setSelect("cycleTracking", onboarding.cycleTracking);
-        setSelect("medTracking", onboarding.medTracking);
-        setInput("medList", onboarding.medList);
-        setInput("mentalReflection", onboarding.mentalReflection);
-        setInput("mentalConsentNote", onboarding.mentalConsentNote);
-        setInput("healthDetail", onboarding.healthDetail);
-
-        const constraintValues = mapLabelsToValues(onboarding.constraints || [], CONSTRAINT_OPTIONS);
-        const healthValues = mapLabelsToValues(onboarding.health || [], HEALTH_OPTIONS);
-        setCheckboxGroup("constraintsGroup", constraintValues);
-        setCheckboxGroup("healthGroup", healthValues);
-
-        applyNoneRule("constraintsGroup", ["none-constraints"]);
-        applyNoneRule("healthGroup", ["prefer-not-health", "none-health"]);
-        toggleMedList();
-        toggleHealthDetail();
-
-        const builtSummary = buildBenjiFactsFromState(onboarding);
-        if ($("#setupSummary")) $("#setupSummary").textContent = builtSummary || "--";
-
-        originalProfile = {
-          height: onboarding.height || "",
-          weight: onboarding.weight || "",
-          benji_facts: onboarding.mentalReflection || ""
-        };
-      } else {
-        toggleMedList();
-        toggleHealthDetail();
+          // Update user info display
+          $("#profileName").textContent = userName;
+          $("#profileEmail").textContent = userEmail;
+          $("#profileAvatar").textContent = userInitials;
+        }
+      } catch (err) {
+        console.warn("Failed to fetch user info:", err);
       }
+
+      // Fetch profile data from backend for this specific user
+      const res = await fetch(`${API_BASE}/profileinfo/${userId}`);
+
+      let profileData = null;
+      let onboarding = {};
+
+      if (res.ok) {
+        profileData = await res.json();
+        console.log("Fetched profile data from backend:", profileData);
+
+        // Parse BenjiFacts JSON (contains summary and text)
+        let parsedFacts = {};
+        if (profileData.benji_facts) {
+          try {
+            parsedFacts = typeof profileData.benji_facts === "string"
+              ? JSON.parse(profileData.benji_facts)
+              : profileData.benji_facts;
+          } catch (e) {
+            console.warn("Failed to parse BenjiFacts:", e);
+            parsedFacts = { text: profileData.benji_facts };
+          }
+        }
+
+        // Extract data from parsed facts summary (format: "Goal: X | Experience: Y | ...")
+        const summary = parsedFacts.summary || "";
+        onboarding = parseSummaryToState(summary);
+        onboarding.height = profileData.height || null;
+        onboarding.weight = profileData.weight || null;
+        onboarding.mentalReflection = parsedFacts.text || "";
+
+        // Update meta display with "None" for missing values
+        $("#metaHeight").textContent = profileData.height || "None";
+        $("#metaWeight").textContent = profileData.weight || "None";
+      } else if (res.status === 404) {
+        console.log("No profile data found for user, using defaults");
+        // User has no profile yet - show empty form with "None" in meta
+        $("#metaHeight").textContent = "None";
+        $("#metaWeight").textContent = "None";
+      } else {
+        throw new Error("Failed to fetch profile");
+      }
+
+      originalSetup = { ...onboarding };
+
+      // Populate form fields with data or empty values
+      setHeightFromValue(onboarding.height || "");
+      setWeightFromValue(onboarding.weight || "");
+      setSelect("goal", onboarding.goal);
+      setSelect("experience", onboarding.experience);
+      setSelect("mentalConsent", onboarding.mentalConsent);
+      setSelect("gender", onboarding.gender);
+      setSelect("activity", onboarding.activity !== null && onboarding.activity !== undefined ? String(onboarding.activity) : "");
+      setSelect("energy", onboarding.energy ? String(onboarding.energy) : "");
+      setSelect("sleep", onboarding.sleep ? String(onboarding.sleep) : "");
+      setSelect("mood", onboarding.mood ? String(onboarding.mood) : "");
+      setSelect("stress", onboarding.stress ? String(onboarding.stress) : "");
+      setSelect("confidence", onboarding.confidence);
+      setSelect("cycleTracking", onboarding.cycleTracking);
+      setSelect("medTracking", onboarding.medTracking);
+      setInput("medList", onboarding.medList);
+      setInput("mentalReflection", onboarding.mentalReflection);
+      setInput("mentalConsentNote", onboarding.mentalConsentNote);
+      setInput("healthDetail", onboarding.healthDetail);
+
+      const constraintValues = mapLabelsToValues(onboarding.constraints || [], CONSTRAINT_OPTIONS);
+      const healthValues = mapLabelsToValues(onboarding.health || [], HEALTH_OPTIONS);
+      setCheckboxGroup("constraintsGroup", constraintValues);
+      setCheckboxGroup("healthGroup", healthValues);
+
+      applyNoneRule("constraintsGroup", ["none-constraints"]);
+      applyNoneRule("healthGroup", ["prefer-not-health", "none-health"]);
+      toggleMedList();
+      toggleHealthDetail();
+      toggleCycleTracking();
+
+      originalProfile = {
+        height: onboarding.height || "",
+        weight: onboarding.weight || "",
+        benji_facts: onboarding.mentalReflection || ""
+      };
 
       $("#profileLoading").style.display = "none";
       $("#profileContent").style.display = "block";
     } catch (err) {
       console.error("Failed to load profile:", err);
       const loading = $("#profileLoading");
-      if (loading) loading.textContent = "Failed to load profile.";
+      if (loading) loading.textContent = "Failed to load profile: " + err.message;
     }
+  }
+
+  // Helper function to parse summary string back to state object
+  function parseSummaryToState(summary) {
+    const state = {};
+    if (!summary) return state;
+
+    // Split by ", " only when followed by a field name (Capital letter + ": ")
+    const parts = summary.split(/, (?=[A-Z])/);
+    parts.forEach(part => {
+      const [key, ...valueParts] = part.split(": ");
+      const value = valueParts.join(": ");
+
+      if (key === "Goal") {
+        state.goal = Object.keys(GOAL_LABELS).find(k => GOAL_LABELS[k] === value) || null;
+      } else if (key === "Experience") {
+        state.experience = Object.keys(EXPERIENCE_LABELS).find(k => EXPERIENCE_LABELS[k] === value) || null;
+      } else if (key === "Constraints") {
+        state.constraints = value.split(", ");
+      } else if (key === "Health") {
+        const detailMatch = value.match(/^(.+?)\s+\((.+)\)$/);
+        if (detailMatch) {
+          state.health = detailMatch[1].split(", ");
+          state.healthDetail = detailMatch[2];
+        } else {
+          state.health = value.split(", ");
+        }
+      } else if (key === "Gender") {
+        state.gender = Object.keys(GENDER_LABELS).find(k => GENDER_LABELS[k] === value) || null;
+      } else if (key === "Cycle tracking") {
+        state.cycleTracking = Object.keys(CYCLE_LABELS).find(k => CYCLE_LABELS[k] === value) || null;
+      } else if (key === "Medications") {
+        state.medTracking = "yes";
+        state.medList = value === "Yes" ? "" : value;
+      } else if (key === "Notes") {
+        state.mentalReflection = value;
+      } else if (key === "Activity") {
+        state.activity = ACTIVITY_LABELS.indexOf(value);
+        if (state.activity === -1) state.activity = null;
+      } else if (key === "Energy") {
+        state.energy = Object.keys(SCALE_LABELS).find(k => SCALE_LABELS[k] === value) || null;
+      } else if (key === "Sleep") {
+        state.sleep = Object.keys(SLEEP_LABELS).find(k => SLEEP_LABELS[k] === value) || null;
+      } else if (key === "Mood") {
+        state.mood = Object.keys(SCALE_LABELS).find(k => SCALE_LABELS[k] === value) || null;
+      } else if (key === "Stress") {
+        state.stress = Object.keys(SCALE_LABELS).find(k => SCALE_LABELS[k] === value) || null;
+      } else if (key === "Confidence") {
+        state.confidence = Object.keys(CONFIDENCE_LABELS).find(k => CONFIDENCE_LABELS[k] === value) || null;
+      }
+    });
+
+    return state;
   }
 
   // Backend expects BenjiFacts as valid JSON; we store as { text: "..." }
@@ -406,8 +540,6 @@
       const lb = $("#weightLb").value.trim();
       return lb ? `${lb} lb` : "";
     })();
-    const benjiFacts = $("#benjiFacts").value.trim();
-
     const setupState = {
       goal: $("#goal").value || null,
       experience: $("#experience").value || null,
@@ -437,37 +569,40 @@
       healthTouched: getCheckboxValues("healthGroup").length > 0
     };
 
-    localStorage.setItem("userProfile", JSON.stringify(setupState));
+    // Save to user-specific localStorage key to avoid conflicts between users
+    localStorage.setItem(`userProfile_${userId}`, JSON.stringify(setupState));
 
-    // Backend expects { profile: { Height?, Weight?, BenjiFacts? } } (PascalCase)
-    const profileFields = {};
-    if (height) profileFields.Height = height;
-    if (weight) profileFields.Weight = weight;
+    // Build the summary from current state
     const summary = buildBenjiFactsFromState(setupState);
-    if ($("#setupSummary")) $("#setupSummary").textContent = summary || "--";
-    if (summary || benjiFacts) {
-      profileFields.BenjiFacts = JSON.stringify({ summary: summary || "", text: benjiFacts || "" });
+
+    // Prepare payload for backend (expects height, weight, benji_facts - lowercase)
+    const payload = {};
+    if (height) payload.height = height;
+    if (weight) payload.weight = weight;
+    if (summary) {
+      payload.benji_facts = JSON.stringify({ summary: summary, text: "" });
     }
 
-    if (!Object.keys(profileFields).length) {
+    if (!Object.keys(payload).length) {
       showToast("Nothing to save.", true);
       return;
     }
 
-    const body = { profile: profileFields };
+    console.log("Saving profile for user:", userId, payload);
 
     try {
       let res = await fetch(`${API_BASE}/profileinfo/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
+        body: JSON.stringify(payload)
       });
 
       if (res.status === 404) {
+        console.log("Profile not found, creating new profile");
         res = await fetch(`${API_BASE}/profileinfo/${userId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
+          body: JSON.stringify(payload)
         });
       }
 
@@ -477,8 +612,12 @@
       }
 
       const saved = await res.json();
-      $("#metaHeight").textContent = saved.height || "--";
-      $("#metaWeight").textContent = saved.weight || "--";
+      console.log("Profile saved successfully:", saved);
+
+      // Update meta display with "None" for missing values
+      $("#metaHeight").textContent = saved.height || "None";
+      $("#metaWeight").textContent = saved.weight || "None";
+
       originalProfile = {
         height: saved.height || "",
         weight: saved.weight || "",
@@ -487,7 +626,7 @@
       originalSetup = { ...setupState };
       showToast("Profile saved!");
     } catch (err) {
-      console.error(err);
+      console.error("Save failed:", err);
       showToast(err.message || "Failed to save.", true);
     }
   }
@@ -495,7 +634,6 @@
   function resetForm() {
     setHeightFromValue(originalProfile.height);
     setWeightFromValue(originalProfile.weight);
-    $("#benjiFacts").value = originalProfile.benji_facts;
 
     setSelect("goal", originalSetup.goal);
     setSelect("experience", originalSetup.experience);
@@ -522,14 +660,14 @@
     applyNoneRule("healthGroup", ["prefer-not-health", "none-health"]);
     toggleMedList();
     toggleHealthDetail();
-    const builtSummary = buildBenjiFactsFromState(originalSetup || {});
-    if ($("#setupSummary")) $("#setupSummary").textContent = builtSummary || "--";
+    toggleCycleTracking();
   }
 
   $("#saveBtn")?.addEventListener("click", saveProfile);
   $("#resetBtn")?.addEventListener("click", resetForm);
   $("#medTracking")?.addEventListener("change", toggleMedList);
   $("#healthGroup")?.addEventListener("change", toggleHealthDetail);
+  $("#gender")?.addEventListener("change", toggleCycleTracking);
   bindNoneRule("constraintsGroup", ["none-constraints"]);
   bindNoneRule("healthGroup", ["prefer-not-health", "none-health"]);
   bindUnitToggles();

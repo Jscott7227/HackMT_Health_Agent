@@ -3,17 +3,18 @@
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
   /* ── Main domain tabs ─────────────────────────────── */
-  const domains = ["day", "fitness", "wellness", "menstrual"];
+  let domains = ["day", "fitness", "wellness"]; // menstrual added if enabled
   let currentIndex = 0;
 
   const tabs       = $$("#checkinTabs .nav-tab");
-  const sections   = domains.map(d => $(`#domain-${d}`));
   const prevBtn    = $("#prevDomain");
   const nextBtn    = $("#nextDomain");
   const submitBtn  = $("#submitCheckin");
   const progressText = $("#progressText");
   const progressFill = $("#progressFill");
   const loading    = $("#loadingOverlay");
+  const menstrualTab = $('#checkinTabs .nav-tab[data-domain="menstrual"]');
+  const menstrualSection = $("#domain-menstrual");
 
   /* ── Recommendations by Benji ─────────────────────── */
   const recommendationsSection = $("#benjiRecommendationsSection");
@@ -148,9 +149,11 @@
 
   /* ── Domain switching ─────────────────────────────── */
   const setDomain = (index) => {
+    if (!domains.length) return;
     currentIndex = Math.max(0, Math.min(domains.length - 1, index));
 
-    sections.forEach((sec, i) => {
+    domains.forEach((d, i) => {
+      const sec = $(`#domain-${d}`);
       if (sec) sec.classList.toggle("active", i === currentIndex);
     });
 
@@ -158,10 +161,10 @@
       t.classList.toggle("active", t.dataset.domain === domains[currentIndex])
     );
 
-  const label = currentIndex === 0 ? "Overall Day"
-              : currentIndex === 1 ? "Fitness"
-              : currentIndex === 2 ? "Wellness"
-              : "Menstrual";
+    const label = domains[currentIndex] === "day" ? "Overall Day"
+                : domains[currentIndex] === "fitness" ? "Fitness"
+                : domains[currentIndex] === "wellness" ? "Wellness"
+                : "Menstrual";
 
     if (progressText) progressText.textContent = label;
     if (progressFill) progressFill.style.width =
@@ -181,6 +184,108 @@
     const isRecovery = getExclusiveValue("recoveryDay") === "yes";
     if (fitnessGoalSection) fitnessGoalSection.style.display = isRecovery ? "none" : "";
     if (recoveryHint)       recoveryHint.style.display       = isRecovery ? "block" : "none";
+  };
+
+  /* ── Menstrual visibility (cycle tracking) ────────── */
+  const setMenstrualVisibility = (enabled) => {
+    const has = domains.includes("menstrual");
+    if (enabled && !has) {
+      domains.push("menstrual");
+      if (menstrualTab) menstrualTab.style.display = "inline-flex";
+      if (menstrualSection) menstrualSection.style.display = "";
+      setDomain(currentIndex);
+    } else if (!enabled && has) {
+      domains = domains.filter(d => d !== "menstrual");
+      if (menstrualTab) menstrualTab.style.display = "none";
+      if (menstrualSection) menstrualSection.style.display = "none";
+      if (currentIndex >= domains.length) setDomain(domains.length - 1);
+      setDomain(currentIndex); // refresh progress widths
+    }
+  };
+
+  const detectCycleTracking = async () => {
+    let enabled = false;
+    let foundInBackend = false;
+    const session = window.BenjiAPI?.getSession?.();
+
+    if (session && session.user_id) {
+      console.log("Detecting cycle tracking for user:", session.user_id);
+
+      // 1) Check backend profileinfo first (source of truth)
+      if (window.BenjiAPI?.getProfileInfo) {
+        try {
+          const profile = await window.BenjiAPI.getProfileInfo(session.user_id);
+          console.log("Profile data for cycle tracking:", profile);
+
+          if (profile.benji_facts) {
+            try {
+              const facts = typeof profile.benji_facts === "string"
+                ? JSON.parse(profile.benji_facts) : profile.benji_facts;
+
+              // Check summary for cycle tracking setting (comma-delimited format)
+              if (facts?.summary) {
+                const summaryLower = facts.summary.toLowerCase();
+                console.log("=== CYCLE TRACKING DEBUG ===");
+                console.log("Raw summary string:", facts.summary);
+                console.log("Lowercase summary:", summaryLower);
+
+                // Only enable if explicitly set to "yes"
+                if (summaryLower.includes("cycle tracking: yes")) {
+                  enabled = true;
+                  foundInBackend = true;
+                  console.log("✓ Menstrual tracking ENABLED (found 'Cycle tracking: Yes')");
+                } else if (summaryLower.includes("cycle tracking: no")) {
+                  // Explicitly "No"
+                  enabled = false;
+                  foundInBackend = true;
+                  console.log("✗ Menstrual tracking DISABLED (found 'Cycle tracking: No')");
+                } else if (summaryLower.includes("cycle tracking: not applicable")) {
+                  // Explicitly "Not applicable"
+                  enabled = false;
+                  foundInBackend = true;
+                  console.log("✗ Menstrual tracking DISABLED (found 'Cycle tracking: Not applicable')");
+                } else if (summaryLower.includes("cycle tracking:")) {
+                  // Found cycle tracking but didn't match any specific case
+                  enabled = false;
+                  foundInBackend = true;
+                  console.log("✗ Menstrual tracking DISABLED (found 'Cycle tracking:' but value unknown)");
+                  console.warn("Unexpected cycle tracking value in summary:", facts.summary);
+                }
+                console.log("=== END DEBUG ===");
+              }
+            } catch (e) {
+              console.warn("Failed to parse benji_facts:", e);
+            }
+          }
+        } catch (e) {
+          console.warn("Profile info load failed; using default menstrual visibility", e);
+        }
+      }
+
+      // 2) Only use localStorage if backend didn't have any cycle tracking data
+      if (!foundInBackend) {
+        console.log("No cycle tracking data in backend, checking localStorage");
+        try {
+          const cached = localStorage.getItem(`userProfile_${session.user_id}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            // Only enable if explicitly "yes"
+            if (parsed.cycleTracking === "yes") {
+              enabled = true;
+              console.log("Menstrual tracking enabled from localStorage");
+            } else {
+              console.log("Menstrual tracking not enabled in localStorage");
+            }
+          }
+        } catch { /* ignore */ }
+      } else {
+        // Backend had data, ignore localStorage to prevent conflicts
+        console.log("Backend has cycle tracking data, ignoring localStorage");
+      }
+    }
+
+    console.log("Final menstrual tracking state:", enabled);
+    setMenstrualVisibility(enabled);
   };
 
   /* ── Fitness goal tabs — predefined from profile ──── */
@@ -488,10 +593,12 @@
   /* ── Init ─────────────────────────────────────────── */
   initReadouts();
   initGoalTabs();
+  setMenstrualVisibility(false); // hide until we confirm preference
   setDomain(0);
   updateRecoveryDay();
   updateFlareup();
   updateDischargeNotes();
   updateOCPDetails();
+  detectCycleTracking();
 
 })();

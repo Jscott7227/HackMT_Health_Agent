@@ -42,6 +42,16 @@
         color: var(--text-muted);
         margin-left: var(--space-xs);
       }
+
+      /* Disabled calendar days (future dates) */
+      .cal-day-disabled {
+        opacity: 0.4;
+        cursor: not-allowed !important;
+        pointer-events: none;
+      }
+      .cal-day-disabled:hover {
+        background: transparent !important;
+      }
     </style>
 </head>
 
