@@ -58,17 +58,32 @@
 
       <!-- Schedule Section -->
       <div class="form-domain">
-        <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-sm);">
           <h3 class="domain-title">Medication Schedule</h3>
-          <button class="btn btn-primary" id="generateScheduleBtn">
-            <span>Generate Schedule</span>
-          </button>
+          <div class="schedule-btn-group" style="display: flex; gap: var(--space-sm);">
+            <button class="btn" id="standardScheduleBtn" title="Rule-based schedule">
+              <span>Standard Schedule</span>
+            </button>
+            <button class="btn btn-primary" id="benjiScheduleBtn" title="AI-powered personalized schedule">
+              <i class="fas fa-magic"></i>
+              <span>Benji's Suggested Schedule</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Personalization Notes (shown when using Benji's schedule) -->
+        <div id="personalizationNotes" class="personalization-notes" style="display: none;">
+          <div class="personalization-notes-header">
+            <i class="fas fa-lightbulb"></i>
+            <span>Benji's Note</span>
+          </div>
+          <p id="personalizationNotesText"></p>
         </div>
 
         <!-- Schedule Display -->
         <div id="scheduleDisplay" class="schedule-display">
           <p style="text-align: center; color: var(--text-secondary); padding: var(--space-lg);">
-            Add medications and click "Generate Schedule" to see your personalized medication schedule with safety checks.
+            Add medications and click "Standard Schedule" or "Benji's Suggested Schedule" to see your personalized medication schedule with safety checks.
           </p>
         </div>
       </div>
@@ -165,6 +180,7 @@
   </div>
 
   <!-- Scripts -->
+  <script src="../js/api.js"></script>
   <script src="../js/medications.js"></script>
   <script src="../components/topbar.js"></script>
 </body>

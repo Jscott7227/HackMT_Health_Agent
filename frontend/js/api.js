@@ -110,20 +110,108 @@
       });
     },
 
-    getMedicationSchedule: function (userId) {
-      return request("/medication-schedule/" + userId).then(function (r) {
+    getMedicationSchedule: function (userId, useAi) {
+      // Build URL with optional use_ai query parameter
+      var url = "/medication-schedule/" + userId;
+      if (useAi === true) {
+        url += "?use_ai=true";
+      }
+      return request(url).then(function (r) {
         if (r.status === 404) {
           return {
             timeSlots: { morning: [], afternoon: [], evening: [], night: [] },
             foodInstructions: [],
             warnings: [],
             spacingNotes: [],
-            timeSlotsDetailed: []
+            timeSlotsDetailed: [],
+            personalizationNotes: null
           };
         }
         if (!r.ok) throw new Error("Medication schedule fetch failed");
         return r.json();
       });
+    },
+
+    // AI schedule cache (localStorage) – agent runs only on "Benji's suggested schedule" click
+    AI_SCHEDULE_CACHE_KEY_PREFIX: "Benji_medication_schedule_ai_cache_",
+
+    getCachedAiSchedule: function (userId) {
+      if (!userId || typeof localStorage === "undefined") return null;
+      try {
+        var raw = localStorage.getItem(this.AI_SCHEDULE_CACHE_KEY_PREFIX + userId);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (e) {
+        return null;
+      }
+    },
+
+    setCachedAiSchedule: function (userId, data) {
+      if (!userId || typeof localStorage === "undefined" || !data) return;
+      try {
+        localStorage.setItem(this.AI_SCHEDULE_CACHE_KEY_PREFIX + userId, JSON.stringify(data));
+      } catch (e) {
+        // ignore quota or parse errors
+      }
+    },
+
+    clearCachedAiSchedule: function (userId) {
+      if (!userId || typeof localStorage === "undefined") return;
+      try {
+        localStorage.removeItem(this.AI_SCHEDULE_CACHE_KEY_PREFIX + userId);
+      } catch (e) {
+        // ignore
+      }
+    },
+
+    // Cycle recommendations API method
+    getCycleRecommendations: function (userId) {
+      return request("/menstrual-recommendations/" + userId).then(function (r) {
+        if (r.status === 404) {
+          return {
+            user_id: userId,
+            current_phase: null,
+            cycle_day: null,
+            predicted_period_onset: null,
+            recommendations: [],
+            personalization_notes: null
+          };
+        }
+        if (!r.ok) throw new Error("Cycle recommendations fetch failed");
+        return r.json();
+      });
+    },
+
+    // Cycle recommendations cache (localStorage) – agent runs only on "Get Benji's recommendations" click
+    CYCLE_RECOMMENDATIONS_CACHE_KEY_PREFIX: "Benji_cycle_recommendations_cache_",
+
+    getCachedCycleRecommendations: function (userId) {
+      if (!userId || typeof localStorage === "undefined") return null;
+      try {
+        var raw = localStorage.getItem(this.CYCLE_RECOMMENDATIONS_CACHE_KEY_PREFIX + userId);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (e) {
+        return null;
+      }
+    },
+
+    setCachedCycleRecommendations: function (userId, data) {
+      if (!userId || typeof localStorage === "undefined" || !data) return;
+      try {
+        localStorage.setItem(this.CYCLE_RECOMMENDATIONS_CACHE_KEY_PREFIX + userId, JSON.stringify(data));
+      } catch (e) {
+        // ignore quota or parse errors
+      }
+    },
+
+    clearCachedCycleRecommendations: function (userId) {
+      if (!userId || typeof localStorage === "undefined") return;
+      try {
+        localStorage.removeItem(this.CYCLE_RECOMMENDATIONS_CACHE_KEY_PREFIX + userId);
+      } catch (e) {
+        // ignore
+      }
     },
   };
 

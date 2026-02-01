@@ -742,17 +742,7 @@
     transform: none;
 }
 
-.ob-cta.is-skip {
-    background: var(--clay-100);
-    color: var(--clay-700);
-    box-shadow: none;
-}
-
-.ob-cta.is-skip:hover {
-    background: var(--clay-200);
-    color: var(--clay-800);
-    transform: translateY(-1px);
-}
+/* Skip buttons now use the same green styling as primary CTAs */
 
 .ob-cta-secondary {
     width: 100%;
@@ -4075,6 +4065,52 @@ textarea:focus-visible {
 
 .schedule-tips {
     background: rgba(1, 104, 68, 0.05);
+    border-color: var(--sage-light);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Personalization Notes (Benji's suggested schedule)
+   ────────────────────────────────────────────────────────── */
+.personalization-notes {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(99, 102, 241, 0.08));
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.personalization-notes-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.personalization-notes-header i {
+    color: #f59e0b;
+    font-size: 1.1rem;
+}
+
+.personalization-notes p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Schedule button group styling */
+.schedule-btn-group .btn {
+    transition: all 0.2s ease;
+}
+
+.schedule-btn-group .btn:not(.btn-primary) {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.schedule-btn-group .btn:not(.btn-primary):hover {
     border-color: var(--sage-light);
 }
 

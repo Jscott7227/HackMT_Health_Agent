@@ -503,6 +503,365 @@ def ContraindicationCheckTool(facts: Dict) -> Dict:
     }
 
 
+def MedicationScheduleAgentTool(
+    medications: List[Dict],
+    contraindication_warnings: List[str],
+    food_instructions: List[str],
+    model
+) -> Dict:
+    """
+    Generate a personalized medication schedule using LLM with explicit time slots.
+    
+    Args:
+        medications: List of medication dicts with name, strength, frequency, foodInstruction, notes
+        contraindication_warnings: Pre-computed warnings from ContraindicationCheckTool
+        food_instructions: List of food instruction strings
+        model: ChatGoogleGenerativeAI instance
+    
+    Returns:
+        Dict with time_slots (explicit times 6 AM - 10 PM), spacing_notes, personalization_notes
+        Or {"_fallback": True} if LLM fails
+    """
+    if not medications:
+        return {"_fallback": True}
+    
+    # Build list of medication names for validation
+    med_names = [f"{m.get('name', 'Unknown')} {m.get('strength', '')}".strip() for m in medications]
+    
+    # Build the prompt with explicit time slots (6 AM - 10 PM)
+    prompt = (
+        "You are a medication scheduling assistant. Your role is to recommend SPECIFIC TIMES "
+        "between 6:00 AM and 10:00 PM to take each medication.\n\n"
+        
+        "IMPORTANT RULES:\n"
+        "- Do NOT give dosing or medical advice.\n"
+        "- Only recommend WHEN (specific time of day) to take each medication.\n"
+        "- Always recommend consulting a healthcare provider for medical decisions.\n"
+        "- You MUST use specific times, NOT generic slots like 'morning' or 'evening'.\n\n"
+        
+        "AVAILABLE TIME SLOTS (use any of these, or times in between):\n"
+        "- 06:00 (6:00 AM) - Early morning, before breakfast\n"
+        "- 07:00 (7:00 AM) - Morning, before or with breakfast\n"
+        "- 08:00 (8:00 AM) - With breakfast\n"
+        "- 10:00 (10:00 AM) - Mid-morning\n"
+        "- 12:00 (12:00 PM) - With lunch\n"
+        "- 14:00 (2:00 PM) - Afternoon\n"
+        "- 18:00 (6:00 PM) - With dinner\n"
+        "- 20:00 (8:00 PM) - Evening\n"
+        "- 21:00 (9:00 PM) - Before bed\n"
+        "- 22:00 (10:00 PM) - Bedtime\n\n"
+        
+        "SCHEDULING GUIDELINES:\n"
+        "1. **SPACING**: Medications with contraindications or interactions MUST be placed at least 2 hours apart.\n"
+        "   - If two medications interact, put them at different times (e.g., 6:00 AM and 8:00 AM).\n"
+        "   - Document this in spacing_notes.\n\n"
+        "2. **EMPTY STOMACH medications** (foodInstruction='empty_stomach'):\n"
+        "   - Schedule at 6:00 AM or 7:00 AM (30-60 min before breakfast)\n"
+        "   - OR at 21:00 or 22:00 (before bed, 2+ hours after dinner)\n"
+        "   - Set foodNote to 'Take on empty stomach'\n\n"
+        "3. **WITH FOOD medications** (foodInstruction='with_food'):\n"
+        "   - Schedule at meal times: 08:00 (breakfast), 12:00 (lunch), or 18:00 (dinner)\n"
+        "   - Set foodNote to 'Take with food'\n\n"
+        "4. **FREQUENCY**:\n"
+        "   - 'once daily': Pick the single best time based on medication type and food requirements\n"
+        "   - 'twice daily': Space at least 10-12 hours apart (e.g., 07:00 and 19:00)\n"
+        "   - 'three times daily': Space 5-6 hours apart (e.g., 07:00, 13:00, 19:00)\n\n"
+        "5. **COMMON MEDICATION KNOWLEDGE**:\n"
+        "   - Levothyroxine: 06:00 AM on empty stomach (30-60 min before food)\n"
+        "   - Metformin: with meals (08:00, 12:00, 18:00) to reduce GI side effects\n"
+        "   - Blood pressure meds (lisinopril, amlodipine): morning (07:00 or 08:00)\n"
+        "   - Statins (simvastatin, atorvastatin): evening/night (20:00 or 21:00)\n"
+        "   - Proton pump inhibitors (omeprazole): 06:00-07:00 AM before breakfast\n"
+        "   - Calcium/Iron supplements: space 2+ hours from thyroid meds\n\n"
+        
+        f"MEDICATIONS TO SCHEDULE:\n{json.dumps(medications, indent=2)}\n\n"
+        
+        f"CONTRAINDICATION WARNINGS (MUST respect spacing):\n{json.dumps(contraindication_warnings, indent=2)}\n\n"
+        
+        f"FOOD INSTRUCTIONS:\n{json.dumps(food_instructions, indent=2)}\n\n"
+        
+        "OUTPUT FORMAT - Return STRICT JSON only, no markdown:\n"
+        "{\n"
+        '  "time_slots": [\n'
+        '    {\n'
+        '      "time": "06:00",\n'
+        '      "label": "6:00 AM",\n'
+        '      "medications": ["Levothyroxine 50 mcg"],\n'
+        '      "foodNote": "Take on empty stomach, 30-60 min before breakfast"\n'
+        '    },\n'
+        '    {\n'
+        '      "time": "08:00",\n'
+        '      "label": "8:00 AM",\n'
+        '      "medications": ["Metformin 500 mg (1st dose)", "Lisinopril 10 mg"],\n'
+        '      "foodNote": "Take with breakfast"\n'
+        '    },\n'
+        '    {\n'
+        '      "time": "18:00",\n'
+        '      "label": "6:00 PM",\n'
+        '      "medications": ["Metformin 500 mg (2nd dose)"],\n'
+        '      "foodNote": "Take with dinner"\n'
+        '    },\n'
+        '    {\n'
+        '      "time": "21:00",\n'
+        '      "label": "9:00 PM",\n'
+        '      "medications": ["Atorvastatin 20 mg"],\n'
+        '      "foodNote": ""\n'
+        '    }\n'
+        '  ],\n'
+        '  "spacing_notes": [\n'
+        '    "Levothyroxine at 6:00 AM, Metformin at 8:00 AM - spaced 2 hours apart as thyroid meds should be taken separately."\n'
+        '  ],\n'
+        '  "personalization_notes": "This schedule spaces thyroid medication from other meds, aligns Metformin with meals to reduce GI issues, and places the statin at night for optimal effectiveness."\n'
+        "}\n\n"
+        
+        "CRITICAL REQUIREMENTS:\n"
+        "1. Assign EVERY medication to at least one time slot. Do not skip any.\n"
+        "2. Use specific times (HH:mm format) between 06:00 and 22:00.\n"
+        "3. Each time_slot must have: time, label, medications (array), foodNote (string).\n"
+        "4. Sort time_slots by time (earliest first).\n"
+        "5. Include spacing_notes explaining any timing decisions for interactions.\n"
+        "6. Include personalization_notes summarizing the overall schedule rationale.\n"
+        "Only output JSON. No explanations outside the JSON."
+    )
+    
+    messages = [
+        SystemMessage(content="You are a medication scheduling assistant that outputs only valid JSON with specific times. Do not give medical advice, only timing recommendations. Use times between 06:00 and 22:00."),
+        HumanMessage(content=prompt)
+    ]
+    
+    try:
+        response = model.invoke(messages)
+        raw = response.content.strip()
+        
+        # Strip markdown code blocks if model adds them
+        if raw.startswith("```"):
+            lines = raw.split("\n")
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines[-1].startswith("```"):
+                lines = lines[:-1]
+            raw = "\n".join(lines)
+        
+        data = json.loads(raw)
+        
+        # Validate time_slots exists and is a list
+        if "time_slots" not in data or not isinstance(data.get("time_slots"), list):
+            print("MedicationScheduleAgentTool: Missing or invalid time_slots")
+            return {"_fallback": True}
+        
+        time_slots = data["time_slots"]
+        
+        # Validate each time slot has required fields
+        for slot in time_slots:
+            if not isinstance(slot, dict):
+                print("MedicationScheduleAgentTool: time_slot is not a dict")
+                return {"_fallback": True}
+            if "time" not in slot or "medications" not in slot:
+                print("MedicationScheduleAgentTool: time_slot missing time or medications")
+                return {"_fallback": True}
+            if not isinstance(slot.get("medications"), list):
+                print("MedicationScheduleAgentTool: medications is not a list")
+                return {"_fallback": True}
+            # Ensure label exists
+            if "label" not in slot:
+                # Generate label from time
+                time_str = slot["time"]
+                try:
+                    hour = int(time_str.split(":")[0])
+                    minute = time_str.split(":")[1] if ":" in time_str else "00"
+                    if hour < 12:
+                        slot["label"] = f"{hour}:{minute} AM"
+                    elif hour == 12:
+                        slot["label"] = f"12:{minute} PM"
+                    else:
+                        slot["label"] = f"{hour - 12}:{minute} PM"
+                except:
+                    slot["label"] = time_str
+            # Ensure foodNote exists
+            if "foodNote" not in slot:
+                slot["foodNote"] = ""
+        
+        # Check that at least some medications were assigned
+        total_assigned = sum(len(slot.get("medications", [])) for slot in time_slots)
+        if total_assigned == 0 and len(medications) > 0:
+            print("MedicationScheduleAgentTool: No medications assigned")
+            return {"_fallback": True}
+        
+        # Sort time_slots by time
+        try:
+            time_slots.sort(key=lambda x: x.get("time", "99:99"))
+        except:
+            pass  # If sorting fails, keep original order
+        
+        # Ensure spacing_notes and personalization_notes exist
+        if "spacing_notes" not in data:
+            data["spacing_notes"] = []
+        if "personalization_notes" not in data:
+            data["personalization_notes"] = None
+        
+        return data
+        
+    except (json.JSONDecodeError, Exception) as e:
+        # Return fallback sentinel on any error
+        print(f"MedicationScheduleAgentTool error: {e}")
+        return {"_fallback": True}
+
+
+def CycleRecommendationsAgentTool(
+    flow_log_entries: Dict,
+    model
+) -> Dict:
+    """
+    Generate personalized cycle phase recommendations using LLM.
+    
+    Args:
+        flow_log_entries: Dict of date strings to entry objects
+            e.g. { "2025-01-15": { "flow": "medium", "symptoms": ["cramps"], "crampPain": 5, "discharge": "none" }, ... }
+        model: ChatGoogleGenerativeAI instance
+    
+    Returns:
+        Dict with current_phase, cycle_day, predicted_period_onset, recommendations, personalization_notes
+        Or {"_fallback": True} if LLM fails
+    """
+    from datetime import datetime, timedelta
+    
+    if not flow_log_entries:
+        return {"_fallback": True}
+    
+    # Get today's date for context
+    today_str = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    # Build the prompt
+    prompt = (
+        "You are a wellness assistant helping users track their menstrual cycle. Your role is to:\n"
+        "1. Infer the user's current cycle phase and cycle day from their flow log\n"
+        "2. Predict their next period onset date (as an estimate)\n"
+        "3. Provide 3-5 short wellness recommendations for the current phase\n\n"
+        
+        "IMPORTANT RULES:\n"
+        "- Do NOT give medical or diagnostic advice.\n"
+        "- Do NOT predict fertility or give pregnancy advice.\n"
+        "- Only provide tracking support, phase awareness, and general wellness recommendations.\n"
+        "- Always recommend consulting a healthcare provider for medical concerns.\n"
+        "- Predictions are estimates only; include this disclaimer.\n\n"
+        
+        "CYCLE PHASE LOGIC (use this to derive phase):\n"
+        "- A period starts when flow is logged (light/medium/heavy/clots) after a gap of >5 days from the previous flow.\n"
+        "- Typical cycle length is 28 days (can vary 21-35 days).\n"
+        "- Phases based on cycle day (day 1 = first day of period):\n"
+        "  - Menstrual: Days 1-5 (bleeding phase)\n"
+        "  - Follicular: Days 6-13 (post-period, before ovulation)\n"
+        "  - Ovulation: Days 14-16 (most fertile window)\n"
+        "  - Luteal: Days 17-28 (post-ovulation, before next period)\n\n"
+        
+        f"TODAY'S DATE: {today_str}\n\n"
+        
+        f"USER'S FLOW LOG (dates with logged data):\n{json.dumps(flow_log_entries, indent=2)}\n\n"
+        
+        "ANALYSIS STEPS:\n"
+        "1. Find the most recent period start (first day of consecutive flow days after a gap >5 days).\n"
+        "2. Calculate cycle day = (today - period_start) % 28 + 1.\n"
+        "3. Determine current phase from cycle day.\n"
+        "4. Predict next period onset = last_period_start + 28 days (give a range of 2-3 days for variability).\n"
+        "5. Generate 3-5 wellness recommendations based on current phase and any logged symptoms.\n\n"
+        
+        "OUTPUT FORMAT - Return STRICT JSON only, no markdown:\n"
+        "{\n"
+        '  "current_phase": "Luteal",\n'
+        '  "cycle_day": 22,\n'
+        '  "predicted_period_onset": "2025-02-15 to 2025-02-17",\n'
+        '  "recommendations": [\n'
+        '    { "icon": "fa-spa", "title": "Wind Down Gradually", "text": "Energy may be lower as your period approaches. Focus on gentle exercise like yoga or walking." },\n'
+        '    { "icon": "fa-moon", "title": "Prioritize Sleep", "text": "Progesterone levels are high. Aim for 8 hours and avoid caffeine after noon." },\n'
+        '    { "icon": "fa-wheat-awn", "title": "Complex Carbs", "text": "Cravings are common. Choose whole grains, sweet potatoes, and magnesium-rich foods." }\n'
+        '  ],\n'
+        '  "personalization_notes": "Based on your logged data, you appear to be in the Luteal phase (day 22). Your next period is predicted around Feb 15-17. I noticed you logged cramps recently—consider gentle stretching and warmth for comfort. This is an estimate; cycles can vary."\n'
+        "}\n\n"
+        
+        "ICON OPTIONS (use Font Awesome solid icons):\n"
+        "- fa-mug-hot, fa-bowl-food, fa-droplet, fa-bed, fa-dumbbell, fa-carrot, fa-brain, fa-people-group\n"
+        "- fa-fire, fa-apple-whole, fa-heart-pulse, fa-comments, fa-spa, fa-wheat-awn, fa-moon, fa-hand-holding-heart\n\n"
+        
+        "CRITICAL REQUIREMENTS:\n"
+        "1. current_phase must be one of: 'Menstrual', 'Follicular', 'Ovulation', 'Luteal', or null if unknown.\n"
+        "2. cycle_day must be an integer 1-28, or null if unknown.\n"
+        "3. predicted_period_onset should be a date or short range (e.g. '2025-02-15' or '2025-02-15 to 2025-02-17'), or null.\n"
+        "4. recommendations must be an array of objects with icon, title, and text.\n"
+        "5. personalization_notes should be a brief, friendly summary mentioning the phase, prediction, and any relevant logged symptoms.\n"
+        "6. If there's not enough data to determine phase, set current_phase to null and provide generic wellness advice.\n"
+        "Only output JSON. No explanations outside the JSON."
+    )
+    
+    messages = [
+        SystemMessage(content="You are a menstrual cycle wellness assistant that outputs only valid JSON. Do not give medical advice, fertility predictions, or diagnoses. Only provide phase tracking, period onset estimates, and general wellness recommendations."),
+        HumanMessage(content=prompt)
+    ]
+    
+    try:
+        response = model.invoke(messages)
+        raw = response.content.strip()
+        
+        # Strip markdown code blocks if model adds them
+        if raw.startswith("```"):
+            lines = raw.split("\n")
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines[-1].startswith("```"):
+                lines = lines[:-1]
+            raw = "\n".join(lines)
+        
+        data = json.loads(raw)
+        
+        # Validate required fields exist
+        if "current_phase" not in data:
+            data["current_phase"] = None
+        if "cycle_day" not in data:
+            data["cycle_day"] = None
+        if "predicted_period_onset" not in data:
+            data["predicted_period_onset"] = None
+        if "recommendations" not in data or not isinstance(data.get("recommendations"), list):
+            print("CycleRecommendationsAgentTool: Missing or invalid recommendations")
+            return {"_fallback": True}
+        if "personalization_notes" not in data:
+            data["personalization_notes"] = None
+        
+        # Validate recommendations structure
+        for rec in data["recommendations"]:
+            if not isinstance(rec, dict):
+                print("CycleRecommendationsAgentTool: recommendation is not a dict")
+                return {"_fallback": True}
+            if "title" not in rec or "text" not in rec:
+                print("CycleRecommendationsAgentTool: recommendation missing title or text")
+                return {"_fallback": True}
+            # Ensure icon exists (default if missing)
+            if "icon" not in rec:
+                rec["icon"] = "fa-heart-pulse"
+        
+        # Validate current_phase if present
+        valid_phases = ["Menstrual", "Follicular", "Ovulation", "Luteal", None]
+        if data["current_phase"] not in valid_phases:
+            # Try to normalize
+            phase_lower = str(data["current_phase"]).lower() if data["current_phase"] else None
+            phase_map = {"menstrual": "Menstrual", "follicular": "Follicular", "ovulation": "Ovulation", "luteal": "Luteal"}
+            data["current_phase"] = phase_map.get(phase_lower, None)
+        
+        # Validate cycle_day if present
+        if data["cycle_day"] is not None:
+            try:
+                data["cycle_day"] = int(data["cycle_day"])
+                if data["cycle_day"] < 1 or data["cycle_day"] > 35:
+                    data["cycle_day"] = None
+            except (ValueError, TypeError):
+                data["cycle_day"] = None
+        
+        return data
+        
+    except (json.JSONDecodeError, Exception) as e:
+        # Return fallback sentinel on any error
+        print(f"CycleRecommendationsAgentTool error: {e}")
+        return {"_fallback": True}
+
+
 # -----------------------------
 # TOOL REGISTRIES
 # -----------------------------
@@ -526,4 +885,6 @@ OPTIONAL_TOOLS = {
     "emotion_eval": WellnessEmotionEvalTool,
     "medication_schedule": MedicationScheduleTool,
     "contraindication_check": ContraindicationCheckTool,
+    "medication_schedule_agent": MedicationScheduleAgentTool,
+    "cycle_recommendations_agent": CycleRecommendationsAgentTool,
 }

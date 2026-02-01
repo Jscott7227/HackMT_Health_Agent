@@ -4,6 +4,7 @@
 
   // ---- Configuration ----
   const STORAGE_KEY = "Benji_medications";
+  const SCHEDULE_MODE_KEY = "Benji_medication_schedule_mode"; // 'standard' or 'ai'
   const BACKEND_URL = "http://127.0.0.1:8000";
 
   // ---- State ----
@@ -22,8 +23,12 @@
   const cancelMedBtn = $("#cancelMedBtn");
   const saveBtnText = $("#saveBtnText");
   const medicationModalClose = $("#medicationModalClose");
-  const generateScheduleBtn = $("#generateScheduleBtn");
+  const generateScheduleBtn = $("#generateScheduleBtn"); // Legacy (kept for backward compatibility)
+  const standardScheduleBtn = $("#standardScheduleBtn");
+  const benjiScheduleBtn = $("#benjiScheduleBtn");
   const scheduleDisplay = $("#scheduleDisplay");
+  const personalizationNotes = $("#personalizationNotes");
+  const personalizationNotesText = $("#personalizationNotesText");
   const loadingOverlay = $("#loadingOverlay");
 
   // Form inputs
@@ -166,6 +171,10 @@
 
       // Also update localStorage as backup
       localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
+      // Invalidate AI schedule cache so next "Benji's suggested schedule" click runs the agent with new list
+      if (window.BenjiAPI && window.BenjiAPI.clearCachedAiSchedule) {
+        window.BenjiAPI.clearCachedAiSchedule(userId);
+      }
       console.log("Medications saved to API");
     } catch (e) {
       console.error("Error saving to API:", e);
@@ -343,7 +352,10 @@
   }
 
   // ---- Schedule Generation (Structured API) ----
-  async function fetchSchedule(showLoadingIndicator = true) {
+  // Track which schedule mode is active
+  let currentScheduleMode = 'standard'; // 'standard' or 'ai'
+
+  async function fetchSchedule(showLoadingIndicator = true, useAi = false) {
     const userId = getUserId();
     if (!userId) {
       // Not logged in - show empty state
@@ -354,21 +366,39 @@
           </p>
         `;
       }
+      // Hide personalization notes when not logged in
+      if (personalizationNotes) personalizationNotes.style.display = "none";
       return;
     }
 
     if (showLoadingIndicator) showLoading(true);
 
+    // Update button states
+    currentScheduleMode = useAi ? 'ai' : 'standard';
+    updateScheduleButtonStates();
+
     try {
-      const response = await fetch(`${BACKEND_URL}/medication-schedule/${userId}`);
+      // Build URL with optional use_ai parameter
+      let url = `${BACKEND_URL}/medication-schedule/${userId}`;
+      if (useAi) {
+        url += "?use_ai=true";
+      }
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch schedule: ${response.statusText}`);
       }
 
       const data = await response.json();
-      displayStructuredSchedule(data);
-      if (showLoadingIndicator) showMessage("Schedule loaded", "success");
+      // Cache AI schedule so we don't call the agent again until user clicks the button or meds change
+      if (useAi && window.BenjiAPI && window.BenjiAPI.setCachedAiSchedule) {
+        window.BenjiAPI.setCachedAiSchedule(userId, data);
+      }
+      displayStructuredSchedule(data, useAi);
+      if (showLoadingIndicator) {
+        showMessage(useAi ? "Benji's schedule loaded" : "Standard schedule loaded", "success");
+      }
     } catch (e) {
       console.error("Error fetching schedule:", e);
       if (scheduleDisplay) {
@@ -379,13 +409,43 @@
           </div>
         `;
       }
+      // Hide personalization notes on error
+      if (personalizationNotes) personalizationNotes.style.display = "none";
     } finally {
       if (showLoadingIndicator) showLoading(false);
     }
   }
 
-  function displayStructuredSchedule(schedule) {
-    const { timeSlotsDetailed, warnings } = schedule;
+  function updateScheduleButtonStates() {
+    // Update button styles to show which is active
+    if (standardScheduleBtn) {
+      if (currentScheduleMode === 'standard') {
+        standardScheduleBtn.classList.add('btn-primary');
+      } else {
+        standardScheduleBtn.classList.remove('btn-primary');
+      }
+    }
+    if (benjiScheduleBtn) {
+      if (currentScheduleMode === 'ai') {
+        benjiScheduleBtn.classList.add('btn-primary');
+      } else {
+        benjiScheduleBtn.classList.remove('btn-primary');
+      }
+    }
+  }
+
+  function displayStructuredSchedule(schedule, isAiSchedule = false) {
+    const { timeSlotsDetailed, warnings, personalizationNotes: notes } = schedule;
+
+    // Show or hide personalization notes based on AI mode and content
+    if (personalizationNotes && personalizationNotesText) {
+      if (isAiSchedule && notes) {
+        personalizationNotesText.textContent = notes;
+        personalizationNotes.style.display = "block";
+      } else {
+        personalizationNotes.style.display = "none";
+      }
+    }
 
     // Use calendar-style view from timeSlotsDetailed (option A: only show detailed, not generalized)
     if (!timeSlotsDetailed || timeSlotsDetailed.length === 0) {
@@ -624,8 +684,21 @@
     hideForm();
   });
 
+  // Legacy button (kept for backward compatibility)
   generateScheduleBtn?.addEventListener("click", () => {
-    fetchSchedule();
+    fetchSchedule(true, false); // Standard schedule
+  });
+
+  // Standard Schedule button
+  standardScheduleBtn?.addEventListener("click", () => {
+    localStorage.setItem(SCHEDULE_MODE_KEY, 'standard');
+    fetchSchedule(true, false); // useAi = false
+  });
+
+  // Benji's Suggested Schedule button (AI-powered) – only place that calls the agent
+  benjiScheduleBtn?.addEventListener("click", () => {
+    localStorage.setItem(SCHEDULE_MODE_KEY, 'ai');
+    fetchSchedule(true, true); // useAi = true; on success fetchSchedule caches the result
   });
 
   // Compliance date picker
@@ -640,10 +713,68 @@
   // ---- Initialization ----
   async function init() {
     await loadMedicationsFromAPI();
-    // Auto-load schedule on page load (persistence)
-    await fetchSchedule(false);
+
+    const userId = getUserId();
+    const savedMode = localStorage.getItem(SCHEDULE_MODE_KEY);
+    const useAi = savedMode === 'ai';
+
+    currentScheduleMode = useAi ? 'ai' : 'standard';
+    updateScheduleButtonStates();
+
+    if (useAi && window.BenjiAPI && window.BenjiAPI.getCachedAiSchedule) {
+      const cached = window.BenjiAPI.getCachedAiSchedule(userId);
+      if (cached && cached.timeSlotsDetailed && cached.timeSlotsDetailed.length > 0) {
+        displayStructuredSchedule(cached, true);
+        await loadCompliance(currentComplianceDate);
+        return;
+      }
+      // No cache: show standard schedule and hint to click Benji's button to generate
+      await fetchSchedule(false, false);
+      currentScheduleMode = 'ai';
+      updateScheduleButtonStates();
+      if (scheduleDisplay) {
+        const hint = document.createElement('p');
+        hint.style.cssText = 'text-align: center; color: var(--text-secondary); margin-top: var(--space-md); font-size: 0.9em;';
+        hint.textContent = "Click \"Benji's Suggested Schedule\" to generate a personalized schedule.";
+        scheduleDisplay.appendChild(hint);
+      }
+    } else {
+      await fetchSchedule(false, false);
+    }
     await loadCompliance(currentComplianceDate);
   }
 
-  init();
+  // ---- Visibility change listener: use cache only for AI mode (no API call) ----
+  let isInitialized = false;
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState !== 'visible' || !isInitialized) return;
+
+    const userId = getUserId();
+    const savedMode = localStorage.getItem(SCHEDULE_MODE_KEY);
+    const useAi = savedMode === 'ai';
+
+    if (useAi && window.BenjiAPI && window.BenjiAPI.getCachedAiSchedule) {
+      const cached = window.BenjiAPI.getCachedAiSchedule(userId);
+      if (cached) {
+        currentScheduleMode = 'ai';
+        updateScheduleButtonStates();
+        displayStructuredSchedule(cached, true);
+        return;
+      }
+    }
+
+    if (currentScheduleMode !== (useAi ? 'ai' : 'standard')) {
+      currentScheduleMode = useAi ? 'ai' : 'standard';
+      updateScheduleButtonStates();
+      if (!useAi) await fetchSchedule(false, false);
+      else if (window.BenjiAPI && window.BenjiAPI.getCachedAiSchedule) {
+        const cached = window.BenjiAPI.getCachedAiSchedule(userId);
+        if (cached) displayStructuredSchedule(cached, true);
+      }
+    }
+  });
+
+  init().then(() => {
+    isInitialized = true;
+  });
 })();
