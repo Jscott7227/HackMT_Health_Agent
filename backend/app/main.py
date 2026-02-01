@@ -713,11 +713,6 @@ def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
             # store end date as Firestore timestamp
             "EndDate": end_date,
 
-            # empty structured check-ins
-            "CheckIns": {
-                "checkins": []
-            },
-
             "DateCreated": firestore.SERVER_TIMESTAMP,
             "UserID": user_id
         })
