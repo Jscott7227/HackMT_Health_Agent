@@ -48,6 +48,39 @@ app.add_middleware(
 
 benji = BenjiLLM()
 
+class UpdateUserNameRequest(BaseModel):
+    email: str
+    password: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+class UpdateUserNameResponse(BaseModel):
+    user_id: str
+    message: str
+
+class DeleteUserResponse(BaseModel):
+    message: str
+
+class CreateGoalEntryRequest(BaseModel):
+    end_date: datetime
+    check_ins: List[str] = []
+
+class UpdateGoalEntryRequest(BaseModel):
+    # each optional
+    date_created: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    check_ins: Optional[List[str]] = None
+
+class GoalEntryOut(BaseModel):
+    goal_id: str
+    user_id: str
+    date_created: datetime
+    end_date: datetime
+    check_ins: List[str]
+
+class DeleteGoalEntryResponse(BaseModel):
+    message: str
+
 class CreateProfileInfoRequest(BaseModel):
     benji_facts: Optional[str] = None
     height: Optional[str] = None
@@ -300,8 +333,9 @@ def run_agent(payload: RunRequest):
     
     return {"response": output}
 
-
-#STARTING USER DATA PULLS
+##########################
+#STARTING USER DATA PULLS#
+##########################
 
 @app.get("/firebase/health")
 def firebase_health():
@@ -425,3 +459,135 @@ def update_profileinfo(user_id: str, payload: UpdateProfileInfoRequest):
         weight=d.get("Weight"),
     )
 
+
+# ---------- Firestore: Goals (accepted + generated) ----------
+class GoalsAcceptedRequest(BaseModel):
+    goals: List[Dict[str, Any]] = Field(default_factory=list, description="List of accepted goal objects")
+
+
+@app.get("/goals/{user_id}")
+def get_goals(user_id: str):
+    """Return stored goals for user (accepted and optionally generated) from Firestore."""
+    doc_ref = db.collection("Goals").document(user_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        return {"accepted": [], "generated": []}
+    d = snap.to_dict() or {}
+    return {
+        "accepted": d.get("accepted", []),
+        "generated": d.get("generated", []),
+    }
+
+
+@app.post("/goals/{user_id}/accepted")
+def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
+    """Save accepted goals for user in Firestore."""
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    doc_ref = db.collection("Goals").document(user_id)
+    doc_ref.set({"UserID": user_id, "accepted": payload.goals}, merge=True)
+    return {"message": "Goals saved", "goals": payload.goals}
+
+
+# ---------- Firestore: Check-ins ----------
+class CheckinCreate(BaseModel):
+    model_config = {"extra": "allow"}
+    user_id: str
+    date: Optional[str] = None
+
+
+@app.get("/checkins/{user_id}")
+def get_checkins(user_id: str):
+    """Return check-ins for user from Firestore (e.g. list of docs)."""
+    docs = list(db.collection("CheckIns").where("UserID", "==", user_id).limit(100).stream())
+    out = []
+    for doc in docs:
+        d = doc.to_dict()
+        d["id"] = doc.id
+        out.append(d)
+    out.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+    return out
+
+
+@app.post("/checkins")
+def create_checkin(payload: CheckinCreate):
+    """Save one check-in to Firestore."""
+    from datetime import datetime
+    user_snap = db.collection("User").document(payload.user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    body = payload.model_dump()
+    body["UserID"] = payload.user_id
+    body["createdAt"] = datetime.utcnow().isoformat() + "Z"
+    doc_ref = db.collection("CheckIns").document()
+    doc_ref.set(body)
+    return {"message": "Check-in saved", "id": doc_ref.id}
+
+    return results
+
+
+@app.delete("/user/{user_id}", response_model=DeleteUserResponse)
+def delete_user(user_id: str, payload: LoginRequest):
+    """
+    Delete a user only if they are that user.
+    We verify by requiring valid email/password that authenticates to the same user_id.
+    """
+    # 1) authenticate credentials -> returns the user's doc id
+    authed_user_id = authenticate_firestore(payload.email, payload.password)
+    if not authed_user_id:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # 2) must match the requested id
+    if authed_user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this user")
+
+    # 3) ensure user exists, then delete
+    doc_ref = db.collection("User").document(user_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    doc_ref.delete()
+
+    # (optional) clean up dependent docs
+    # db.collection("ProfileInfo").document(user_id).delete()
+
+    return DeleteUserResponse(message="User deleted successfully")
+
+
+@app.patch("/user/{user_id}", response_model=UpdateUserNameResponse)
+def update_user_name(user_id: str, payload: UpdateUserNameRequest):
+    """
+    Update first and/or last name for a User doc,
+    only if the requester's credentials authenticate to that same user_id.
+    """
+
+    # 1) authenticate -> returns the authenticated user doc id
+    authed_user_id = authenticate_firestore(payload.email, payload.password)
+    if not authed_user_id:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # 2) must match the requested id
+    if authed_user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this user")
+
+    # 3) build optional updates
+    updates = {}
+    if payload.first_name is not None:
+        updates["first_name"] = payload.first_name
+    if payload.last_name is not None:
+        updates["last_name"] = payload.last_name
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields provided to update")
+
+    # 4) ensure user exists then update
+    doc_ref = db.collection("User").document(user_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    doc_ref.update(updates)
+
+    return UpdateUserNameResponse(user_id=user_id, message="User updated successfully")

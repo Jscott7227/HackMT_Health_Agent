@@ -448,9 +448,36 @@
         .modal-btn-secondary:hover {
             background: rgba(0, 0, 0, 0.1);
         }
+
+        /* Page transition: fade-in on load, fade-out before leaving */
+        body {
+            transition: opacity 0.4s ease;
+        }
+        body.page-loading {
+            opacity: 0;
+        }
+        body.page-visible {
+            opacity: 1;
+        }
+        body.page-transition-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .finalize-validation-msg {
+            display: none;
+            margin-top: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            background: rgba(200, 80, 80, 0.1);
+            color: #b33;
+            font-size: 0.95rem;
+        }
+        .finalize-validation-msg.visible {
+            display: block;
+        }
     </style>
 </head>
-<body data-page="goals">
+<body data-page="goals" class="page-loading">
 
     <!-- ============================================================
         BACKGROUND
@@ -476,6 +503,7 @@
         <div class="goals-list" id="goalsList"></div>
 
         <div class="finalize-section">
+            <p class="finalize-validation-msg" id="finalizeValidationMsg">Please accept at least one goal before continuing.</p>
             <div class="button-group">
                 <button class="finalize-btn" id="finalizeBtn" disabled onclick="finalizeGoals()">
                     Continue with Selected Goals
@@ -553,6 +581,7 @@
         </div>
     </div>
 
+    <script src="../js/api.js"></script>
     <script>
         // Synthetic goal pool (simulating what would come from LLM)
         const GOAL_POOL = [
@@ -854,22 +883,32 @@
 
         // Finalize and save accepted goals
         function finalizeGoals() {
+            const validationMsg = document.getElementById('finalizeValidationMsg');
+            validationMsg.classList.remove('visible');
             const acceptedGoals = displayedGoals.filter(g => g.status === 'accepted');
             
             if (acceptedGoals.length === 0) {
-                alert('Please accept at least one goal before continuing.');
+                validationMsg.classList.add('visible');
                 return;
             }
 
-            // Save to localStorage (or send to backend)
+            // Save to localStorage and to backend when logged in
             localStorage.setItem('benjiAcceptedGoals', JSON.stringify(acceptedGoals));
-
-            // Show confirmation
             console.log('Accepted goals:', acceptedGoals);
-            alert(`Great! You've accepted ${acceptedGoals.length} goal${acceptedGoals.length > 1 ? 's' : ''}. Redirecting to your dashboard...`);
+            if (window.BenjiAPI) {
+                var session = BenjiAPI.getSession();
+                if (session && session.user_id) {
+                    BenjiAPI.postGoalsAccepted(session.user_id, acceptedGoals).catch(function (err) {
+                        console.warn('Backend save goals failed:', err);
+                    });
+                }
+            }
 
-            // Navigate to next page
-            // window.location.href = 'dashboard.html';
+            // Smooth fade-out then navigate to main app (no popup)
+            document.body.classList.add('page-transition-out');
+            setTimeout(function() {
+                window.location.href = 'index.html';
+            }, 450);
         }
 
         // Helper function to process input data (for future LLM integration)
@@ -891,6 +930,12 @@
                 console.error('Invalid goal data format:', e);
             }
         }
+
+        // Fade-in on load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.classList.remove('page-loading');
+            document.body.classList.add('page-visible');
+        });
     </script>
 </body>
 </html>

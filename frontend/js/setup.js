@@ -643,8 +643,9 @@ async function completeSetup() {
         console.error("Profile sync failed:", err);
     }
     
-    // Redirect to main chat page after brief delay
+    // Smooth fade-out then transition to goals
+    document.body.classList.add('page-transition-out');
     setTimeout(function() {
-        window.location.href = 'index.html';
-    }, 800);
+        window.location.href = 'goals.html';
+    }, 450);
 }
