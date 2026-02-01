@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
@@ -15,10 +16,66 @@
 
   <div id="benji-root"></div>
 
-  <div class="container">
-    <!-- Journal content goes here -->
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
   </div>
 
+  <!-- Main Container -->
+  <div class="container">
+
+    <!-- Page Header -->
+    <div class="section-intro">
+      <h2 class="section-title">Your Wellness Journal</h2>
+      <p class="section-description">Track your progress and reflect on your wellness journey through daily check-ins.</p>
+    </div>
+
+    <!-- Journal Content Area -->
+    <div class="journal-container" id="journalContainer">
+      <!-- Entries or empty state rendered by JS -->
+    </div>
+
+    <!-- Not Logged In State (hidden by default) -->
+    <div class="form-domain" id="notLoggedInState" style="display: none;">
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-user-lock"></i></div>
+        <p>Please sign in to view your wellness journal.</p>
+        <a href="landing.html" class="ob-cta" style="display: inline-block; max-width: 200px; margin-top: var(--space-md);">
+          Sign In
+        </a>
+      </div>
+    </div>
+
+    <!-- Empty State (hidden by default) -->
+    <div class="form-domain" id="emptyState" style="display: none;">
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-book-open"></i></div>
+        <p>Your journal will fill as you complete daily check-ins.</p>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: var(--space-xs);">
+          Check-ins help Benji understand your wellness patterns and provide personalized support.
+        </p>
+        <a href="index.html" class="ob-cta" style="display: inline-block; max-width: 220px; margin-top: var(--space-md);">
+          <i class="fas fa-clipboard-check" style="margin-right: 8px;"></i> Do a Check-in
+        </a>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="form-domain" id="loadingState" style="display: none;">
+      <div class="empty-state">
+        <div class="loading-spinner" style="margin: 0 auto var(--space-md);"></div>
+        <p>Loading your journal entries...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/api.js"></script>
   <script src="../components/topbar.js"></script>
+  <script src="../js/journal.js"></script>
 </body>
 </html>

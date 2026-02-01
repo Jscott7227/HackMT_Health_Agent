@@ -503,7 +503,7 @@
             <p class="goals-subtext">Review your goals below. Accept the ones you like or skip any to get a new suggestion.</p>
         </div>
 
-        <p class="goals-count"><span id="acceptedCount">0</span> of 5 goals accepted</p>
+        <p class="goals-count"><span id="acceptedCount">0</span> of 3 goals accepted</p>
         
         <div class="goals-list" id="goalsList"></div>
 
@@ -714,7 +714,7 @@
             displayedGoals = [];
             usedGoalIndices.clear();
 
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 3; i++) {
                 const goal = getRandomUnusedGoal();
                 displayedGoals.push({
                     ...goal,

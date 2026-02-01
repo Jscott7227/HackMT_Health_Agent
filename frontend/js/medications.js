@@ -13,12 +13,13 @@
   // ---- DOM Elements ----
   const medicationList = $("#medicationList");
   const emptyState = $("#emptyState");
-  const medicationForm = $("#medicationForm");
+  const medicationModal = $("#medicationModal");
   const formTitle = $("#formTitle");
   const addMedBtn = $("#addMedBtn");
   const saveMedBtn = $("#saveMedBtn");
   const cancelMedBtn = $("#cancelMedBtn");
   const saveBtnText = $("#saveBtnText");
+  const medicationModalClose = $("#medicationModalClose");
   const generateScheduleBtn = $("#generateScheduleBtn");
   const scheduleDisplay = $("#scheduleDisplay");
   const loadingOverlay = $("#loadingOverlay");
@@ -212,14 +213,18 @@
     return div.innerHTML;
   }
 
-  // ---- Form Management ----
+  // ---- Form Management (Modal Popup) ----
   function showForm() {
-    medicationForm.style.display = "block";
-    medicationForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (!medicationModal) return;
+    medicationModal.classList.add("active");
+    medicationModal.setAttribute("aria-hidden", "false");
+    setTimeout(() => medName?.focus(), 100);
   }
 
   function hideForm() {
-    medicationForm.style.display = "none";
+    if (!medicationModal) return;
+    medicationModal.classList.remove("active");
+    medicationModal.setAttribute("aria-hidden", "true");
     clearForm();
   }
 
@@ -359,6 +364,24 @@
 
   cancelMedBtn?.addEventListener("click", () => {
     hideForm();
+  });
+
+  medicationModalClose?.addEventListener("click", () => {
+    hideForm();
+  });
+
+  // Close modal when clicking the overlay backdrop (not the dialog)
+  medicationModal?.addEventListener("click", (e) => {
+    if (e.target === medicationModal) {
+      hideForm();
+    }
+  });
+
+  // Close modal on Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && medicationModal?.classList.contains("active")) {
+      hideForm();
+    }
   });
 
   saveMedBtn?.addEventListener("click", () => {

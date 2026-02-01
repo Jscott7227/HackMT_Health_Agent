@@ -2317,6 +2317,148 @@ body {
     color: var(--text-primary);
 }
 
+/* Journal Container & Entry List */
+.journal-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.journal-entry {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.journal-entry:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Journal Metrics */
+.journal-metric {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) 0;
+    font-size: 0.95rem;
+}
+
+.journal-metric .metric-icon {
+    font-size: 1.1rem;
+    width: 24px;
+    flex-shrink: 0;
+}
+
+.journal-metric .metric-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.journal-metric .metric-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Recovery Badge */
+.journal-metric.recovery-badge {
+    background: linear-gradient(135deg, rgba(180, 165, 196, 0.15), rgba(180, 165, 196, 0.08));
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    width: fit-content;
+    margin: var(--space-xs) 0;
+}
+
+.journal-metric.recovery-badge .metric-value {
+    color: var(--lavender);
+    font-weight: 600;
+}
+
+/* Journal Notes */
+.journal-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    background: var(--clay-50);
+    border-radius: var(--radius-sm);
+    margin: var(--space-xs) 0;
+}
+
+.journal-note .note-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.journal-note .note-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    font-style: italic;
+}
+
+/* Journal Tags */
+.journal-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: var(--space-xs) 0;
+}
+
+.journal-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: var(--forest-50);
+    color: var(--sage-dark);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    text-transform: capitalize;
+}
+
+/* Mini Metrics Grid */
+.journal-metrics-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    border-top: 1px solid var(--clay-100);
+    border-bottom: 1px solid var(--clay-100);
+    margin: var(--space-xs) 0;
+}
+
+.mini-metric {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    background: var(--clay-50);
+    border-radius: var(--radius-sm);
+}
+
+.mini-metric span:first-child {
+    font-size: 0.95rem;
+}
+
+/* Journal Page Responsive */
+@media (max-width: 768px) {
+    .journal-metrics-grid {
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .mini-metric {
+        width: 100%;
+    }
+
+    .journal-metric {
+        flex-wrap: wrap;
+    }
+}
+
 .insight-card {
     background: linear-gradient(135deg, rgba(139, 157, 131, 0.05), rgba(180, 165, 196, 0.05));
     border-radius: var(--radius-lg);
@@ -3729,6 +3871,77 @@ textarea:focus-visible {
 
 .checkin-modal-close:hover {
     color: var(--text-primary);
+}
+
+/* ============================================================
+   MEDICATION MODAL POPUP
+   ============================================================ */
+.medication-modal-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.medication-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.medication-modal-body {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  padding: var(--space-lg);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.medication-modal-overlay.active .medication-modal-body {
+  transform: translateY(0) scale(1);
+}
+
+.medication-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 50%;
+  z-index: 2;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.medication-modal-close:hover {
+  color: var(--text-primary);
+  background: var(--clay-100);
+}
+
+.medication-modal-content .domain-title {
+  margin-bottom: var(--space-md);
+  padding-right: 36px;
 }
 
 /* Make the banner-cta button look like the original anchor */
