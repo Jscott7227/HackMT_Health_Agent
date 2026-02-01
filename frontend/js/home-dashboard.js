@@ -1,16 +1,14 @@
 /* ============================================================
-   HOME DASHBOARD – renders all sections with faux data
-   (will be replaced with real API data later)
+   HOME DASHBOARD – renders all sections; loads goals from API when available
    ============================================================ */
 (function () {
   "use strict";
 
-  /* ---------- FAUX DATA ---------- */
+  /* ---------- FAUX DATA (fallback when no API or no goals) ---------- */
 
   /*
    * Each goal maps 1-to-1 with a DB row.
-   * Replace this array with a fetch() call later:
-   *   GET /api/users/:id/goals → [{ id, label, specific, measurable, ... }]
+   * When window.BenjiAPI and session exist, we fetch GET /goals/:id and use accepted goals for rings.
    */
   var fauxGoals = [
     {
@@ -333,9 +331,52 @@
     initCheckinModal();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initDashboard);
-  } else {
+  function mapApiGoalsToRings(accepted) {
+    if (!accepted || accepted.length === 0) return null;
+    var colors = ["#3a7d44", "#5a9a64", "#7ab884"];
+    return accepted.map(function (g, i) {
+      return {
+        id: g.id || "goal_" + i,
+        label: g.title || g.label || "Goal " + (i + 1),
+        specific: g.description || g.specific || "",
+        measurable: g.measurable || g.description || "",
+        currentValue: g.currentValue != null ? g.currentValue : 0,
+        targetValue: g.targetValue != null ? g.targetValue : 100,
+        unit: g.unit || "",
+        progressPct: g.progressPct != null ? g.progressPct : 0,
+        weekCurrent: g.weekCurrent != null ? g.weekCurrent : 1,
+        weekTotal: g.weekTotal != null ? g.weekTotal : 12,
+        startDate: g.startDate || new Date().toISOString().slice(0, 10),
+        endDate: g.endDate || "",
+        color: g.color || colors[i % colors.length],
+      };
+    });
+  }
+
+  function runInit() {
+    if (window.BenjiAPI && window.BenjiAPI.getSession) {
+      var session = window.BenjiAPI.getSession();
+      if (session && session.user_id) {
+        window.BenjiAPI.getGoals(session.user_id)
+          .then(function (data) {
+            var fromApi = mapApiGoalsToRings(data.accepted);
+            if (fromApi && fromApi.length > 0) {
+              fauxGoals = fromApi;
+            }
+            initDashboard();
+          })
+          .catch(function () {
+            initDashboard();
+          });
+        return;
+      }
+    }
     initDashboard();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", runInit);
+  } else {
+    runInit();
   }
 })();
