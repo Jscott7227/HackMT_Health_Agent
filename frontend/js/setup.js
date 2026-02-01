@@ -192,7 +192,11 @@ async function goTo(n) {
             void ring.offsetWidth;
             ring.style.animation = '';
         }
-        await fetchGoalsAndContinue();
+        const smartGoals = await fetchGoalsAndContinue();
+        localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
+
+        // Optional: slight delay so animation feels natural
+        await completeSetup();
     }
 
     updateCtaForScreen(n);
@@ -200,10 +204,14 @@ async function goTo(n) {
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+async function startAnalysis() {
+    await goTo(13);
+}
+
 async function fetchGoalsAndContinue() {
     var finalGoal = FINALGOAL
     const userId = session.user_id || null;
-
+    
     try {
         var res = await fetch('http://localhost:8000/goals', {
             method: 'POST',
@@ -222,9 +230,9 @@ async function fetchGoalsAndContinue() {
         await data
         var smartGoals = data.smart_goals || [];
 
-        localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
+        return smartGoals
+        
 
-        await completeSetup()
 
     } catch (err) {
         console.error("Goal fetch error:", err); // fail forward instead of trapping user

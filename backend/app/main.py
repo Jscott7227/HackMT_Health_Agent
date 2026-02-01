@@ -8,7 +8,8 @@ from uuid import uuid4
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from datetime import datetime
+from datetime import datetime, timedelta
+import random
 
 import json
 import os
@@ -383,8 +384,13 @@ def run_goals_endpoint(payload: RunGoalsRequest):
     Generate SMART goals for a user's input goal and optionally persist to user facts.
     """
     try:
-        d =  get_profileinfo(payload.user_id)
-
+        print("Payload received:", payload)
+        try:
+            d = get_profileinfo(payload.user_id)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"get_profileinfo failed: {str(e)}")
+        if not d:
+            raise HTTPException(404, detail=f"No profile found for user {payload.user_id}")
         user_facts = {
             "benji_facts": d.benji_facts,
             "height": d.height,
@@ -664,6 +670,21 @@ def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
     for goal in payload.goals:
         doc_ref = db.collection("Goals").document()
 
+        # Ensure EndDate is a datetime object; if string, convert
+        end_date = goal.get("EndDate")
+        if isinstance(end_date, str):
+            try:
+                # Attempt ISO format parsing
+                end_date = datetime.datetime.fromisoformat(end_date)
+            except ValueError:
+                # Fallback: random 3-7 weeks from now
+                weeks_offset = random.randint(3, 7)
+                end_date = datetime.datetime.utcnow() + datetime.timedelta(weeks=weeks_offset)
+        elif not end_date:
+            # If EndDate is None, also use random 3-7 weeks
+            weeks_offset = random.randint(3, 7)
+            end_date = datetime.utcnow() + timedelta(weeks=weeks_offset)
+
         doc_ref.set({
             "Specific": goal.get("Specific"),
             "Measurable": goal.get("Measurable"),
@@ -676,7 +697,9 @@ def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
 
             # duplicate for UI convenience
             "Description": goal.get("Specific"),
-            "EndDate": goal.get("EndDate"),
+
+            # store end date as Firestore timestamp
+            "EndDate": end_date,
 
             # empty structured check-ins
             "CheckIns": {
