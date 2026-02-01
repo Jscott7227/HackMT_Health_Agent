@@ -87,6 +87,7 @@
     padding: var(--space-lg) var(--space-md);
     position: relative;
     z-index: 1;
+    background: var(--bg-primary);
 }
 
 .onboarding-card {
@@ -98,6 +99,10 @@
     border: 1px solid var(--border-color);
     overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 4rem);
+    min-height: 0;
 }
 
 .onboarding-card.animate {
@@ -151,7 +156,10 @@
    ==================================== */
 .ob-screen {
     display: none;
-    padding: var(--space-xl) var(--space-lg) var(--space-lg);
+    padding: var(--space-sm) var(--space-lg) var(--space-xs);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .ob-screen.active {
@@ -196,8 +204,8 @@
     font-size: 0.8125rem;
     color: var(--text-muted);
     text-align: center;
-    margin-top: var(--space-sm);
-    line-height: 1.5;
+    margin-top: var(--space-xs);
+    line-height: 1.35;
 }
 
 .ob-microcopy button.ob-skip-link {
@@ -225,7 +233,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-xs);
 }
 
 .ob-option-card {
@@ -490,7 +498,7 @@
    Onboarding Activity Slider
    ==================================== */
 .ob-slider-wrap {
-    padding: var(--space-md) 0 var(--space-xs);
+    padding: var(--space-xs) 0 var(--space-xs);
 }
 
 .ob-slider {
@@ -502,7 +510,7 @@
     -webkit-appearance: none;
     appearance: none;
     cursor: pointer;
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-xs);
 }
 
 .ob-slider::-webkit-slider-thumb {
@@ -541,9 +549,9 @@
 .ob-slider-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 0.78125rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    margin-bottom: var(--space-xs);
+    margin-bottom: 0.3rem;
 }
 
 .ob-slider-current {
@@ -713,6 +721,7 @@
     transition: all var(--transition-base);
     box-shadow: 0 4px 14px rgba(1, 104, 68, 0.3);
     margin-top: var(--space-sm);
+    margin-bottom: var(--space-sm);
     letter-spacing: 0.01em;
 }
 
@@ -869,6 +878,30 @@
     display: block;
 }
 
+/* ====================================
+   Onboarding Welcome Screen Spacing
+   ==================================== */
+#screen-1 .ob-welcome-icon {
+    margin-bottom: var(--space-md);
+}
+
+#screen-1 .ob-headline {
+    margin-bottom: var(--space-sm);
+}
+
+#screen-1 .ob-subtext {
+    margin-bottom: var(--space-lg);
+}
+
+#screen-1 .ob-cta {
+    margin-top: var(--space-xs);
+}
+
+#screen-1 .ob-microcopy {
+    margin-top: 0.4rem;
+    margin-bottom: var(--space-sm);
+}
+
 
 /* ====================================
    Onboarding Consent Icon
@@ -897,19 +930,19 @@
    Onboarding 1-5 Labeled Scale
    ==================================== */
 .ob-labeled-scale {
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-xs);
 }
 
 .ob-scale-question {
     font-size: 0.9375rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: var(--space-sm);
+    margin-bottom: 0.2rem;
 }
 
 .ob-scale-track {
     display: flex;
-    gap: 6px;
+    gap: 3px;
 }
 
 .ob-scale-pip {
@@ -917,8 +950,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: var(--space-xs) 2px;
+    gap: 3px;
+    padding: 2px 1px;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -930,8 +963,8 @@
 }
 
 .ob-pip-dot {
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: var(--clay-100);
     border: 2px solid var(--clay-200);
@@ -961,11 +994,11 @@
 }
 
 .ob-pip-label {
-    font-size: 0.6875rem;
+    font-size: 0.58rem;
     font-weight: 500;
     color: var(--text-muted);
     text-align: center;
-    line-height: 1.3;
+    line-height: 1.15;
     transition: color var(--transition-fast);
 }
 
@@ -979,9 +1012,9 @@
     font-weight: 400;
     color: var(--text-muted);
     text-align: center;
-    line-height: 1.4;
-    min-height: 1.4em;
-    margin-top: 6px;
+    line-height: 1.25;
+    min-height: 0;
+    margin-top: 0;
     transition: color var(--transition-base);
 }
 
@@ -1094,7 +1127,7 @@
     }
 
     .ob-screen {
-        padding: var(--space-lg) var(--space-sm) var(--space-md);
+        padding: var(--space-sm) var(--space-sm) var(--space-xs);
     }
 
     .ob-headline {
@@ -1115,16 +1148,16 @@
     }
 
     .ob-pip-dot {
-        width: 30px;
-        height: 30px;
+        width: 26px;
+        height: 26px;
     }
 
     .ob-pip-label {
-        font-size: 0.625rem;
+        font-size: 0.56rem;
     }
 
     .ob-scale-desc-line {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
     }
 }
 
@@ -3705,9 +3738,9 @@ button.banner-cta {
     font-family: var(--font-body);
 }
 
-body {
+body[data-page="chat"] {
     font-family: 'DM Sans', sans-serif;
-    background-color: #f5f5f5;
+    background-color: var(--bg-primary);
     margin: 0;
     padding: 0;
     display: flex;
