@@ -1,0 +1,65 @@
+rules_version = '2';
+
+// Benji app – Firestore security rules
+// This app uses database id "benji". In Firebase Console, select that database when editing rules.
+// The backend uses the Admin SDK (service account) and bypasses these rules.
+// These rules apply to: client SDK access (e.g. future web/mobile), and Firebase Console usage.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: true if the request is authenticated and the doc belongs to that user
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // User – users can read/update/delete only their own document (doc id = uid)
+    match /User/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // ProfileInfo – one doc per user (document id = user id)
+    match /ProfileInfo/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // CheckIns – documents have UserID field; users can only access their own check-ins
+    match /CheckIns/{docId} {
+      allow read, update, delete: if request.auth != null && resource.data.UserID == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.UserID == request.auth.uid;
+    }
+
+    // Goals – one doc per user (document id = user id)
+    match /Goals/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // ChatHistory – one doc per user (document id = user id)
+    match /ChatHistory/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Medications – one doc per user (document id = user id)
+    match /Medications/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // MedicationCompliance – document id = "{userId}_{date}"; user_id in document
+    match /MedicationCompliance/{docId} {
+      allow read, write: if request.auth != null
+        && (resource == null
+          ? request.resource.data.user_id == request.auth.uid
+          : resource.data.user_id == request.auth.uid);
+    }
+
+    // Debug / internal – restrict to backend only (no client access)
+    match /debug/{docId} {
+      allow read, write: if false;
+    }
+
+    // Explicit deny for any other collection (same as your previous "allow read, write: if false")
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
