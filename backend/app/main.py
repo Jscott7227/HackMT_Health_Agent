@@ -96,20 +96,24 @@ class DeleteGoalEntryResponse(BaseModel):
     message: str
 
 class ProfileFields(BaseModel):
-    BenjiFacts: str = "{}"
-    Height: Optional[str] = None
-    Weight: Optional[str] = None
+    benji_facts: str = "{}"
+    height: Optional[str] = None
+    weight: Optional[str] = None
 
 class CreateProfileInfoRequest(BaseModel):
-    profile: ProfileFields
+    benji_facts: Optional[str] = "{}"
+    height: Optional[str] = None
+    weight: Optional[str] = None
 
 class ProfileFieldsPatch(BaseModel):
-    BenjiFacts: Optional[str] = None
-    Height: Optional[str] = None
-    Weight: Optional[str] = None
+    benji_facts: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[str] = None
 
 class UpdateProfileInfoRequest(BaseModel):
-    profile: ProfileFieldsPatch
+    benji_facts: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[str] = None
 
 class ProfileInfoOut(BaseModel):
     user_id: str
@@ -452,14 +456,16 @@ def create_profileinfo(user_id: str, payload: CreateProfileInfoRequest):
     if doc_ref.get().exists:
         raise HTTPException(status_code=409, detail="ProfileInfo already exists for this user")
 
-    # Start with UserID, then merge every key from the JSON dict
-    doc_data = {"UserID": user_id}
+    # Build doc_data with PascalCase for Firestore
+    doc_data = {
+        "UserID": user_id,
+        "BenjiFacts": payload.benji_facts or "{}",
+        "Height": payload.height,
+        "Weight": payload.weight
+    }
 
-    safe_profile = payload.profile.model_dump()
-    safe_profile.pop("UserID", None)
-    doc_data.update(safe_profile)
-
-    if doc_data.get("BenjiFacts") is not None:
+    # Validate BenjiFacts is valid JSON
+    if doc_data.get("BenjiFacts"):
         try:
             json.loads(doc_data["BenjiFacts"])
         except Exception:
@@ -504,11 +510,14 @@ def update_profileinfo(user_id: str, payload: UpdateProfileInfoRequest):
     if not snap.exists:
         raise HTTPException(status_code=404, detail="ProfileInfo not found")
 
-    if payload.profile is None or len(payload.profile) == 0:
-        raise HTTPException(status_code=400, detail="No fields provided to update")
-
-    updates = payload.profile.model_dump(exclude_none=True)
-    updates.pop("UserID", None)
+    # Map lowercase to PascalCase for Firestore
+    updates = {}
+    if payload.benji_facts is not None:
+        updates["BenjiFacts"] = payload.benji_facts
+    if payload.height is not None:
+        updates["Height"] = payload.height
+    if payload.weight is not None:
+        updates["Weight"] = payload.weight
 
     if "BenjiFacts" in updates:
         try:

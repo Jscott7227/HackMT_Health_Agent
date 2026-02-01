@@ -1,0 +1,5 @@
+Make things look prettier
+make text input text boxes prettier
+replace skip button with edit
+make additional button that can regenerate goals, keep the ones that were selected.
+change manual input parameters.
