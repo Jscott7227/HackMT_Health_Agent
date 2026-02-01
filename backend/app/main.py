@@ -840,15 +840,21 @@ class MedicationScheduleResponse(BaseModel):
     warnings: List[str]
     spacingNotes: List[str]
     timeSlotsDetailed: List[DetailedTimeSlot] = []  # New: calendar-style schedule
+    personalizationNotes: Optional[str] = None  # AI-generated explanation (only when use_ai=true)
 
 
 @app.get("/medication-schedule/{user_id}", response_model=MedicationScheduleResponse)
-def get_medication_schedule(user_id: str):
+def get_medication_schedule(user_id: str, use_ai: bool = False):
     """
     Generate a structured medication schedule with contraindication warnings.
-    Uses MedicationScheduleTool and ContraindicationCheckTool from tools.py.
+    
+    Args:
+        user_id: User ID to fetch medications for
+        use_ai: If True, use AI agent for personalized scheduling; if False, use rule-based tool
+    
+    Uses MedicationScheduleTool (rule-based) or MedicationScheduleAgentTool (AI) from tools.py.
     """
-    from backend.llm.tools import MedicationScheduleTool, ContraindicationCheckTool
+    from backend.llm.tools import MedicationScheduleTool, ContraindicationCheckTool, MedicationScheduleAgentTool
     
     # Validate user exists
     user_snap = db.collection("User").document(user_id).get()
@@ -859,36 +865,32 @@ def get_medication_schedule(user_id: str):
     doc_ref = db.collection("Medications").document(user_id)
     snap = doc_ref.get()
     
+    empty_response = MedicationScheduleResponse(
+        timeSlots={"morning": [], "afternoon": [], "evening": [], "night": []},
+        foodInstructions=[],
+        warnings=["No medications found. Add medications to generate a schedule."],
+        spacingNotes=[],
+        personalizationNotes=None
+    )
+    
     if not snap.exists:
-        return MedicationScheduleResponse(
-            timeSlots={"morning": [], "afternoon": [], "evening": [], "night": []},
-            foodInstructions=[],
-            warnings=["No medications found. Add medications to generate a schedule."],
-            spacingNotes=[]
-        )
+        return empty_response
     
     data = snap.to_dict()
     medications = data.get("list", [])
     
     if not medications:
-        return MedicationScheduleResponse(
-            timeSlots={"morning": [], "afternoon": [], "evening": [], "night": []},
-            foodInstructions=[],
-            warnings=["No medications found. Add medications to generate a schedule."],
-            spacingNotes=[]
-        )
+        return empty_response
     
     # Build facts dict for the tools
     facts = {"medications": medications}
     
-    # Get schedule from tool
-    schedule_result = MedicationScheduleTool(facts)
-    
-    # Get contraindication warnings from tool
+    # Get contraindication warnings from tool (used in both paths)
     contraindication_result = ContraindicationCheckTool(facts)
+    warnings = contraindication_result.get("warnings", [])
     
-    # Also check explicit foodInstruction field from medication model
-    food_instructions = schedule_result.get("food_instructions", [])
+    # Build food_instructions from medication foodInstruction field
+    food_instructions = []
     for med in medications:
         food_inst = med.get("foodInstruction")
         name = med.get("name", "Unknown")
@@ -901,58 +903,161 @@ def get_medication_schedule(user_id: str):
             if instruction not in food_instructions:
                 food_instructions.append(instruction)
     
-    # Build timeSlotsDetailed for calendar-style view
-    slot_time_mapping = {
-        "morning": ("08:00", "8:00 AM"),
-        "afternoon": ("12:00", "12:00 PM"),
-        "evening": ("18:00", "6:00 PM"),
-        "night": ("21:00", "9:00 PM")
-    }
-    
+    personalization_notes = None
     time_slots_detailed = []
-    for slot in ["morning", "afternoon", "evening", "night"]:
-        meds_in_slot = schedule_result.get(slot, [])
-        if not meds_in_slot:
-            continue
+    spacing_notes = []
+    use_ai_time_slots = False  # Flag to track if we used AI's explicit time_slots
+    
+    if use_ai:
+        # --- AI Path: Use MedicationScheduleAgentTool ---
+        agent_result = MedicationScheduleAgentTool(
+            medications=medications,
+            contraindication_warnings=warnings,
+            food_instructions=food_instructions,
+            model=benji.model
+        )
         
-        time_val, label = slot_time_mapping[slot]
-        
-        # Build foodNote for this slot: match med names to food_instructions
-        with_food = []
-        empty_stomach = []
-        
-        for med_str in meds_in_slot:
-            # Extract med name from string like "Lisinopril 10 mg" or "Metformin 500 mg (1st dose)"
-            med_name_lower = med_str.split()[0].lower() if med_str else ""
+        if agent_result.get("_fallback"):
+            # AI failed, fall back to rule-based
+            schedule_result = MedicationScheduleTool(facts)
+        elif agent_result.get("time_slots"):
+            # AI returned explicit time_slots (new format)
+            use_ai_time_slots = True
+            personalization_notes = agent_result.get("personalization_notes")
+            spacing_notes = agent_result.get("spacing_notes", [])
             
-            # Check food_instructions list
-            for instruction in food_instructions:
-                instr_lower = instruction.lower()
-                if med_name_lower and med_name_lower in instr_lower:
-                    if "with food" in instr_lower:
-                        med_display = med_str.split()[0]  # Just the name
-                        if med_display not in with_food:
-                            with_food.append(med_display)
-                    elif "empty stomach" in instr_lower:
-                        med_display = med_str.split()[0]
-                        if med_display not in empty_stomach:
-                            empty_stomach.append(med_display)
+            # Build timeSlotsDetailed directly from AI's time_slots
+            for slot_data in agent_result["time_slots"]:
+                time_val = slot_data.get("time", "08:00")
+                label = slot_data.get("label", time_val)
+                meds = slot_data.get("medications", [])
+                food_note = slot_data.get("foodNote", "")
+                
+                if not meds:
+                    continue
+                
+                # Determine slot name from time for compatibility
+                try:
+                    hour = int(time_val.split(":")[0])
+                    if hour < 10:
+                        slot_name = "early_morning"
+                    elif hour < 12:
+                        slot_name = "morning"
+                    elif hour < 14:
+                        slot_name = "midday"
+                    elif hour < 17:
+                        slot_name = "afternoon"
+                    elif hour < 20:
+                        slot_name = "evening"
+                    else:
+                        slot_name = "night"
+                except:
+                    slot_name = "custom"
+                
+                time_slots_detailed.append(DetailedTimeSlot(
+                    time=time_val,
+                    label=label,
+                    slot=slot_name,
+                    medications=meds,
+                    foodNote=food_note
+                ))
+            
+            # Sort by time
+            time_slots_detailed.sort(key=lambda x: x.time)
+            
+            # Create schedule_result for backward compatibility (timeSlots dict)
+            schedule_result = {
+                "morning": [],
+                "afternoon": [],
+                "evening": [],
+                "night": [],
+                "spacing_notes": spacing_notes
+            }
+            # Populate the legacy timeSlots from AI result
+            for slot_data in agent_result["time_slots"]:
+                time_val = slot_data.get("time", "08:00")
+                meds = slot_data.get("medications", [])
+                try:
+                    hour = int(time_val.split(":")[0])
+                    if hour < 12:
+                        schedule_result["morning"].extend(meds)
+                    elif hour < 17:
+                        schedule_result["afternoon"].extend(meds)
+                    elif hour < 20:
+                        schedule_result["evening"].extend(meds)
+                    else:
+                        schedule_result["night"].extend(meds)
+                except:
+                    schedule_result["morning"].extend(meds)
+        else:
+            # AI returned old format (morning/afternoon/evening/night) - use as-is
+            schedule_result = agent_result
+            personalization_notes = agent_result.get("personalization_notes")
+            spacing_notes = agent_result.get("spacing_notes", [])
+    else:
+        # --- Standard Path: Use rule-based MedicationScheduleTool ---
+        schedule_result = MedicationScheduleTool(facts)
+    
+    # Add food_instructions from rule-based tool if present
+    rule_food_instructions = schedule_result.get("food_instructions", [])
+    for instr in rule_food_instructions:
+        if instr not in food_instructions:
+            food_instructions.append(instr)
+    
+    # Build timeSlotsDetailed for calendar-style view (only if not already built from AI time_slots)
+    if not use_ai_time_slots:
+        slot_time_mapping = {
+            "morning": ("08:00", "8:00 AM"),
+            "afternoon": ("12:00", "12:00 PM"),
+            "evening": ("18:00", "6:00 PM"),
+            "night": ("21:00", "9:00 PM")
+        }
         
-        # Build the foodNote string
-        food_note_parts = []
-        if with_food:
-            food_note_parts.append(f"With food: {', '.join(with_food)}")
-        if empty_stomach:
-            food_note_parts.append(f"On empty stomach: {', '.join(empty_stomach)}")
-        food_note = ". ".join(food_note_parts)
+        for slot in ["morning", "afternoon", "evening", "night"]:
+            meds_in_slot = schedule_result.get(slot, [])
+            if not meds_in_slot:
+                continue
+            
+            time_val, label = slot_time_mapping[slot]
+            
+            # Build foodNote for this slot: match med names to food_instructions
+            with_food = []
+            empty_stomach = []
+            
+            for med_str in meds_in_slot:
+                # Extract med name from string like "Lisinopril 10 mg" or "Metformin 500 mg (1st dose)"
+                med_name_lower = med_str.split()[0].lower() if med_str else ""
+                
+                # Check food_instructions list
+                for instruction in food_instructions:
+                    instr_lower = instruction.lower()
+                    if med_name_lower and med_name_lower in instr_lower:
+                        if "with food" in instr_lower:
+                            med_display = med_str.split()[0]  # Just the name
+                            if med_display not in with_food:
+                                with_food.append(med_display)
+                        elif "empty stomach" in instr_lower:
+                            med_display = med_str.split()[0]
+                            if med_display not in empty_stomach:
+                                empty_stomach.append(med_display)
+            
+            # Build the foodNote string
+            food_note_parts = []
+            if with_food:
+                food_note_parts.append(f"With food: {', '.join(with_food)}")
+            if empty_stomach:
+                food_note_parts.append(f"On empty stomach: {', '.join(empty_stomach)}")
+            food_note = ". ".join(food_note_parts)
+            
+            time_slots_detailed.append(DetailedTimeSlot(
+                time=time_val,
+                label=label,
+                slot=slot,
+                medications=meds_in_slot,
+                foodNote=food_note
+            ))
         
-        time_slots_detailed.append(DetailedTimeSlot(
-            time=time_val,
-            label=label,
-            slot=slot,
-            medications=meds_in_slot,
-            foodNote=food_note
-        ))
+        spacing_notes = schedule_result.get("spacing_notes", [])
     
     return MedicationScheduleResponse(
         timeSlots={
@@ -962,9 +1067,10 @@ def get_medication_schedule(user_id: str):
             "night": schedule_result.get("night", [])
         },
         foodInstructions=food_instructions,
-        warnings=contraindication_result.get("warnings", []),
-        spacingNotes=schedule_result.get("spacing_notes", []),
-        timeSlotsDetailed=time_slots_detailed
+        warnings=warnings,
+        spacingNotes=spacing_notes,
+        timeSlotsDetailed=time_slots_detailed,
+        personalizationNotes=personalization_notes
     )
 
 

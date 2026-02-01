@@ -503,6 +503,210 @@ def ContraindicationCheckTool(facts: Dict) -> Dict:
     }
 
 
+def MedicationScheduleAgentTool(
+    medications: List[Dict],
+    contraindication_warnings: List[str],
+    food_instructions: List[str],
+    model
+) -> Dict:
+    """
+    Generate a personalized medication schedule using LLM with explicit time slots.
+    
+    Args:
+        medications: List of medication dicts with name, strength, frequency, foodInstruction, notes
+        contraindication_warnings: Pre-computed warnings from ContraindicationCheckTool
+        food_instructions: List of food instruction strings
+        model: ChatGoogleGenerativeAI instance
+    
+    Returns:
+        Dict with time_slots (explicit times 6 AM - 10 PM), spacing_notes, personalization_notes
+        Or {"_fallback": True} if LLM fails
+    """
+    if not medications:
+        return {"_fallback": True}
+    
+    # Build list of medication names for validation
+    med_names = [f"{m.get('name', 'Unknown')} {m.get('strength', '')}".strip() for m in medications]
+    
+    # Build the prompt with explicit time slots (6 AM - 10 PM)
+    prompt = (
+        "You are a medication scheduling assistant. Your role is to recommend SPECIFIC TIMES "
+        "between 6:00 AM and 10:00 PM to take each medication.\n\n"
+        
+        "IMPORTANT RULES:\n"
+        "- Do NOT give dosing or medical advice.\n"
+        "- Only recommend WHEN (specific time of day) to take each medication.\n"
+        "- Always recommend consulting a healthcare provider for medical decisions.\n"
+        "- You MUST use specific times, NOT generic slots like 'morning' or 'evening'.\n\n"
+        
+        "AVAILABLE TIME SLOTS (use any of these, or times in between):\n"
+        "- 06:00 (6:00 AM) - Early morning, before breakfast\n"
+        "- 07:00 (7:00 AM) - Morning, before or with breakfast\n"
+        "- 08:00 (8:00 AM) - With breakfast\n"
+        "- 10:00 (10:00 AM) - Mid-morning\n"
+        "- 12:00 (12:00 PM) - With lunch\n"
+        "- 14:00 (2:00 PM) - Afternoon\n"
+        "- 18:00 (6:00 PM) - With dinner\n"
+        "- 20:00 (8:00 PM) - Evening\n"
+        "- 21:00 (9:00 PM) - Before bed\n"
+        "- 22:00 (10:00 PM) - Bedtime\n\n"
+        
+        "SCHEDULING GUIDELINES:\n"
+        "1. **SPACING**: Medications with contraindications or interactions MUST be placed at least 2 hours apart.\n"
+        "   - If two medications interact, put them at different times (e.g., 6:00 AM and 8:00 AM).\n"
+        "   - Document this in spacing_notes.\n\n"
+        "2. **EMPTY STOMACH medications** (foodInstruction='empty_stomach'):\n"
+        "   - Schedule at 6:00 AM or 7:00 AM (30-60 min before breakfast)\n"
+        "   - OR at 21:00 or 22:00 (before bed, 2+ hours after dinner)\n"
+        "   - Set foodNote to 'Take on empty stomach'\n\n"
+        "3. **WITH FOOD medications** (foodInstruction='with_food'):\n"
+        "   - Schedule at meal times: 08:00 (breakfast), 12:00 (lunch), or 18:00 (dinner)\n"
+        "   - Set foodNote to 'Take with food'\n\n"
+        "4. **FREQUENCY**:\n"
+        "   - 'once daily': Pick the single best time based on medication type and food requirements\n"
+        "   - 'twice daily': Space at least 10-12 hours apart (e.g., 07:00 and 19:00)\n"
+        "   - 'three times daily': Space 5-6 hours apart (e.g., 07:00, 13:00, 19:00)\n\n"
+        "5. **COMMON MEDICATION KNOWLEDGE**:\n"
+        "   - Levothyroxine: 06:00 AM on empty stomach (30-60 min before food)\n"
+        "   - Metformin: with meals (08:00, 12:00, 18:00) to reduce GI side effects\n"
+        "   - Blood pressure meds (lisinopril, amlodipine): morning (07:00 or 08:00)\n"
+        "   - Statins (simvastatin, atorvastatin): evening/night (20:00 or 21:00)\n"
+        "   - Proton pump inhibitors (omeprazole): 06:00-07:00 AM before breakfast\n"
+        "   - Calcium/Iron supplements: space 2+ hours from thyroid meds\n\n"
+        
+        f"MEDICATIONS TO SCHEDULE:\n{json.dumps(medications, indent=2)}\n\n"
+        
+        f"CONTRAINDICATION WARNINGS (MUST respect spacing):\n{json.dumps(contraindication_warnings, indent=2)}\n\n"
+        
+        f"FOOD INSTRUCTIONS:\n{json.dumps(food_instructions, indent=2)}\n\n"
+        
+        "OUTPUT FORMAT - Return STRICT JSON only, no markdown:\n"
+        "{\n"
+        '  "time_slots": [\n'
+        '    {\n'
+        '      "time": "06:00",\n'
+        '      "label": "6:00 AM",\n'
+        '      "medications": ["Levothyroxine 50 mcg"],\n'
+        '      "foodNote": "Take on empty stomach, 30-60 min before breakfast"\n'
+        '    },\n'
+        '    {\n'
+        '      "time": "08:00",\n'
+        '      "label": "8:00 AM",\n'
+        '      "medications": ["Metformin 500 mg (1st dose)", "Lisinopril 10 mg"],\n'
+        '      "foodNote": "Take with breakfast"\n'
+        '    },\n'
+        '    {\n'
+        '      "time": "18:00",\n'
+        '      "label": "6:00 PM",\n'
+        '      "medications": ["Metformin 500 mg (2nd dose)"],\n'
+        '      "foodNote": "Take with dinner"\n'
+        '    },\n'
+        '    {\n'
+        '      "time": "21:00",\n'
+        '      "label": "9:00 PM",\n'
+        '      "medications": ["Atorvastatin 20 mg"],\n'
+        '      "foodNote": ""\n'
+        '    }\n'
+        '  ],\n'
+        '  "spacing_notes": [\n'
+        '    "Levothyroxine at 6:00 AM, Metformin at 8:00 AM - spaced 2 hours apart as thyroid meds should be taken separately."\n'
+        '  ],\n'
+        '  "personalization_notes": "This schedule spaces thyroid medication from other meds, aligns Metformin with meals to reduce GI issues, and places the statin at night for optimal effectiveness."\n'
+        "}\n\n"
+        
+        "CRITICAL REQUIREMENTS:\n"
+        "1. Assign EVERY medication to at least one time slot. Do not skip any.\n"
+        "2. Use specific times (HH:mm format) between 06:00 and 22:00.\n"
+        "3. Each time_slot must have: time, label, medications (array), foodNote (string).\n"
+        "4. Sort time_slots by time (earliest first).\n"
+        "5. Include spacing_notes explaining any timing decisions for interactions.\n"
+        "6. Include personalization_notes summarizing the overall schedule rationale.\n"
+        "Only output JSON. No explanations outside the JSON."
+    )
+    
+    messages = [
+        SystemMessage(content="You are a medication scheduling assistant that outputs only valid JSON with specific times. Do not give medical advice, only timing recommendations. Use times between 06:00 and 22:00."),
+        HumanMessage(content=prompt)
+    ]
+    
+    try:
+        response = model.invoke(messages)
+        raw = response.content.strip()
+        
+        # Strip markdown code blocks if model adds them
+        if raw.startswith("```"):
+            lines = raw.split("\n")
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines[-1].startswith("```"):
+                lines = lines[:-1]
+            raw = "\n".join(lines)
+        
+        data = json.loads(raw)
+        
+        # Validate time_slots exists and is a list
+        if "time_slots" not in data or not isinstance(data.get("time_slots"), list):
+            print("MedicationScheduleAgentTool: Missing or invalid time_slots")
+            return {"_fallback": True}
+        
+        time_slots = data["time_slots"]
+        
+        # Validate each time slot has required fields
+        for slot in time_slots:
+            if not isinstance(slot, dict):
+                print("MedicationScheduleAgentTool: time_slot is not a dict")
+                return {"_fallback": True}
+            if "time" not in slot or "medications" not in slot:
+                print("MedicationScheduleAgentTool: time_slot missing time or medications")
+                return {"_fallback": True}
+            if not isinstance(slot.get("medications"), list):
+                print("MedicationScheduleAgentTool: medications is not a list")
+                return {"_fallback": True}
+            # Ensure label exists
+            if "label" not in slot:
+                # Generate label from time
+                time_str = slot["time"]
+                try:
+                    hour = int(time_str.split(":")[0])
+                    minute = time_str.split(":")[1] if ":" in time_str else "00"
+                    if hour < 12:
+                        slot["label"] = f"{hour}:{minute} AM"
+                    elif hour == 12:
+                        slot["label"] = f"12:{minute} PM"
+                    else:
+                        slot["label"] = f"{hour - 12}:{minute} PM"
+                except:
+                    slot["label"] = time_str
+            # Ensure foodNote exists
+            if "foodNote" not in slot:
+                slot["foodNote"] = ""
+        
+        # Check that at least some medications were assigned
+        total_assigned = sum(len(slot.get("medications", [])) for slot in time_slots)
+        if total_assigned == 0 and len(medications) > 0:
+            print("MedicationScheduleAgentTool: No medications assigned")
+            return {"_fallback": True}
+        
+        # Sort time_slots by time
+        try:
+            time_slots.sort(key=lambda x: x.get("time", "99:99"))
+        except:
+            pass  # If sorting fails, keep original order
+        
+        # Ensure spacing_notes and personalization_notes exist
+        if "spacing_notes" not in data:
+            data["spacing_notes"] = []
+        if "personalization_notes" not in data:
+            data["personalization_notes"] = None
+        
+        return data
+        
+    except (json.JSONDecodeError, Exception) as e:
+        # Return fallback sentinel on any error
+        print(f"MedicationScheduleAgentTool error: {e}")
+        return {"_fallback": True}
+
+
 # -----------------------------
 # TOOL REGISTRIES
 # -----------------------------
@@ -526,4 +730,5 @@ OPTIONAL_TOOLS = {
     "emotion_eval": WellnessEmotionEvalTool,
     "medication_schedule": MedicationScheduleTool,
     "contraindication_check": ContraindicationCheckTool,
+    "medication_schedule_agent": MedicationScheduleAgentTool,
 }

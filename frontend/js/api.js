@@ -110,15 +110,21 @@
       });
     },
 
-    getMedicationSchedule: function (userId) {
-      return request("/medication-schedule/" + userId).then(function (r) {
+    getMedicationSchedule: function (userId, useAi) {
+      // Build URL with optional use_ai query parameter
+      var url = "/medication-schedule/" + userId;
+      if (useAi === true) {
+        url += "?use_ai=true";
+      }
+      return request(url).then(function (r) {
         if (r.status === 404) {
           return {
             timeSlots: { morning: [], afternoon: [], evening: [], night: [] },
             foodInstructions: [],
             warnings: [],
             spacingNotes: [],
-            timeSlotsDetailed: []
+            timeSlotsDetailed: [],
+            personalizationNotes: null
           };
         }
         if (!r.ok) throw new Error("Medication schedule fetch failed");

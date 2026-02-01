@@ -4,6 +4,7 @@
 
   // ---- Configuration ----
   const STORAGE_KEY = "Benji_medications";
+  const SCHEDULE_MODE_KEY = "Benji_medication_schedule_mode"; // 'standard' or 'ai'
   const BACKEND_URL = "http://127.0.0.1:8000";
 
   // ---- State ----
@@ -22,8 +23,12 @@
   const cancelMedBtn = $("#cancelMedBtn");
   const saveBtnText = $("#saveBtnText");
   const medicationModalClose = $("#medicationModalClose");
-  const generateScheduleBtn = $("#generateScheduleBtn");
+  const generateScheduleBtn = $("#generateScheduleBtn"); // Legacy (kept for backward compatibility)
+  const standardScheduleBtn = $("#standardScheduleBtn");
+  const benjiScheduleBtn = $("#benjiScheduleBtn");
   const scheduleDisplay = $("#scheduleDisplay");
+  const personalizationNotes = $("#personalizationNotes");
+  const personalizationNotesText = $("#personalizationNotesText");
   const loadingOverlay = $("#loadingOverlay");
 
   // Form inputs
@@ -343,7 +348,10 @@
   }
 
   // ---- Schedule Generation (Structured API) ----
-  async function fetchSchedule(showLoadingIndicator = true) {
+  // Track which schedule mode is active
+  let currentScheduleMode = 'standard'; // 'standard' or 'ai'
+
+  async function fetchSchedule(showLoadingIndicator = true, useAi = false) {
     const userId = getUserId();
     if (!userId) {
       // Not logged in - show empty state
@@ -354,21 +362,35 @@
           </p>
         `;
       }
+      // Hide personalization notes when not logged in
+      if (personalizationNotes) personalizationNotes.style.display = "none";
       return;
     }
 
     if (showLoadingIndicator) showLoading(true);
 
+    // Update button states
+    currentScheduleMode = useAi ? 'ai' : 'standard';
+    updateScheduleButtonStates();
+
     try {
-      const response = await fetch(`${BACKEND_URL}/medication-schedule/${userId}`);
+      // Build URL with optional use_ai parameter
+      let url = `${BACKEND_URL}/medication-schedule/${userId}`;
+      if (useAi) {
+        url += "?use_ai=true";
+      }
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch schedule: ${response.statusText}`);
       }
 
       const data = await response.json();
-      displayStructuredSchedule(data);
-      if (showLoadingIndicator) showMessage("Schedule loaded", "success");
+      displayStructuredSchedule(data, useAi);
+      if (showLoadingIndicator) {
+        showMessage(useAi ? "Benji's schedule loaded" : "Standard schedule loaded", "success");
+      }
     } catch (e) {
       console.error("Error fetching schedule:", e);
       if (scheduleDisplay) {
@@ -379,13 +401,43 @@
           </div>
         `;
       }
+      // Hide personalization notes on error
+      if (personalizationNotes) personalizationNotes.style.display = "none";
     } finally {
       if (showLoadingIndicator) showLoading(false);
     }
   }
 
-  function displayStructuredSchedule(schedule) {
-    const { timeSlotsDetailed, warnings } = schedule;
+  function updateScheduleButtonStates() {
+    // Update button styles to show which is active
+    if (standardScheduleBtn) {
+      if (currentScheduleMode === 'standard') {
+        standardScheduleBtn.classList.add('btn-primary');
+      } else {
+        standardScheduleBtn.classList.remove('btn-primary');
+      }
+    }
+    if (benjiScheduleBtn) {
+      if (currentScheduleMode === 'ai') {
+        benjiScheduleBtn.classList.add('btn-primary');
+      } else {
+        benjiScheduleBtn.classList.remove('btn-primary');
+      }
+    }
+  }
+
+  function displayStructuredSchedule(schedule, isAiSchedule = false) {
+    const { timeSlotsDetailed, warnings, personalizationNotes: notes } = schedule;
+
+    // Show or hide personalization notes based on AI mode and content
+    if (personalizationNotes && personalizationNotesText) {
+      if (isAiSchedule && notes) {
+        personalizationNotesText.textContent = notes;
+        personalizationNotes.style.display = "block";
+      } else {
+        personalizationNotes.style.display = "none";
+      }
+    }
 
     // Use calendar-style view from timeSlotsDetailed (option A: only show detailed, not generalized)
     if (!timeSlotsDetailed || timeSlotsDetailed.length === 0) {
@@ -624,8 +676,21 @@
     hideForm();
   });
 
+  // Legacy button (kept for backward compatibility)
   generateScheduleBtn?.addEventListener("click", () => {
-    fetchSchedule();
+    fetchSchedule(true, false); // Standard schedule
+  });
+
+  // Standard Schedule button
+  standardScheduleBtn?.addEventListener("click", () => {
+    localStorage.setItem(SCHEDULE_MODE_KEY, 'standard');
+    fetchSchedule(true, false); // useAi = false
+  });
+
+  // Benji's Suggested Schedule button (AI-powered)
+  benjiScheduleBtn?.addEventListener("click", () => {
+    localStorage.setItem(SCHEDULE_MODE_KEY, 'ai');
+    fetchSchedule(true, true); // useAi = true
   });
 
   // Compliance date picker
@@ -640,8 +705,17 @@
   // ---- Initialization ----
   async function init() {
     await loadMedicationsFromAPI();
-    // Auto-load schedule on page load (persistence)
-    await fetchSchedule(false);
+    
+    // Auto-load schedule on page load with persisted mode
+    const savedMode = localStorage.getItem(SCHEDULE_MODE_KEY);
+    const useAi = savedMode === 'ai';
+    
+    // Set initial button states based on saved mode
+    currentScheduleMode = useAi ? 'ai' : 'standard';
+    updateScheduleButtonStates();
+    
+    // Load the schedule with the saved mode (no loading indicator on init)
+    await fetchSchedule(false, useAi);
     await loadCompliance(currentComplianceDate);
   }
 
