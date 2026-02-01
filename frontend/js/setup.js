@@ -82,20 +82,25 @@ function getSession() {
 }
 
 function buildBenjiFacts() {
-    var parts = [];
-    if (state.goal) parts.push("Goal: " + (GOAL_LABELS[state.goal] || state.goal));
-    if (state.experience) parts.push("Experience: " + (EXP_LABELS[state.experience] || state.experience));
-    if (state.constraints && state.constraints.length) parts.push("Constraints: " + state.constraints.join(", "));
-    if (state.health && state.health.length) {
-        var healthStr = state.health.join(", ");
-        if (state.healthDetail) healthStr += " (" + state.healthDetail + ")";
-        parts.push("Health: " + healthStr);
-    }
-    if (state.gender) parts.push("Gender: " + state.gender);
-    if (state.cycleTracking) parts.push("Cycle tracking: " + state.cycleTracking);
-    if (state.medTracking === 'yes') parts.push("Medications: " + (state.medList || 'Yes'));
-    if (state.mentalReflection) parts.push("Notes: " + state.mentalReflection);
-    return parts.join(" | ");
+    var factsObj = {};
+if (state.goal) factsObj.goal = GOAL_LABELS[state.goal] || state.goal;
+if (state.experience) factsObj.experience = EXP_LABELS[state.experience] || state.experience;
+if (state.constraints && state.constraints.length) factsObj.constraints = state.constraints;
+if (state.health && state.health.length) {
+    factsObj.health = state.health;
+    if (state.healthDetail) factsObj.healthDetail = state.healthDetail;
+}
+if (state.gender) factsObj.gender = state.gender;
+if (state.cycleTracking) factsObj.cycleTracking = state.cycleTracking;
+if (state.medTracking === 'yes') factsObj.medications = state.medList || 'Yes';
+if (state.mentalReflection) factsObj.notes = state.mentalReflection;
+if (state.mentalConsentNote) factsObj.mentalConsentNote = state.mentalConsentNote;
+if (state.mood) factsObj.mood = GENERIC_SCALE[state.mood];
+if (state.stress) factsObj.stress = GENERIC_SCALE[state.stress];
+if (state.energy) factsObj.energy = GENERIC_SCALE[state.energy];
+if (state.sleep) factsObj.sleep = SLEEP_LABELS[state.sleep];
+if (state.confidence) factsObj.confidence = state.confidence;
+return factsObj;
 }
 
 /* --------------------------------------------------------
@@ -614,35 +619,54 @@ async function completeSetup() {
     btn.disabled = true;
 
     // Persist profile info to backend if available
-    // Backend expects: { profile: { BenjiFacts?, Height?, Weight? } } (nested, PascalCase)
+    // Backend expects: { benji_facts?, height?, weight? } (flat, lowercase snake_case)
     try {
         var session = getSession();
         if (session && session.user_id) {
-            var profileFields = {};
-            if (state.height) profileFields.Height = state.height;
-            if (state.weight) profileFields.Weight = state.weight;
-            var facts = buildBenjiFacts();
-            if (facts) {
-                // Backend requires BenjiFacts to be a valid JSON string
-                profileFields.BenjiFacts = JSON.stringify({ summary: facts });
+            // Build BenjiFacts as a JSON object, then stringify it
+            var factsObj = {};
+            if (state.goal) factsObj.goal = GOAL_LABELS[state.goal] || state.goal;
+            if (state.experience) factsObj.experience = EXP_LABELS[state.experience] || state.experience;
+            if (state.constraints && state.constraints.length) factsObj.constraints = state.constraints;
+            if (state.health && state.health.length) {
+                factsObj.health = state.health;
+                if (state.healthDetail) factsObj.healthDetail = state.healthDetail;
             }
+            if (state.gender) factsObj.gender = state.gender;
+            if (state.cycleTracking) factsObj.cycleTracking = state.cycleTracking;
+            if (state.medTracking === 'yes') factsObj.medications = state.medList || 'Yes';
+            if (state.mentalReflection) factsObj.notes = state.mentalReflection;
+            if (state.mentalConsentNote) factsObj.mentalConsentNote = state.mentalConsentNote;
+            if (state.mood) factsObj.mood = GENERIC_SCALE[state.mood];
+            if (state.stress) factsObj.stress = GENERIC_SCALE[state.stress];
+            if (state.energy) factsObj.energy = GENERIC_SCALE[state.energy];
+            if (state.sleep) factsObj.sleep = SLEEP_LABELS[state.sleep];
+            if (state.confidence) factsObj.confidence = state.confidence;
 
-            if (Object.keys(profileFields).length) {
-                var payload = { profile: profileFields };
-                var res = await fetch(API_BASE + "/profileinfo/" + session.user_id, {
+            var payload = {
+                benji_facts: JSON.stringify(factsObj),
+                height: state.height || null,
+                weight: state.weight || null
+            };
+
+            // Try POST first (during onboarding, profile shouldn't exist yet)
+            var res = await fetch(API_BASE + "/profileinfo/" + session.user_id, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            // If profile already exists (409), update it with PATCH
+            if (res.status === 409) {
+                await fetch(API_BASE + "/profileinfo/" + session.user_id, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-
-                if (res.status === 404) {
-                    // Profile doesn't exist yet, create it with POST
-                    await fetch(API_BASE + "/profileinfo/" + session.user_id, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    });
-                }
+            }
+            
+            if (!res.ok && res.status !== 409) {
+                console.error("ProfileInfo creation failed:", res.status, await res.text());
             }
         }
     } catch (err) {
