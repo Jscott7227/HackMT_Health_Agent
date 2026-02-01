@@ -30,15 +30,80 @@
     <!-- Page Header -->
     <div class="section-intro">
       <h2 class="section-title">Your Wellness Journal</h2>
-      <p class="section-description">Track your progress and reflect on your wellness journey through daily check-ins.</p>
+      <p class="section-description">Track your progress and reflect on your wellness journey through daily check-ins and conversations.</p>
     </div>
 
-    <!-- Journal Content Area -->
-    <div class="journal-container" id="journalContainer">
-      <!-- Entries or empty state rendered by JS -->
+    <!-- Tab Strip -->
+    <div class="journal-tabs" id="journalTabs">
+      <button class="journal-tab active" data-tab="wellness">
+        <i class="fas fa-heart"></i> Wellness
+      </button>
+      <button class="journal-tab" data-tab="conversations">
+        <i class="fas fa-comments"></i> Conversations
+      </button>
     </div>
 
-    <!-- Not Logged In State (hidden by default) -->
+    <!-- Wellness Tab Content -->
+    <div class="journal-tab-content" id="wellnessTab">
+      <!-- Journal Content Area -->
+      <div class="journal-container" id="journalContainer">
+        <!-- Entries or empty state rendered by JS -->
+      </div>
+
+      <!-- Empty State for Wellness (hidden by default) -->
+      <div class="form-domain" id="emptyState" style="display: none;">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fas fa-book-open"></i></div>
+          <p>Your journal will fill as you complete daily check-ins.</p>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: var(--space-xs);">
+            Check-ins help Benji understand your wellness patterns and provide personalized support.
+          </p>
+          <a href="index.html" class="ob-cta" style="display: inline-block; max-width: 220px; margin-top: var(--space-md);">
+            <i class="fas fa-clipboard-check" style="margin-right: 8px;"></i> Do a Check-in
+          </a>
+        </div>
+      </div>
+
+      <!-- Loading State for Wellness -->
+      <div class="form-domain" id="loadingState" style="display: none;">
+        <div class="empty-state">
+          <div class="loading-spinner" style="margin: 0 auto var(--space-md);"></div>
+          <p>Loading your journal entries...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conversations Tab Content -->
+    <div class="journal-tab-content" id="conversationsTab" style="display: none;">
+      <!-- Chat History Container -->
+      <div class="journal-chat-history" id="chatHistoryContainer">
+        <!-- Messages rendered by JS -->
+      </div>
+
+      <!-- Empty State for Conversations (hidden by default) -->
+      <div class="form-domain" id="conversationsEmptyState" style="display: none;">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fas fa-comments"></i></div>
+          <p>No conversation history yet.</p>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: var(--space-xs);">
+            Chat with Benji to see your conversation history here.
+          </p>
+          <a href="chat.html" class="ob-cta" style="display: inline-block; max-width: 220px; margin-top: var(--space-md);">
+            <i class="fas fa-comment" style="margin-right: 8px;"></i> Chat with Benji
+          </a>
+        </div>
+      </div>
+
+      <!-- Loading State for Conversations -->
+      <div class="form-domain" id="conversationsLoadingState" style="display: none;">
+        <div class="empty-state">
+          <div class="loading-spinner" style="margin: 0 auto var(--space-md);"></div>
+          <p>Loading your conversation history...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Not Logged In State (shared, hidden by default) -->
     <div class="form-domain" id="notLoggedInState" style="display: none;">
       <div class="empty-state">
         <div class="empty-icon"><i class="fas fa-user-lock"></i></div>
@@ -49,33 +114,12 @@
       </div>
     </div>
 
-    <!-- Empty State (hidden by default) -->
-    <div class="form-domain" id="emptyState" style="display: none;">
-      <div class="empty-state">
-        <div class="empty-icon"><i class="fas fa-book-open"></i></div>
-        <p>Your journal will fill as you complete daily check-ins.</p>
-        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: var(--space-xs);">
-          Check-ins help Benji understand your wellness patterns and provide personalized support.
-        </p>
-        <a href="index.html" class="ob-cta" style="display: inline-block; max-width: 220px; margin-top: var(--space-md);">
-          <i class="fas fa-clipboard-check" style="margin-right: 8px;"></i> Do a Check-in
-        </a>
-      </div>
-    </div>
-
-    <!-- Loading State -->
-    <div class="form-domain" id="loadingState" style="display: none;">
-      <div class="empty-state">
-        <div class="loading-spinner" style="margin: 0 auto var(--space-md);"></div>
-        <p>Loading your journal entries...</p>
-      </div>
-    </div>
-
   </div>
 
   <!-- Scripts -->
   <script src="../js/api.js"></script>
   <script src="../components/topbar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="../js/journal.js"></script>
 </body>
 </html>

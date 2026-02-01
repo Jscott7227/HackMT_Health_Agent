@@ -432,19 +432,73 @@ def chat_endpoint(req: ChatRequest):
         for msg in (req.history or [])
     ]
     
+    user_facts = {}
     if req.user_id:
-        d =  get_profileinfo(req.user_id)
+        try:
+            d = get_profileinfo(req.user_id)
+            user_facts = {
+                "benji_facts": d.benji_facts,
+                "height": d.height,
+                "weight": d.weight,
+            }
+        except HTTPException:
+            # Profile not found - continue with empty facts
+            pass
 
-        user_facts = {
-            "benji_facts": d.benji_facts,
-            "height": d.height,
-            "weight": d.weight,
-        }
-
-    print(user_facts)
     # Call chat function, passing LangChain message objects
     reply = benji.chat(req.user_input, history=history_msgs, user_facts=user_facts)
+
+    # Persist chat history to Firestore if user is logged in
+    if req.user_id:
+        try:
+            now = datetime.utcnow().isoformat() + "Z"
+            doc_ref = db.collection("ChatHistory").document(req.user_id)
+            snap = doc_ref.get()
+            
+            if snap.exists:
+                existing = snap.to_dict()
+                messages = existing.get("messages", [])
+            else:
+                messages = []
+            
+            # Append user message and assistant reply
+            messages.append({"role": "user", "content": req.user_input, "ts": now})
+            messages.append({"role": "assistant", "content": reply, "ts": now})
+            
+            # Trim to last 500 messages if too large
+            if len(messages) > 500:
+                messages = messages[-500:]
+            
+            doc_ref.set({"UserID": req.user_id, "messages": messages, "updatedAt": now})
+        except Exception as e:
+            print(f"Warning: failed to persist chat history for {req.user_id}: {e}")
+
     return ChatResponse(response=reply)
+
+
+class ChatHistoryResponse(BaseModel):
+    messages: List[Dict[str, str]]
+
+
+@app.get("/chat-history/{user_id}", response_model=ChatHistoryResponse)
+def get_chat_history(user_id: str):
+    """Return chat history for a user from Firestore."""
+    # Validate user exists
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get chat history
+    doc_ref = db.collection("ChatHistory").document(user_id)
+    snap = doc_ref.get()
+    
+    if not snap.exists:
+        return {"messages": []}
+    
+    data = snap.to_dict()
+    messages = data.get("messages", [])
+    
+    return {"messages": messages}
 
 @app.post("/profileinfo/{user_id}", response_model=ProfileInfoOut)
 def create_profileinfo(user_id: str, payload: CreateProfileInfoRequest):

@@ -2487,6 +2487,199 @@ body {
     }
 }
 
+/* ──────────────────────────────────────────────────────────
+   Journal Tabs
+   ────────────────────────────────────────────────────────── */
+.journal-tabs {
+    display: flex;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-lg);
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+.journal-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.journal-tab:hover {
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--text-primary);
+}
+
+.journal-tab.active {
+    background: white;
+    color: var(--sage-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.journal-tab i {
+    font-size: 0.9rem;
+}
+
+.journal-tab-content {
+    min-height: 300px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Journal Chat History (Conversation Tab)
+   ────────────────────────────────────────────────────────── */
+.journal-chat-history {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.chat-date-separator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: var(--space-md) 0;
+    position: relative;
+}
+
+.chat-date-separator::before,
+.chat-date-separator::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.chat-date-separator span {
+    padding: 0 var(--space-md);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.journal-message {
+    max-width: 85%;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-lg);
+    line-height: 1.6;
+    word-wrap: break-word;
+    animation: fadeInUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.journal-message.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--sage), var(--sage-dark));
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.journal-message.assistant {
+    align-self: flex-start;
+    background: white;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.journal-message .message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    gap: var(--space-sm);
+}
+
+.journal-message .message-sender {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.journal-message.user .message-sender {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.journal-message.assistant .message-sender {
+    color: var(--sage-dark);
+}
+
+.journal-message .message-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.journal-message .message-content {
+    font-size: 0.95rem;
+}
+
+.journal-message.assistant .message-content p {
+    margin: 0 0 var(--space-xs) 0;
+}
+
+.journal-message.assistant .message-content p:last-child {
+    margin-bottom: 0;
+}
+
+.journal-message.assistant .message-content ul,
+.journal-message.assistant .message-content ol {
+    margin: var(--space-xs) 0;
+    padding-left: var(--space-md);
+}
+
+.journal-message.assistant .message-content li {
+    margin-bottom: 4px;
+}
+
+.journal-message.assistant .message-content strong {
+    color: var(--sage-dark);
+}
+
+.journal-message.assistant .message-content code {
+    background: var(--forest-50);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* Journal Tabs Responsive */
+@media (max-width: 600px) {
+    .journal-tabs {
+        flex-direction: column;
+    }
+
+    .journal-tab {
+        width: 100%;
+    }
+
+    .journal-message {
+        max-width: 95%;
+    }
+
+    .journal-chat-history {
+        padding: var(--space-sm);
+    }
+}
+
 .insight-card {
     background: linear-gradient(135deg, rgba(139, 157, 131, 0.05), rgba(180, 165, 196, 0.05));
     border-radius: var(--radius-lg);
