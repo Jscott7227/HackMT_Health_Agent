@@ -109,6 +109,22 @@
         return r.json();
       });
     },
+
+    getMedicationSchedule: function (userId) {
+      return request("/medication-schedule/" + userId).then(function (r) {
+        if (r.status === 404) {
+          return {
+            timeSlots: { morning: [], afternoon: [], evening: [], night: [] },
+            foodInstructions: [],
+            warnings: [],
+            spacingNotes: [],
+            timeSlotsDetailed: []
+          };
+        }
+        if (!r.ok) throw new Error("Medication schedule fetch failed");
+        return r.json();
+      });
+    },
   };
 
   global.BenjiAPI = BenjiAPI;

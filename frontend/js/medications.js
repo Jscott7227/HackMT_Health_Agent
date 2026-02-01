@@ -343,47 +343,61 @@
   }
 
   // ---- Schedule Generation (Structured API) ----
-  async function fetchSchedule() {
-    if (medications.length === 0) {
-      alert("Please add at least one medication first");
-      return;
-    }
-
+  async function fetchSchedule(showLoadingIndicator = true) {
     const userId = getUserId();
     if (!userId) {
-      alert("Please log in to generate schedule");
+      // Not logged in - show empty state
+      if (scheduleDisplay) {
+        scheduleDisplay.innerHTML = `
+          <p style="text-align: center; color: var(--text-secondary); padding: var(--space-lg);">
+            Please log in to view your medication schedule.
+          </p>
+        `;
+      }
       return;
     }
 
-    showLoading(true);
+    if (showLoadingIndicator) showLoading(true);
 
     try {
       const response = await fetch(`${BACKEND_URL}/medication-schedule/${userId}`);
 
       if (!response.ok) {
-        throw new Error(`Failed to generate schedule: ${response.statusText}`);
+        throw new Error(`Failed to fetch schedule: ${response.statusText}`);
       }
 
       const data = await response.json();
       displayStructuredSchedule(data);
-      showMessage("Schedule generated successfully", "success");
+      if (showLoadingIndicator) showMessage("Schedule loaded", "success");
     } catch (e) {
-      console.error("Error generating schedule:", e);
-      scheduleDisplay.innerHTML = `
-        <div class="warning-banner">
-          <p><strong>Error:</strong> Unable to generate schedule. Please make sure the backend is running.</p>
-          <p style="font-size: 0.9em; margin-top: 8px;">${e.message}</p>
-        </div>
-      `;
+      console.error("Error fetching schedule:", e);
+      if (scheduleDisplay) {
+        scheduleDisplay.innerHTML = `
+          <div class="warning-banner">
+            <p><strong>Error:</strong> Unable to load schedule. Please make sure the backend is running.</p>
+            <p style="font-size: 0.9em; margin-top: 8px;">${e.message}</p>
+          </div>
+        `;
+      }
     } finally {
-      showLoading(false);
+      if (showLoadingIndicator) showLoading(false);
     }
   }
 
   function displayStructuredSchedule(schedule) {
-    const { timeSlots, foodInstructions, warnings, spacingNotes } = schedule;
+    const { timeSlotsDetailed, warnings } = schedule;
 
-    // Build time slots HTML
+    // Use calendar-style view from timeSlotsDetailed (option A: only show detailed, not generalized)
+    if (!timeSlotsDetailed || timeSlotsDetailed.length === 0) {
+      scheduleDisplay.innerHTML = `
+        <p style="text-align: center; color: var(--text-secondary); padding: var(--space-lg);">
+          No medications scheduled. Add medications to see your daily schedule.
+        </p>
+      `;
+      return;
+    }
+
+    // Time slot icons by slot name
     const timeSlotIcons = {
       morning: '<i class="fas fa-sun" style="color: #f59e0b;"></i>',
       afternoon: '<i class="fas fa-cloud-sun" style="color: #3b82f6;"></i>',
@@ -391,50 +405,31 @@
       night: '<i class="fas fa-star" style="color: #6366f1;"></i>'
     };
 
-    const timeSlotLabels = {
-      morning: "Morning",
-      afternoon: "Afternoon",
-      evening: "Evening",
-      night: "Night"
-    };
+    // Build calendar-style schedule HTML
+    let calendarHtml = '<div class="schedule-calendar">';
+    for (const entry of timeSlotsDetailed) {
+      const icon = timeSlotIcons[entry.slot] || '<i class="fas fa-clock"></i>';
+      const medsHtml = entry.medications.map(med => `<li>${escapeHtml(med)}</li>`).join("");
+      const foodNoteHtml = entry.foodNote 
+        ? `<div class="schedule-calendar-food"><i class="fas fa-utensils"></i> ${escapeHtml(entry.foodNote)}</div>` 
+        : '';
 
-    let timeSlotsHtml = '<div class="schedule-time-slots">';
-    for (const [slot, meds] of Object.entries(timeSlots)) {
-      if (meds.length > 0) {
-        timeSlotsHtml += `
-          <div class="schedule-time-slot">
-            <div class="time-slot-header">
-              ${timeSlotIcons[slot] || ''} <span>${timeSlotLabels[slot] || slot}</span>
-            </div>
-            <ul class="time-slot-meds">
-              ${meds.map(med => `<li>${escapeHtml(med)}</li>`).join("")}
-            </ul>
+      calendarHtml += `
+        <div class="schedule-calendar-entry">
+          <div class="schedule-calendar-time">
+            ${icon}
+            <span class="time-label">${escapeHtml(entry.label)}</span>
           </div>
-        `;
-      }
-    }
-    timeSlotsHtml += '</div>';
-
-    // Check if any time slots have medications
-    const hasScheduledMeds = Object.values(timeSlots).some(meds => meds.length > 0);
-    if (!hasScheduledMeds) {
-      timeSlotsHtml = '<p style="text-align: center; color: var(--text-secondary);">No medications scheduled.</p>';
-    }
-
-    // Build food instructions HTML
-    let foodHtml = '';
-    if (foodInstructions && foodInstructions.length > 0) {
-      foodHtml = `
-        <div class="schedule-section">
-          <h4 class="schedule-section-title"><i class="fas fa-utensils"></i> Food Instructions</h4>
-          <ul class="schedule-list">
-            ${foodInstructions.map(inst => `<li>${escapeHtml(inst)}</li>`).join("")}
-          </ul>
+          <div class="schedule-calendar-meds">
+            <ul>${medsHtml}</ul>
+            ${foodNoteHtml}
+          </div>
         </div>
       `;
     }
+    calendarHtml += '</div>';
 
-    // Build warnings HTML
+    // Build warnings HTML (keep warnings visible)
     let warningsHtml = '';
     if (warnings && warnings.length > 0) {
       const hasWarning = warnings.some(w => w.includes("CAUTION") || w.includes("WARNING"));
@@ -450,25 +445,10 @@
       `;
     }
 
-    // Build spacing notes HTML
-    let spacingHtml = '';
-    if (spacingNotes && spacingNotes.length > 0) {
-      spacingHtml = `
-        <div class="schedule-section">
-          <h4 class="schedule-section-title"><i class="fas fa-clock"></i> Spacing Notes</h4>
-          <ul class="schedule-list">
-            ${spacingNotes.map(note => `<li>${escapeHtml(note)}</li>`).join("")}
-          </ul>
-        </div>
-      `;
-    }
-
     scheduleDisplay.innerHTML = `
       <div class="schedule-content">
-        ${timeSlotsHtml}
-        ${foodHtml}
+        ${calendarHtml}
         ${warningsHtml}
-        ${spacingHtml}
       </div>
     `;
   }
@@ -660,6 +640,8 @@
   // ---- Initialization ----
   async function init() {
     await loadMedicationsFromAPI();
+    // Auto-load schedule on page load (persistence)
+    await fetchSchedule(false);
     await loadCompliance(currentComplianceDate);
   }
 

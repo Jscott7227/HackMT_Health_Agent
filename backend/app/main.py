@@ -826,11 +826,20 @@ def update_medications(user_id: str, payload: MedicationsListRequest):
 
 
 # ---------- Medication Schedule (structured) ----------
+class DetailedTimeSlot(BaseModel):
+    time: str  # "HH:mm"
+    label: str  # "8:00 AM"
+    slot: str  # "morning", "afternoon", "evening", "night"
+    medications: List[str]
+    foodNote: str  # Combined food instructions for meds in this slot
+
+
 class MedicationScheduleResponse(BaseModel):
     timeSlots: Dict[str, List[str]]
     foodInstructions: List[str]
     warnings: List[str]
     spacingNotes: List[str]
+    timeSlotsDetailed: List[DetailedTimeSlot] = []  # New: calendar-style schedule
 
 
 @app.get("/medication-schedule/{user_id}", response_model=MedicationScheduleResponse)
@@ -892,6 +901,59 @@ def get_medication_schedule(user_id: str):
             if instruction not in food_instructions:
                 food_instructions.append(instruction)
     
+    # Build timeSlotsDetailed for calendar-style view
+    slot_time_mapping = {
+        "morning": ("08:00", "8:00 AM"),
+        "afternoon": ("12:00", "12:00 PM"),
+        "evening": ("18:00", "6:00 PM"),
+        "night": ("21:00", "9:00 PM")
+    }
+    
+    time_slots_detailed = []
+    for slot in ["morning", "afternoon", "evening", "night"]:
+        meds_in_slot = schedule_result.get(slot, [])
+        if not meds_in_slot:
+            continue
+        
+        time_val, label = slot_time_mapping[slot]
+        
+        # Build foodNote for this slot: match med names to food_instructions
+        with_food = []
+        empty_stomach = []
+        
+        for med_str in meds_in_slot:
+            # Extract med name from string like "Lisinopril 10 mg" or "Metformin 500 mg (1st dose)"
+            med_name_lower = med_str.split()[0].lower() if med_str else ""
+            
+            # Check food_instructions list
+            for instruction in food_instructions:
+                instr_lower = instruction.lower()
+                if med_name_lower and med_name_lower in instr_lower:
+                    if "with food" in instr_lower:
+                        med_display = med_str.split()[0]  # Just the name
+                        if med_display not in with_food:
+                            with_food.append(med_display)
+                    elif "empty stomach" in instr_lower:
+                        med_display = med_str.split()[0]
+                        if med_display not in empty_stomach:
+                            empty_stomach.append(med_display)
+        
+        # Build the foodNote string
+        food_note_parts = []
+        if with_food:
+            food_note_parts.append(f"With food: {', '.join(with_food)}")
+        if empty_stomach:
+            food_note_parts.append(f"On empty stomach: {', '.join(empty_stomach)}")
+        food_note = ". ".join(food_note_parts)
+        
+        time_slots_detailed.append(DetailedTimeSlot(
+            time=time_val,
+            label=label,
+            slot=slot,
+            medications=meds_in_slot,
+            foodNote=food_note
+        ))
+    
     return MedicationScheduleResponse(
         timeSlots={
             "morning": schedule_result.get("morning", []),
@@ -901,7 +963,8 @@ def get_medication_schedule(user_id: str):
         },
         foodInstructions=food_instructions,
         warnings=contraindication_result.get("warnings", []),
-        spacingNotes=schedule_result.get("spacing_notes", [])
+        spacingNotes=schedule_result.get("spacing_notes", []),
+        timeSlotsDetailed=time_slots_detailed
     )
 
 
@@ -958,7 +1021,7 @@ def get_compliance(user_id: str, date: Optional[str] = None, from_date: Optional
         data = snap.to_dict()
         return ComplianceResponse(user_id=user_id, date=date, entries=data.get("entries", []))
     
-    # Date range query (uses composite index: user_id + date)
+    # Date range query (uses composite index: user_id ASC, date DESC)
     if from_date and to_date:
         docs = db.collection("MedicationCompliance") \
             .where("user_id", "==", user_id) \
@@ -1027,7 +1090,7 @@ def get_health_history(user_id: str, limit: int = 30):
     if not user_snap.exists:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Query compliance documents for this user (uses composite index: user_id + date)
+    # Query compliance documents (uses composite index: user_id ASC, date DESC)
     docs = db.collection("MedicationCompliance") \
         .where("user_id", "==", user_id) \
         .order_by("date", direction=firestore.Query.DESCENDING) \

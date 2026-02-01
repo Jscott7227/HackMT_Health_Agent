@@ -318,11 +318,119 @@
     window.BenjiCheckinModal = { close: closeModal };
   }
 
+  /* ---------- RENDER: MEDICATION SCHEDULE (generalized plan) ---------- */
+  var medicationScheduleData = null;
+
+  function renderMedicationSchedule() {
+    var section = el("medicationScheduleSection");
+    var container = el("homeMedicationSchedule");
+    if (!section || !container) return;
+
+    if (!medicationScheduleData) {
+      section.style.display = "none";
+      return;
+    }
+
+    var schedule = medicationScheduleData;
+    var timeSlots = schedule.timeSlots || {};
+    var foodInstructions = schedule.foodInstructions || [];
+    var warnings = schedule.warnings || [];
+
+    // Check if any time slots have medications
+    var hasScheduledMeds = Object.keys(timeSlots).some(function (k) {
+      return timeSlots[k] && timeSlots[k].length > 0;
+    });
+
+    if (!hasScheduledMeds) {
+      section.style.display = "none";
+      return;
+    }
+
+    // Show the section
+    section.style.display = "block";
+
+    // Time slot icons
+    var timeSlotIcons = {
+      morning: '<i class="fas fa-sun" style="color: #f59e0b;"></i>',
+      afternoon: '<i class="fas fa-cloud-sun" style="color: #3b82f6;"></i>',
+      evening: '<i class="fas fa-moon" style="color: #8b5cf6;"></i>',
+      night: '<i class="fas fa-star" style="color: #6366f1;"></i>'
+    };
+    var timeSlotLabels = {
+      morning: "Morning",
+      afternoon: "Afternoon",
+      evening: "Evening",
+      night: "Night"
+    };
+
+    // Build time slots HTML (generalized view)
+    var timeSlotsHtml = '<div class="schedule-time-slots">';
+    var slotOrder = ["morning", "afternoon", "evening", "night"];
+    for (var i = 0; i < slotOrder.length; i++) {
+      var slot = slotOrder[i];
+      var meds = timeSlots[slot] || [];
+      if (meds.length > 0) {
+        var medsHtml = "";
+        for (var j = 0; j < meds.length; j++) {
+          medsHtml += "<li>" + escapeHtml(meds[j]) + "</li>";
+        }
+        timeSlotsHtml += '<div class="schedule-time-slot">' +
+          '<div class="time-slot-header">' +
+            (timeSlotIcons[slot] || "") + " <span>" + timeSlotLabels[slot] + "</span>" +
+          '</div>' +
+          '<ul class="time-slot-meds">' + medsHtml + '</ul>' +
+        '</div>';
+      }
+    }
+    timeSlotsHtml += '</div>';
+
+    // Build food instructions HTML
+    var foodHtml = "";
+    if (foodInstructions.length > 0) {
+      var foodItems = "";
+      for (var f = 0; f < foodInstructions.length; f++) {
+        foodItems += "<li>" + escapeHtml(foodInstructions[f]) + "</li>";
+      }
+      foodHtml = '<div class="schedule-section">' +
+        '<h4 class="schedule-section-title"><i class="fas fa-utensils"></i> Food Instructions</h4>' +
+        '<ul class="schedule-list">' + foodItems + '</ul>' +
+      '</div>';
+    }
+
+    // Build warnings HTML
+    var warningsHtml = "";
+    if (warnings.length > 0) {
+      var hasWarning = warnings.some(function (w) {
+        return w.indexOf("CAUTION") >= 0 || w.indexOf("WARNING") >= 0;
+      });
+      var warningClass = hasWarning ? "schedule-warnings" : "schedule-tips";
+      var warningIcon = hasWarning ? "fa-exclamation-triangle" : "fa-info-circle";
+      var warningItems = "";
+      for (var w = 0; w < warnings.length; w++) {
+        warningItems += "<li>" + escapeHtml(warnings[w]) + "</li>";
+      }
+      warningsHtml = '<div class="schedule-section ' + warningClass + '">' +
+        '<h4 class="schedule-section-title"><i class="fas ' + warningIcon + '"></i> ' + (hasWarning ? "Warnings" : "Tips") + '</h4>' +
+        '<ul class="schedule-list">' + warningItems + '</ul>' +
+      '</div>';
+    }
+
+    container.innerHTML = '<div class="schedule-content">' + timeSlotsHtml + foodHtml + warningsHtml + '</div>';
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    var div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   /* ---------- INIT ---------- */
   function initDashboard() {
     renderBanner();
     renderRecovery();
     renderInjuryWarning();
+    renderMedicationSchedule();
     renderGlance();
     renderGoals();
     renderPreview();
@@ -357,12 +465,28 @@
     if (window.BenjiAPI && window.BenjiAPI.getSession) {
       var session = window.BenjiAPI.getSession();
       if (session && session.user_id) {
-        window.BenjiAPI.getGoals(session.user_id)
+        // Fetch goals and medication schedule in parallel
+        var goalsPromise = window.BenjiAPI.getGoals(session.user_id)
           .then(function (data) {
             var fromApi = mapApiGoalsToRings(data.accepted);
             if (fromApi && fromApi.length > 0) {
               fauxGoals = fromApi;
             }
+          })
+          .catch(function () {
+            // Goals fetch failed, use faux data
+          });
+
+        var medsPromise = window.BenjiAPI.getMedicationSchedule(session.user_id)
+          .then(function (data) {
+            medicationScheduleData = data;
+          })
+          .catch(function () {
+            medicationScheduleData = null;
+          });
+
+        Promise.all([goalsPromise, medsPromise])
+          .then(function () {
             initDashboard();
           })
           .catch(function () {

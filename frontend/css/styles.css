@@ -4059,6 +4059,154 @@ textarea:focus-visible {
 }
 
 /* ──────────────────────────────────────────────────────────
+   Calendar-Style Schedule (medications page detailed view)
+   ────────────────────────────────────────────────────────── */
+.schedule-calendar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.schedule-calendar-entry {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.schedule-calendar-entry:hover {
+    border-color: var(--sage-light);
+}
+
+.schedule-calendar-time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 80px;
+    padding-right: var(--space-md);
+    border-right: 2px solid var(--sage-light);
+}
+
+.schedule-calendar-time i {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-xs);
+}
+
+.schedule-calendar-time .time-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.schedule-calendar-meds {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.schedule-calendar-meds ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.schedule-calendar-meds ul li {
+    padding: var(--space-xs) 0;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.schedule-calendar-meds ul li:last-child {
+    border-bottom: none;
+}
+
+.schedule-calendar-food {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    background: rgba(1, 104, 68, 0.05);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--sage-dark);
+}
+
+.schedule-calendar-food i {
+    margin-right: var(--space-xs);
+}
+
+/* Responsive calendar schedule */
+@media (max-width: 500px) {
+    .schedule-calendar-entry {
+        flex-direction: column;
+    }
+
+    .schedule-calendar-time {
+        flex-direction: row;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding-right: 0;
+        padding-bottom: var(--space-sm);
+        min-width: auto;
+        gap: var(--space-sm);
+    }
+
+    .schedule-calendar-time i {
+        font-size: 1.2rem;
+        margin-bottom: 0;
+    }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Home Medication Schedule Section
+   ────────────────────────────────────────────────────────── */
+.home-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.home-section-header .home-section-title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.home-section-header .home-section-title i {
+    color: var(--sage);
+}
+
+.home-section-link {
+    font-size: 0.9rem;
+    color: var(--sage);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.home-section-link:hover {
+    color: var(--sage-dark);
+    text-decoration: underline;
+}
+
+.home-medication-schedule {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+}
+
+.home-medication-schedule .schedule-time-slots {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+/* ──────────────────────────────────────────────────────────
    Compliance List and Toggles
    ────────────────────────────────────────────────────────── */
 .compliance-list {
