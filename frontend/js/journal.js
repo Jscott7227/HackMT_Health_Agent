@@ -1,16 +1,33 @@
 /**
- * Journal Page - Display check-in history as journal entries
+ * Journal Page - Display check-in history and conversation history as journal entries
  */
 (() => {
   "use strict";
 
   const API_BASE = "http://127.0.0.1:8000";
 
-  // DOM Elements
+  // DOM Elements - Tabs
+  const journalTabs = document.getElementById("journalTabs");
+  const wellnessTab = document.getElementById("wellnessTab");
+  const conversationsTab = document.getElementById("conversationsTab");
+
+  // DOM Elements - Wellness Tab
   const journalContainer = document.getElementById("journalContainer");
-  const notLoggedInState = document.getElementById("notLoggedInState");
   const emptyState = document.getElementById("emptyState");
   const loadingState = document.getElementById("loadingState");
+
+  // DOM Elements - Conversations Tab
+  const chatHistoryContainer = document.getElementById("chatHistoryContainer");
+  const conversationsEmptyState = document.getElementById("conversationsEmptyState");
+  const conversationsLoadingState = document.getElementById("conversationsLoadingState");
+
+  // DOM Elements - Shared
+  const notLoggedInState = document.getElementById("notLoggedInState");
+
+  // State
+  let currentTab = "wellness";
+  let conversationsLoaded = false;
+  let cachedChatHistory = null;
 
   /**
    * Get user session from storage
@@ -28,13 +45,52 @@
   }
 
   /**
-   * Show a specific state, hide others
+   * Show a specific state for wellness tab, hide others
    */
-  function showState(state) {
+  function showWellnessState(state) {
     journalContainer.style.display = state === "entries" ? "block" : "none";
-    notLoggedInState.style.display = state === "notLoggedIn" ? "block" : "none";
     emptyState.style.display = state === "empty" ? "block" : "none";
     loadingState.style.display = state === "loading" ? "block" : "none";
+  }
+
+  /**
+   * Show a specific state for conversations tab, hide others
+   */
+  function showConversationsState(state) {
+    chatHistoryContainer.style.display = state === "messages" ? "block" : "none";
+    conversationsEmptyState.style.display = state === "empty" ? "block" : "none";
+    conversationsLoadingState.style.display = state === "loading" ? "block" : "none";
+  }
+
+  /**
+   * Switch between tabs
+   */
+  function switchTab(tabName) {
+    currentTab = tabName;
+
+    // Update tab button active states
+    const tabButtons = journalTabs.querySelectorAll(".journal-tab");
+    tabButtons.forEach(btn => {
+      if (btn.dataset.tab === tabName) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
+
+    // Show/hide tab content
+    if (tabName === "wellness") {
+      wellnessTab.style.display = "block";
+      conversationsTab.style.display = "none";
+    } else if (tabName === "conversations") {
+      wellnessTab.style.display = "none";
+      conversationsTab.style.display = "block";
+
+      // Load conversations if not already loaded
+      if (!conversationsLoaded) {
+        loadConversations();
+      }
+    }
   }
 
   /**
@@ -44,6 +100,17 @@
     const response = await fetch(`${API_BASE}/checkins/${userId}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch check-ins: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Fetch chat history from API
+   */
+  async function fetchChatHistory(userId) {
+    const response = await fetch(`${API_BASE}/chat-history/${userId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch chat history: ${response.statusText}`);
     }
     return response.json();
   }
@@ -63,22 +130,27 @@
   }
 
   /**
+   * Format timestamp for chat messages
+   */
+  function formatTimestamp(tsStr) {
+    if (!tsStr) return "";
+    const date = new Date(tsStr);
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    });
+  }
+
+  /**
    * Get mood emoji
    */
   function getMoodEmoji(mood) {
     const emojis = ["😞", "😕", "😐", "🙂", "😊"];
     if (mood >= 1 && mood <= 5) return emojis[mood - 1];
     return "";
-  }
-
-  /**
-   * Get score label
-   */
-  function getScoreLabel(score, labels) {
-    if (score >= 1 && score <= labels.length) {
-      return labels[score - 1];
-    }
-    return score || "—";
   }
 
   /**
@@ -231,13 +303,102 @@
   }
 
   /**
+   * Create a chat message element
+   */
+  function createChatMessage(msg) {
+    const messageEl = document.createElement("div");
+    const isUser = msg.role === "user";
+    messageEl.className = `journal-message ${isUser ? "user" : "assistant"}`;
+
+    const sender = isUser ? "You" : "Benji";
+    const timestamp = formatTimestamp(msg.ts);
+
+    // Parse markdown for assistant messages, escape for user messages
+    let content;
+    if (isUser) {
+      content = escapeHtml(msg.content);
+    } else {
+      // Use marked if available, otherwise escape
+      if (typeof marked !== "undefined") {
+        content = marked.parse(msg.content);
+      } else {
+        content = escapeHtml(msg.content);
+      }
+    }
+
+    messageEl.innerHTML = `
+      <div class="message-header">
+        <span class="message-sender">${sender}</span>
+        <span class="message-time">${timestamp}</span>
+      </div>
+      <div class="message-content">${content}</div>
+    `;
+
+    return messageEl;
+  }
+
+  /**
+   * Group messages by date for better readability
+   */
+  function groupMessagesByDate(messages) {
+    const groups = {};
+    messages.forEach(msg => {
+      const date = msg.ts ? new Date(msg.ts).toDateString() : "Unknown";
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(msg);
+    });
+    return groups;
+  }
+
+  /**
+   * Render conversation history
+   */
+  function renderConversationHistory(messages) {
+    chatHistoryContainer.innerHTML = "";
+
+    if (!messages || messages.length === 0) {
+      showConversationsState("empty");
+      return;
+    }
+
+    // Group messages by date
+    const groupedMessages = groupMessagesByDate(messages);
+    const dates = Object.keys(groupedMessages).sort((a, b) => new Date(b) - new Date(a));
+
+    dates.forEach(dateStr => {
+      // Create date separator
+      const dateSeparator = document.createElement("div");
+      dateSeparator.className = "chat-date-separator";
+      const formattedDate = new Date(dateStr).toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+      dateSeparator.innerHTML = `<span>${formattedDate}</span>`;
+      chatHistoryContainer.appendChild(dateSeparator);
+
+      // Render messages for this date (in chronological order within each day)
+      const dayMessages = groupedMessages[dateStr];
+      dayMessages.forEach(msg => {
+        const messageEl = createChatMessage(msg);
+        chatHistoryContainer.appendChild(messageEl);
+      });
+    });
+
+    showConversationsState("messages");
+  }
+
+  /**
    * Render journal entries
    */
   function renderEntries(checkIns) {
     journalContainer.innerHTML = "";
 
     if (!checkIns || checkIns.length === 0) {
-      showState("empty");
+      showWellnessState("empty");
       return;
     }
 
@@ -253,7 +414,41 @@
       journalContainer.appendChild(entryEl);
     });
 
-    showState("entries");
+    showWellnessState("entries");
+  }
+
+  /**
+   * Load and render conversations
+   */
+  async function loadConversations() {
+    const session = getSession();
+    if (!session || !session.user_id) {
+      return;
+    }
+
+    showConversationsState("loading");
+
+    try {
+      const data = await fetchChatHistory(session.user_id);
+      cachedChatHistory = data.messages || [];
+      renderConversationHistory(cachedChatHistory);
+      conversationsLoaded = true;
+    } catch (error) {
+      console.error("Error loading conversations:", error);
+      chatHistoryContainer.innerHTML = `
+        <div class="form-domain">
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <p>Unable to load conversation history.</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">${escapeHtml(error.message)}</p>
+            <button class="ob-cta" style="max-width: 180px; margin-top: var(--space-md);" onclick="location.reload()">
+              Try Again
+            </button>
+          </div>
+        </div>
+      `;
+      showConversationsState("messages");
+    }
   }
 
   /**
@@ -262,12 +457,28 @@
   async function init() {
     const session = getSession();
 
+    // Set up tab click handlers
+    if (journalTabs) {
+      journalTabs.addEventListener("click", (e) => {
+        const tabButton = e.target.closest(".journal-tab");
+        if (tabButton && tabButton.dataset.tab) {
+          switchTab(tabButton.dataset.tab);
+        }
+      });
+    }
+
     if (!session || !session.user_id) {
-      showState("notLoggedIn");
+      // Hide both tab contents and show not logged in state
+      wellnessTab.style.display = "none";
+      conversationsTab.style.display = "none";
+      notLoggedInState.style.display = "block";
       return;
     }
 
-    showState("loading");
+    // User is logged in - show wellness tab by default
+    notLoggedInState.style.display = "none";
+    switchTab("wellness");
+    showWellnessState("loading");
 
     try {
       const checkIns = await fetchCheckIns(session.user_id);
@@ -287,7 +498,7 @@
           </div>
         </div>
       `;
-      showState("entries");
+      showWellnessState("entries");
     }
   }
 
