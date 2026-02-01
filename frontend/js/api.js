@@ -102,6 +102,13 @@
         return r.json();
       });
     },
+
+    postCheckinRecommendations: function (body) {
+      return request("/checkin-recommendations", { method: "POST", body: body }).then(function (r) {
+        if (!r.ok) throw new Error("Failed to get check-in recommendations");
+        return r.json();
+      });
+    },
   };
 
   global.BenjiAPI = BenjiAPI;

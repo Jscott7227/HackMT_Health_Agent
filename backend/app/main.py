@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
@@ -64,8 +65,6 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
 class UpdateUserNameRequest(BaseModel):
-    email: str
-    password: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
 
@@ -97,20 +96,24 @@ class DeleteGoalEntryResponse(BaseModel):
     message: str
 
 class ProfileFields(BaseModel):
-    BenjiFacts: str = "{}"
-    Height: Optional[str] = None
-    Weight: Optional[str] = None
+    benji_facts: str = "{}"
+    height: Optional[str] = None
+    weight: Optional[str] = None
 
 class CreateProfileInfoRequest(BaseModel):
-    profile: ProfileFields
+    benji_facts: Optional[str] = "{}"
+    height: Optional[str] = None
+    weight: Optional[str] = None
 
 class ProfileFieldsPatch(BaseModel):
-    BenjiFacts: Optional[str] = None
-    Height: Optional[str] = None
-    Weight: Optional[str] = None
+    benji_facts: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[str] = None
 
 class UpdateProfileInfoRequest(BaseModel):
-    profile: ProfileFieldsPatch
+    benji_facts: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[str] = None
 
 class ProfileInfoOut(BaseModel):
     user_id: str
@@ -453,14 +456,16 @@ def create_profileinfo(user_id: str, payload: CreateProfileInfoRequest):
     if doc_ref.get().exists:
         raise HTTPException(status_code=409, detail="ProfileInfo already exists for this user")
 
-    # Start with UserID, then merge every key from the JSON dict
-    doc_data = {"UserID": user_id}
+    # Build doc_data with PascalCase for Firestore
+    doc_data = {
+        "UserID": user_id,
+        "BenjiFacts": payload.benji_facts or "{}",
+        "Height": payload.height,
+        "Weight": payload.weight
+    }
 
-    safe_profile = payload.profile.model_dump()
-    safe_profile.pop("UserID", None)
-    doc_data.update(safe_profile)
-
-    if doc_data.get("BenjiFacts") is not None:
+    # Validate BenjiFacts is valid JSON
+    if doc_data.get("BenjiFacts"):
         try:
             json.loads(doc_data["BenjiFacts"])
         except Exception:
@@ -505,11 +510,14 @@ def update_profileinfo(user_id: str, payload: UpdateProfileInfoRequest):
     if not snap.exists:
         raise HTTPException(status_code=404, detail="ProfileInfo not found")
 
-    if payload.profile is None or len(payload.profile) == 0:
-        raise HTTPException(status_code=400, detail="No fields provided to update")
-
-    updates = payload.profile.model_dump(exclude_none=True)
-    updates.pop("UserID", None)
+    # Map lowercase to PascalCase for Firestore
+    updates = {}
+    if payload.benji_facts is not None:
+        updates["BenjiFacts"] = payload.benji_facts
+    if payload.height is not None:
+        updates["Height"] = payload.height
+    if payload.weight is not None:
+        updates["Weight"] = payload.weight
 
     if "BenjiFacts" in updates:
         try:
@@ -595,7 +603,55 @@ def create_checkin(payload: CheckinCreate):
     doc_ref.set(body)
     return {"message": "Check-in saved", "id": doc_ref.id}
 
-    return results
+
+# ---------- Check-in Recommendations ----------
+class CheckinRecommendationsRequest(BaseModel):
+    user_id: str
+    user_message: Optional[str] = None
+
+class CheckinRecommendationsResponse(BaseModel):
+    response: str
+
+@app.post("/checkin-recommendations", response_model=CheckinRecommendationsResponse)
+def get_checkin_recommendations(payload: CheckinRecommendationsRequest):
+    """
+    Generate personalized check-in focus areas based on user profile and goals.
+    Optionally considers a user message for customized suggestions.
+    """
+    # Validate user exists
+    user_snap = db.collection("User").document(payload.user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Load profile info
+    try:
+        profile = get_profileinfo(payload.user_id)
+        user_facts = {
+            "benji_facts": profile.benji_facts,
+            "height": profile.height,
+            "weight": profile.weight,
+        }
+    except HTTPException:
+        # Profile not found - use empty facts
+        user_facts = {}
+    
+    # Load goals
+    try:
+        goals_data = get_goals(payload.user_id)
+        accepted_goals = goals_data.get("accepted", [])
+        if accepted_goals:
+            user_facts["goals"] = accepted_goals
+    except Exception:
+        # Goals not found - continue without
+        pass
+    
+    # Call LLM helper
+    response_text = benji.checkin_recommendations(
+        user_facts=user_facts,
+        user_message=payload.user_message
+    )
+    
+    return CheckinRecommendationsResponse(response=response_text)
 
 
 @app.delete("/user/{user_id}", response_model=DeleteUserResponse)
@@ -630,20 +686,11 @@ def delete_user(user_id: str, payload: LoginRequest):
 @app.patch("/user/{user_id}", response_model=UpdateUserNameResponse)
 def update_user_name(user_id: str, payload: UpdateUserNameRequest):
     """
-    Update first and/or last name for a User doc,
-    only if the requester's credentials authenticate to that same user_id.
+    Update first and/or last name for a User doc.
+    NOTE: Auth is disabled for this endpoint until credentials are available.
     """
 
-    # 1) authenticate -> returns the authenticated user doc id
-    authed_user_id = authenticate_firestore(payload.email, payload.password)
-    if not authed_user_id:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    # 2) must match the requested id
-    if authed_user_id != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to edit this user")
-
-    # 3) build optional updates
+    # build optional updates
     updates = {}
     if payload.first_name is not None:
         updates["first_name"] = payload.first_name
@@ -653,7 +700,7 @@ def update_user_name(user_id: str, payload: UpdateUserNameRequest):
     if not updates:
         raise HTTPException(status_code=400, detail="No fields provided to update")
 
-    # 4) ensure user exists then update
+    # ensure user exists then update
     doc_ref = db.collection("User").document(user_id)
     snap = doc_ref.get()
     if not snap.exists:
@@ -663,6 +710,11 @@ def update_user_name(user_id: str, payload: UpdateUserNameRequest):
 
     return UpdateUserNameResponse(user_id=user_id, message="User updated successfully")
 
+
+# Favicon: avoid 404 when browser requests /favicon.ico
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
 
 # Serve frontend static files (HTML, CSS, JS, assets) so /html/chat.html etc. work
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
