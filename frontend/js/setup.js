@@ -6,6 +6,11 @@ at runtime based on the consent answer on screen 3.
 var ROUTE = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 14, 15, 11, 12, 13];
 var returnToReview = false;
 var currentRouteIndex = 0;
+const session = JSON.parse(
+    sessionStorage.getItem("sanctuary_session") ||
+    localStorage.getItem("sanctuary_session") ||
+    "{}"
+);
 
 /* --------------------------------------------------------
 STATE – mirrors the profile schema from the handoff doc
@@ -43,30 +48,30 @@ var state = {
 /* --------------------------------------------------------
 LABELS
 -------------------------------------------------------- */
-var ACTIVITY_LABELS = ['Very inactive','Lightly active','Moderately active','Very active'];
+var ACTIVITY_LABELS = ['Very inactive', 'Lightly active', 'Moderately active', 'Very active'];
 
 var AFFIRMATIONS = {
-    'not-confident':  "That's okay – we'll meet you where you are.",
-    'somewhat':       "A little doubt is normal. We'll build your confidence step by step.",
-    'very':           "That's great! Let's channel that energy into your plan."
+    'not-confident': "That's okay – we'll meet you where you are.",
+    'somewhat': "A little doubt is normal. We'll build your confidence step by step.",
+    'very': "That's great! Let's channel that energy into your plan."
 };
 
 var GOAL_LABELS = {
-    'lose-fat':      'Lose body fat',
-    'build-muscle':  'Build muscle',
-    'endurance':     'Improve endurance',
-    'feel-healthier':'Feel healthier overall',
-    'not-sure':      'Not sure yet'
+    'lose-fat': 'Lose body fat',
+    'build-muscle': 'Build muscle',
+    'endurance': 'Improve endurance',
+    'feel-healthier': 'Feel healthier overall',
+    'not-sure': 'Not sure yet'
 };
 
 var EXP_LABELS = {
-    'beginner':     'Beginner',
+    'beginner': 'Beginner',
     'intermediate': 'Intermediate',
-    'advanced':     'Advanced'
+    'advanced': 'Advanced'
 };
 
-var GENERIC_SCALE = { 1:'Very low', 2:'Low', 3:'Moderate', 4:'Good', 5:'Very high' };
-var SLEEP_LABELS  = { 1:'Terrible',  2:'Poor', 3:'Okay',    4:'Good', 5:'Great' };
+var GENERIC_SCALE = { 1: 'Very low', 2: 'Low', 3: 'Moderate', 4: 'Good', 5: 'Very high' };
+var SLEEP_LABELS = { 1: 'Terrible', 2: 'Poor', 3: 'Okay', 4: 'Good', 5: 'Great' };
 
 /* --------------------------------------------------------
 BACKEND HELPERS
@@ -183,15 +188,48 @@ function goTo(n) {
             ring.style.animation = '';
         }
         // Auto-complete after 3 seconds of "analyzing"
-        setTimeout(function() {
-            completeSetup();
-        }, 3000);
+        fetchGoalsAndContinue();
     }
 
     updateCtaForScreen(n);
     updateBackVisibility(n);
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+async function fetchGoalsAndContinue() {
+    var finalGoal = localStorage.getItem('finalGoal') || "";
+    const userId = session.user_id || null;
+
+    try {
+        var res = await fetch('http://localhost:8000/goals', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                user_goal: finalGoal
+            })
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch goals');
+
+        var data = await res.json();
+        var smartGoals = data.smart_goals || [];
+
+        localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
+
+        // slight delay so animation feels intentional
+        setTimeout(function () {
+            completeSetup();
+        }, 800);
+
+    } catch (err) {
+        console.error("Goal fetch error:", err);
+        completeSetup(); // fail forward instead of trapping user
+    }
+}
+
 
 // Used by screen 3 CTA – updates the route first, then advances
 function advanceFrom(fromScreen) {
@@ -275,6 +313,10 @@ function updateCtaForScreen(screenId) {
     if (id === 9) return setCtaLabel(document.querySelector('#screen-9 .ob-cta'), !!state.constraintsTouched);
     if (id === 10) return setCtaLabel(document.querySelector('#screen-10 .ob-cta'), !!state.healthTouched);
     if (id === 11) return setCtaLabel(document.getElementById('cta-11'), !!state.confidence);
+    if (id === 12) return setCtaLabel(
+        document.querySelector('#screen-12 .ob-cta'),
+        !!state.finalGoal
+    );
     if (id === 14) return setCtaLabel(document.getElementById('cta-14'), !!state.cycleTracking);
     if (id === 15) {
         var medHasData = state.medTracking === 'no' || (state.medTracking === 'yes' && !!state.medList);
@@ -408,11 +450,11 @@ function switchUnit(field, unit, btn) {
 
     if (field === 'height') {
         state.heightUnit = unit;
-        document.getElementById('heightMetric').style.display  = (unit === 'metric')   ? 'flex' : 'none';
+        document.getElementById('heightMetric').style.display = (unit === 'metric') ? 'flex' : 'none';
         document.getElementById('heightImperial').style.display = (unit === 'imperial') ? 'flex' : 'none';
     } else {
         state.weightUnit = unit;
-        document.getElementById('weightMetric').style.display  = (unit === 'metric')   ? 'flex' : 'none';
+        document.getElementById('weightMetric').style.display = (unit === 'metric') ? 'flex' : 'none';
         document.getElementById('weightImperial').style.display = (unit === 'imperial') ? 'flex' : 'none';
     }
     validateMetric();
@@ -421,9 +463,17 @@ function switchUnit(field, unit, btn) {
 function validateMetric() {
     var hCta = document.getElementById('cta-6');
     if (state.heightUnit === 'imperial') {
-        var ft   = document.getElementById('heightFt').value;
-        var inch = document.getElementById('heightIn').value;
-        state.height = (ft || inch) ? ((ft||'0') + ' ft ' + (inch||'0') + ' in') : null;
+        var ft = document.getElementById('heightFt').value;
+        var inchInput = document.getElementById('heightIn');
+        var inch = inchInput.value;
+
+        // Validate inches are 0-11
+        if (inch !== '' && (parseInt(inch) < 0 || parseInt(inch) > 11)) {
+            inchInput.value = Math.min(11, Math.max(0, parseInt(inch) || 0));
+            inch = inchInput.value;
+        }
+
+        state.height = (ft || inch) ? ((ft || '0') + ' ft ' + (inch || '0') + ' in') : null;
     } else {
         var cm = document.getElementById('heightCm').value;
         state.height = cm ? (cm + ' cm') : null;
@@ -480,9 +530,9 @@ function buildReview() {
     var grid = document.getElementById('reviewGrid');
     grid.innerHTML = '';
     var items = [];
-    var confMap = { 'not-confident':'Not confident', 'somewhat':'Somewhat confident', 'very':'Very confident' };
-    var genderMap = { 'male':'Male', 'female':'Female', 'other':'Other', 'prefer-not-to-say':'Prefer not to say' };
-    var cycleMap = { 'yes':'Yes', 'no':'No', 'not-applicable':'N/A' };
+    var confMap = { 'not-confident': 'Not confident', 'somewhat': 'Somewhat confident', 'very': 'Very confident' };
+    var genderMap = { 'male': 'Male', 'female': 'Female', 'other': 'Other', 'prefer-not-to-say': 'Prefer not to say' };
+    var cycleMap = { 'yes': 'Yes', 'no': 'No', 'not-applicable': 'N/A' };
     var consentLabel = state.mentalConsent === 'yes' ? 'Yes' : state.mentalConsent === 'no' ? 'No' : 'N/A';
 
     function addItem(icon, key, value, editId) {
@@ -524,12 +574,12 @@ function buildReview() {
         var it = items[i];
         grid.innerHTML +=
             '<div class="ob-review-item">' +
-                '<div class="ob-review-left">' +
-                    '<span class="ob-review-icon">' + it.icon + '</span>' +
-                    '<span class="ob-review-key">'  + it.key  + '</span>' +
-                '</div>' +
-                '<span class="ob-review-value">' + it.value + '</span>' +
-                (it.editId ? ('<button class="ob-review-edit" type="button" onclick="goToEdit(' + it.editId + ')" aria-label="Edit"><i class="fa-solid fa-pencil"></i></button>') : '') +
+            '<div class="ob-review-left">' +
+            '<span class="ob-review-icon">' + it.icon + '</span>' +
+            '<span class="ob-review-key">' + it.key + '</span>' +
+            '</div>' +
+            '<span class="ob-review-value">' + it.value + '</span>' +
+            (it.editId ? ('<button class="ob-review-edit" type="button" onclick="goToEdit(' + it.editId + ')" aria-label="Edit"><i class="fa-solid fa-pencil"></i></button>') : '') +
             '</div>';
     }
 }
@@ -584,9 +634,9 @@ function toggleMedInput(show) {
 /* --------------------------------------------------------
 INIT
 -------------------------------------------------------- */
-document.getElementById('heightMetric').style.display  = 'none';
+document.getElementById('heightMetric').style.display = 'none';
 document.getElementById('heightImperial').style.display = 'flex';
-document.getElementById('weightMetric').style.display  = 'none';
+document.getElementById('weightMetric').style.display = 'none';
 document.getElementById('weightImperial').style.display = 'flex';
 updateStepLabels();
 updateCtaForScreen(2);
@@ -622,6 +672,22 @@ if (medInput) {
     medInput.addEventListener('input', function () {
         state.medList = medInput.value.trim() || null;
         updateCtaForScreen(15);
+    });
+}
+
+var finalGoalInput = document.getElementById('finalGoalInput');
+if (finalGoalInput) {
+    finalGoalInput.addEventListener('input', function () {
+        state.finalGoal = finalGoalInput.value.trim();
+        updateCtaForScreen(12);
+    });
+}
+
+var finalGoalInput = document.getElementById('finalGoalInput');
+
+if (finalGoalInput) {
+    finalGoalInput.addEventListener('input', function () {
+        localStorage.setItem('finalGoal', finalGoalInput.value);
     });
 }
 
@@ -692,10 +758,10 @@ async function completeSetup() {
     } catch (err) {
         console.error("Profile sync failed:", err);
     }
-    
+
     // Smooth fade-out then transition to goals
     document.body.classList.add('page-transition-out');
-    setTimeout(function() {
+    setTimeout(function () {
         window.location.href = 'goals.html';
     }, 450);
 }

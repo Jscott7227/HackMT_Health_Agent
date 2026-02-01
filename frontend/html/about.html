@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Us • Benji</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body { opacity: 0; transition: opacity 0.4s ease; }
+    body.page-visible { opacity: 1; }
+    
+    /* About Page Specific Styles */
+    .about-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+    
+    .about-header {
+      text-align: center;
+      margin-bottom: var(--space-2xl);
+    }
+    
+    .about-title {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 600;
+      color: var(--sage);
+      margin-bottom: var(--space-sm);
+    }
+    
+    .about-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+    
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--sage);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      text-decoration: none;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .back-button:hover {
+      background: var(--sage-dark);
+      transform: translateX(-2px);
+    }
+    
+    .about-section {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      margin-bottom: var(--space-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--sage);
+      margin-bottom: var(--space-md);
+    }
+    
+    .section-content {
+      color: var(--text-primary);
+      font-size: 1.0625rem;
+      line-height: 1.8;
+    }
+    
+    .section-content p {
+      margin-bottom: var(--space-md);
+    }
+    
+    .section-content p:last-child {
+      margin-bottom: 0;
+    }
+    
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+    }
+    
+    .feature-card {
+      background: var(--cream);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      border: 1px solid var(--border-color);
+    }
+    
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--sage-light);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      margin-bottom: var(--space-sm);
+    }
+    
+    .feature-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--sage);
+      margin-bottom: var(--space-xs);
+    }
+    
+    .feature-description {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+    
+    .tech-stack-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      margin-top: var(--space-md);
+    }
+    
+    .tech-badge {
+      background: var(--sage-light);
+      color: white;
+      padding: var(--space-xs) var(--space-md);
+      border-radius: var(--radius-xl);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .example-card {
+      background: var(--cream);
+      border-left: 4px solid var(--sage-light);
+      padding: var(--space-md);
+      margin-top: var(--space-md);
+      border-radius: var(--radius-sm);
+    }
+    
+    .example-title {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--sage);
+      margin-bottom: var(--space-xs);
+    }
+    
+    .example-content {
+      color: var(--text-primary);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+    
+    .problem-list {
+      list-style: none;
+      padding: 0;
+      margin-top: var(--space-md);
+    }
+    
+    .problem-list li {
+      padding-left: var(--space-lg);
+      margin-bottom: var(--space-sm);
+      position: relative;
+      color: var(--text-primary);
+      line-height: 1.7;
+    }
+    
+    .problem-list li::before {
+      content: "•";
+      position: absolute;
+      left: var(--space-sm);
+      color: var(--sage-light);
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+    
+    .future-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+    }
+    
+    .future-item {
+      background: var(--cream);
+      border-radius: var(--radius-sm);
+      padding: var(--space-md);
+    }
+    
+    .future-item strong {
+      color: var(--sage);
+      display: block;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .footer-note {
+      text-align: center;
+      padding: var(--space-xl) var(--space-md);
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .footer-note a {
+      color: inherit;              /* same color as the footer text */
+      font-size: inherit;          /* same size */
+      text-decoration: underline;  /* or none if you prefer */
+      opacity: 0.85;
+    }
+
+    .footer-note a:hover {
+      opacity: 1;
+    }
+
+
+    .hero-logo {
+      width: clamp(130px, 26vh, 340px);
+      height: auto;
+      aspect-ratio: 1;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 16px rgba(79, 62, 47, .18));
+      transition: transform var(--transition-base), filter var(--transition-base);
+    }
+
+    .hero-logo {
+        width: 280px;
+        height: 280px;
+      }
+
+    
+    @media (max-width: 768px) {
+      .about-title {
+        font-size: 2rem;
+      }
+      
+      .about-container {
+        padding: var(--space-lg) var(--space-md);
+      }
+      
+      .about-section {
+        padding: var(--space-md);
+      }
+    }
+  </style>
+</head>
+
+<body data-page="about">
+
+  <div id="benji-root"></div>
+
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <div class="about-container">
+    <!-- Back Button -->
+    <a href="landing.html" class="back-button">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      Back
+    </a>
+
+    <!-- Header -->
+    <div class="about-header">
+      <img src="../assets/img/benji_logo.png" alt="Benji Logo" class="hero-logo">
+      <h1 class="about-title">About Us</h1>
+      <p class="about-subtitle">
+        Wellness Sanctuary with Benji is our hackathon project: a wellness companion powered by an AI agent that helps you manage every aspect of your unique daily life, as a personal trainer, advocate, and support, no matter your circumstances.
+      </p>
+    </div>
+
+    <!-- Project Definition -->
+    <section class="about-section">
+      <h2 class="section-title">Project Definition</h2>
+      <div class="section-content">
+        <p>
+          Wellness Sanctuary with Benji is an AI agent that helps you manage every aspect of your daily life by using your information to offer personalized recommendations for your unique life situations.
+        </p>
+        <ul class="problem-list">
+          <li>People often struggle with consistency, accountability, and personalized guidance as they work toward their goals.</li>
+          <li>Generic apps rarely adapt to each person's context, goals, and constraints.</li>
+          <li>Many people lack access to a dedicated coach or advocate who can respond to their unique situation.</li>
+        </ul>
+        <p>
+          Benji takes your personalized information and addresses these gaps by putting an adaptive, supportive agent in your corner. It delivers recommendations, encouragement, and support to help you reach your goals. It's built for everyone, whether you're focused on health, fitness, habits, mental wellness, or something else. The experience is inclusive, supportive, and goal-oriented.
+        </p>
+      </div>
+    </section>
+
+    <!-- User Experience Goals -->
+    <section class="about-section">
+      <h2 class="section-title">User Experience Goals</h2>
+      <div class="section-content">
+        <p><strong>How Benji works with your goals:</strong></p>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-user" aria-hidden="true"></i>
+            </div>
+            <h3 class="feature-title">Your input</h3>
+            <p class="feature-description">
+              You share what matters: goals, preferences, constraints, progress, and context (including profile details like diet, fitness level, wellness, lifestyle, and optional mental health).
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-brain" aria-hidden="true"></i>
+            </div>
+            <h3 class="feature-title">The agent</h3>
+            <p class="feature-description">
+              That information is sent to Gemini 2.5 Pro, which reasons, plans, and generates responses tailored to you.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-star" aria-hidden="true"></i>
+            </div>
+            <h3 class="feature-title">Your experience</h3>
+            <p class="feature-description">
+              You get recommendations, encouragement, and support—clear next steps, check-ins, and motivation to help you stay on track.
+            </p>
+          </div>
+        </div>
+
+        <!-- Examples -->
+        <div class="example-card">
+          <h3 class="example-title">Fitness goals</h3>
+          <p class="example-content">
+            When you create a fitness goal, the agent determines the goal type (e.g., weight loss, strength training, cardio, injury recovery, mobility) and uses a specialized preset for that category. From there, it builds a personalized plan with check-ins, daily targets, and progress tracking, like "Tomorrow you are walking for fifteen minutes" or "Today is a rest day." Goal-specific check-in fields (calories, protein, soreness, rehab adherence, etc.) help the agent adjust your plan using real context, not guesses.
+          </p>
+        </div>
+
+        <div class="example-card">
+          <h3 class="example-title">Wellness & medication</h3>
+          <p class="example-content">
+            For wellness goals, you get timeline views, weekly recaps, and clear suggestions you can act on. The Medication Manager uses your medications (name, strength, frequency) so the agent can generate a safe schedule that respects contraindications (e.g., drug–drug interactions, with/without meals), combining medication planning with the rest of your wellness in one place.
+          </p>
+        </div>
+
+        <div class="example-card">
+          <h3 class="example-title">Menstrual cycle support</h3>
+          <p class="example-content">
+            When a user tracks cycle, flow, symptoms, cramps, discharge, and oral contraceptives, the agent can infer a simple "today mode" (low/medium/high capacity) and adjust recommendations accordingly. On a low-capacity day, Benji can suggest gentler training (like a 15–30 minute walk, mobility, light core/pelvic/hip work) and practical nutrition support for cravings and bloating (protein anchor + a carb you actually want + fiber/salt balance), helping users stay consistent without feeling punished.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why It's Impactful -->
+    <section class="about-section">
+      <h2 class="section-title">Why It's Impactful</h2>
+      <div class="section-content">
+        <p>
+          We are combining many different applications into one uniform app:
+        </p>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-bullseye" aria-hidden="true"></i>
+            </div>
+            <h3 class="feature-title">Goals & planning</h3>
+            <p class="feature-description">
+              Fitness and wellness goals with timelines and milestones.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
+            </div>
+            <h3 class="feature-title">Daily check-ins</h3>
+            <p class="feature-description">
+              Ratings, tags, and goal-specific fields (diet, sleep, fitness, recovery).
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-pills" aria-hidden="true"></i>
+            </div>
+            <h3 class="feature-title">Medication management</h3>
+            <p class="feature-description">
+              Schedule generation that respects safety and food/drug rules.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-comments" aria-hidden="true"></i>
+            </div>
+            <h3 class="feature-title">Chat & support</h3>
+            <p class="feature-description">
+              A single chatbot helper for questions about any goal.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+            </div>
+            <h3 class="feature-title">Home dashboard</h3>
+            <p class="feature-description">
+              Progress rings, today/tomorrow previews, trends, recovery and injury-aware messaging.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+            </div>
+            <h3 class="feature-title">Menstrual cycle</h3>
+            <p class="feature-description">
+              Guidance that adapts check-ins, workouts, and wellness to symptoms and energy levels.
+            </p>
+          </div>
+        </div>
+        <p style="margin-top: var(--space-lg);">
+          Instead of juggling separate fitness apps, medication trackers, and generic planners, users get one adaptive agent that knows their profile, goals, and context and responds with personalized recommendations, encouragement, and support.
+        </p>
+      </div>
+    </section>
+
+        <!-- Tech Stack -->
+    <section class="about-section">
+      <h2 class="section-title">Tech Stack</h2>
+      <div class="section-content">
+        <p>
+          We chose a simple, modular tech stack to keep the system easy to understand, extend, and customize:
+        </p>
+        <div class="tech-stack-list">
+          <span class="tech-badge">HTML</span>
+          <span class="tech-badge">CSS</span>
+          <span class="tech-badge">JavaScript</span>
+          <span class="tech-badge">Python</span>
+          <span class="tech-badge">FastAPI</span>
+          <span class="tech-badge">Gemini 2.5 Pro</span>
+          <span class="tech-badge">Firestore</span>
+        </div>
+        <p style="margin-top: var(--space-md);">
+          <strong>Frontend:</strong> HTML, CSS, JavaScript — straightforward and easy to tweak or replace.
+        </p>
+        <p>
+          <strong>Backend:</strong> Python with FastAPI — a clear API surface and simple to add new endpoints.
+        </p>
+        <p>
+          <strong>LLM / Agent:</strong> Gemini 2.5 Pro — the agent "brain," chosen for strong context handling and room for future feature expansion.
+        </p>
+        <p>
+          This setup prioritizes future customizations and expansions without locking us into a heavy framework.
+        </p>
+      </div>
+    </section>
+
+    <!-- Developers -->
+    <section class="about-section">
+      <h2 class="section-title">Developers</h2>
+      <div class="section-content">
+        <p>
+          Built by a small team collaborating across frontend, backend, and product design.
+        </p>
+
+        <div class="tech-stack-list" style="margin-top: var(--space-md);">
+          <span class="tech-badge">Thomas Robertson</span>
+          <span class="tech-badge">Kashaina Nucum</span>
+          <span class="tech-badge">Jared Scott</span>
+          <span class="tech-badge">Jacob Hernando</span>
+          <span class="tech-badge">Jun Han</span>
+          <span class="tech-badge">Ariadna Mendoza</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Future Plans -->
+    <section class="about-section">
+      <h2 class="section-title">Future Plans and Expansions</h2>
+      <div class="section-content">
+        <p>
+          Our roadmap is focused on customizability and expanding how the agent behaves:
+        </p>
+        <div class="future-grid">
+          <div class="future-item">
+            <strong>Tone and personality</strong>
+            Let users adjust Benji's tone (e.g. more casual, more clinical, more motivational) so the agent fits their preference.
+          </div>
+          <div class="future-item">
+            <strong>Richer agent behavior</strong>
+            More tools and context for the LLM (e.g. trend analysis, habit nudges, crisis or mental-health-aware responses where appropriate).
+          </div>
+          <div class="future-item">
+            <strong>Customized modeling</strong>
+            Fine-tuned model creation to better integrate user data for a faster, more responsive experience.
+          </div>
+          <div class="future-item">
+            <strong>Broader wellness</strong>
+            Extend beyond fitness and medications into sleep, stress, nutrition, and mental wellness with the same unified experience.
+          </div>
+        </div>
+        <p style="margin-top: var(--space-lg);">
+          By keeping the architecture clean and the agent at the center, we can grow Wellness Sanctuary with Benji into a single, customizable wellness companion that adapts to each user over time.
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer Note -->
+    <div class="footer-note">
+      <p>Built for the MTSU 2026 hackathon. We aim to show how agentic AI can make personalized health and life support accessible to everyone.</p>
+      <p><a href="https://www.vecteezy.com/free-vector/lotus-logo">Lotus Logo Vectors by Vecteezy</a></p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.classList.add('page-visible');
+    });
+  </script>
+
+</body>
+
+</html>

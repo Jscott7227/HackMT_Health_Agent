@@ -534,5 +534,16 @@
   bindNoneRule("healthGroup", ["prefer-not-health", "none-health"]);
   bindUnitToggles();
 
+  // Validate inches are 0-11
+  const heightInInput = $("#heightIn");
+  if (heightInInput) {
+    heightInInput.addEventListener("input", function() {
+      const val = parseInt(this.value);
+      if (!isNaN(val) && (val < 0 || val > 11)) {
+        this.value = Math.min(11, Math.max(0, val));
+      }
+    });
+  }
+
   loadProfile();
 })();
