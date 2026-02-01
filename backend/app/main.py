@@ -179,6 +179,13 @@ class LoginResponse(BaseModel):
     user_id: str
     message: str
 
+class QuestionRequest(BaseModel):
+    active_goals: List[str]
+    user_id: str  # take user id instead of raw facts
+
+class QuestionResponse(BaseModel):
+    questions: Dict[str, List[str]]
+
 class UpdateUserFacts(BaseModel):
     user_id: str
     user_facts: Dict[str, Any] = Field(
@@ -312,6 +319,35 @@ def login(request: LoginRequest):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     return LoginResponse(user_id=user_id, message="Login successful")
 
+@app.post("/relevant-questions", response_model=QuestionResponse)
+def get_relevant_questions(payload: QuestionRequest):
+    """
+    Return relevant check-in questions based on active goals and user's existing facts.
+    """
+    try:
+        # Fetch the user facts from the backend
+        print(payload.user_id)
+        d = get_profileinfo(payload.user_id)
+        user_facts = {
+            "benji_facts": d.benji_facts,
+            "height": d.height,
+            "weight": d.weight,
+        }
+        print(user_facts)
+        if user_facts is None:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        relevant = benji.select_relevant_questions(
+            active_goals={},
+            user_facts=user_facts
+        )
+        print(relevant)
+        return QuestionResponse(questions=relevant)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/user/{user_id}", response_model=UserInfoOut)
 def get_user_info(user_id: str):
@@ -406,7 +442,6 @@ def run_goals_endpoint(payload: RunGoalsRequest):
     try:
         print("Payload received:", payload)
         
-
         user_facts = fetch_profileinfo(payload.user_id)
         result = benji.run_goals(
             user_goal=payload.user_goal,

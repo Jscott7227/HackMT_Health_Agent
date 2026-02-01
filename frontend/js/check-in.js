@@ -6,14 +6,14 @@
   const domains = ["day", "fitness", "wellness", "menstrual"];
   let currentIndex = 0;
 
-  const tabs       = $$("#checkinTabs .nav-tab");
-  const sections   = domains.map(d => $(`#domain-${d}`));
-  const prevBtn    = $("#prevDomain");
-  const nextBtn    = $("#nextDomain");
-  const submitBtn  = $("#submitCheckin");
+  const tabs = $$("#checkinTabs .nav-tab");
+  const sections = domains.map(d => $(`#domain-${d}`));
+  const prevBtn = $("#prevDomain");
+  const nextBtn = $("#nextDomain");
+  const submitBtn = $("#submitCheckin");
   const progressText = $("#progressText");
   const progressFill = $("#progressFill");
-  const loading    = $("#loadingOverlay");
+  const loading = $("#loadingOverlay");
 
   /* ── Recommendations by Benji ─────────────────────── */
   const recommendationsSection = $("#benjiRecommendationsSection");
@@ -22,6 +22,13 @@
   const getRecommendationsBtn = $("#getRecommendationsBtn");
   const getCustomRecommendationsBtn = $("#getCustomRecommendationsBtn");
   const benjiContextInput = $("#benjiContextInput");
+
+  const session = JSON.parse(
+    sessionStorage.getItem("sanctuary_session") ||
+    localStorage.getItem("sanctuary_session") ||
+    "{}"
+  );
+  const userId = session.user_id || null;
 
   const showRecommendationsLoading = (show) => {
     if (recommendationsLoading) {
@@ -34,12 +41,12 @@
 
   const displayRecommendations = (responseText) => {
     if (!recommendationsResponse) return;
-    
+
     // Convert markdown-style formatting to HTML
     let html = responseText
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')  // Bold
       .replace(/\n/g, '<br>');  // Line breaks
-    
+
     recommendationsResponse.innerHTML = `<div class="recommendations-content">${html}</div>`;
   };
 
@@ -67,7 +74,7 @@
       }
 
       const result = await window.BenjiAPI.postCheckinRecommendations(body);
-      
+
       if (result && result.response) {
         displayRecommendations(result.response);
       } else {
@@ -93,34 +100,34 @@
 
   /* ── All slider ↔ readout pairs ───────────────────── */
   const sliderReadouts = [
-    ["#dayScore",           "#dayScoreValue"],
-    ["#eatScore",           "#eatScoreValue"],
-    ["#drinkScore",         "#drinkScoreValue"],
-    ["#sleepScore",         "#sleepScoreValue"],
-    ["#fitnessScore",       "#fitnessScoreValue"],
-    ["#fitnessGoalScore",   "#fitnessGoalScoreValue"],
-    ["#wellnessScore",      "#wellnessScoreValue"],
-    ["#stressScore",        "#stressScoreValue"],
-    ["#cardioIntensity",    "#cardioIntensityValue"],
-    ["#mobTightness",       "#mobTightnessValue"],
-    ["#mobStiffness",       "#mobStiffnessValue"],
-    ["#mobSoreness",        "#mobSorenessValue"],
-    ["#mobLooseness",       "#mobLoosenessValue"],
-    ["#mobPainLevel",       "#mobPainLevelValue"],
-    ["#injPainIntensity",   "#injPainIntensityValue"],
-    ["#injStiffness",       "#injStiffnessValue"],
-    ["#injFunctionScore",   "#injFunctionScoreValue"],
-    ["#rehabAfterEffects",  "#rehabAfterEffectsValue"],
-    ["#perfIntensity",      "#perfIntensityValue"],
-    ["#perfDifficulty",     "#perfDifficultyValue"],
-    ["#perfSoreness",       "#perfSorenessValue"],
-    ["#perfFatigue",        "#perfFatigueValue"],
-    ["#crampPain",          "#crampPainValue"],
+    ["#dayScore", "#dayScoreValue"],
+    ["#eatScore", "#eatScoreValue"],
+    ["#drinkScore", "#drinkScoreValue"],
+    ["#sleepScore", "#sleepScoreValue"],
+    ["#fitnessScore", "#fitnessScoreValue"],
+    ["#fitnessGoalScore", "#fitnessGoalScoreValue"],
+    ["#wellnessScore", "#wellnessScoreValue"],
+    ["#stressScore", "#stressScoreValue"],
+    ["#cardioIntensity", "#cardioIntensityValue"],
+    ["#mobTightness", "#mobTightnessValue"],
+    ["#mobStiffness", "#mobStiffnessValue"],
+    ["#mobSoreness", "#mobSorenessValue"],
+    ["#mobLooseness", "#mobLoosenessValue"],
+    ["#mobPainLevel", "#mobPainLevelValue"],
+    ["#injPainIntensity", "#injPainIntensityValue"],
+    ["#injStiffness", "#injStiffnessValue"],
+    ["#injFunctionScore", "#injFunctionScoreValue"],
+    ["#rehabAfterEffects", "#rehabAfterEffectsValue"],
+    ["#perfIntensity", "#perfIntensityValue"],
+    ["#perfDifficulty", "#perfDifficultyValue"],
+    ["#perfSoreness", "#perfSorenessValue"],
+    ["#perfFatigue", "#perfFatigueValue"],
+    ["#crampPain", "#crampPainValue"],
 
   ];
 
   const setReadout = (sliderSel, readoutSel) => {
-    const slider  = $(sliderSel);
+    const slider = $(sliderSel);
     const readout = $(readoutSel);
     if (!slider || !readout) return;
     readout.textContent = slider.value;
@@ -158,10 +165,10 @@
       t.classList.toggle("active", t.dataset.domain === domains[currentIndex])
     );
 
-  const label = currentIndex === 0 ? "Overall Day"
-              : currentIndex === 1 ? "Fitness"
-              : currentIndex === 2 ? "Wellness"
-              : "Menstrual";
+    const label = currentIndex === 0 ? "Overall Day"
+      : currentIndex === 1 ? "Fitness"
+        : currentIndex === 2 ? "Wellness"
+          : "Menstrual";
 
     if (progressText) progressText.textContent = label;
     if (progressFill) progressFill.style.width =
@@ -169,18 +176,18 @@
 
     if (prevBtn) prevBtn.disabled = currentIndex === 0;
     const isLast = currentIndex === domains.length - 1;
-    if (nextBtn)   nextBtn.style.display   = isLast ? "none" : "inline-flex";
+    if (nextBtn) nextBtn.style.display = isLast ? "none" : "inline-flex";
     if (submitBtn) submitBtn.style.display = isLast ? "inline-flex" : "none";
   };
 
   /* ── Recovery Day toggle ──────────────────────────── */
   const fitnessGoalSection = $("#fitnessGoalSection");
-  const recoveryHint       = $("#recoveryHint");
+  const recoveryHint = $("#recoveryHint");
 
   const updateRecoveryDay = () => {
     const isRecovery = getExclusiveValue("recoveryDay") === "yes";
     if (fitnessGoalSection) fitnessGoalSection.style.display = isRecovery ? "none" : "";
-    if (recoveryHint)       recoveryHint.style.display       = isRecovery ? "block" : "none";
+    if (recoveryHint) recoveryHint.style.display = isRecovery ? "block" : "none";
   };
 
   /* ── Fitness goal tabs — predefined from profile ──── */
@@ -273,24 +280,24 @@
   const payload = () => {
     const data = {
       /* Overall Day */
-      dayScore:   num("#dayScore"),
-      dayNotes:   str("#dayNotes"),
-      tags:       getTags(),
-      eatScore:   num("#eatScore"),
+      dayScore: num("#dayScore"),
+      dayNotes: str("#dayNotes"),
+      tags: getTags(),
+      eatScore: num("#eatScore"),
       drinkScore: num("#drinkScore"),
       sleepScore: num("#sleepScore"),
 
       /* Fitness core */
-      fitnessScore:     num("#fitnessScore"),
-      fitnessNotes:     str("#fitnessNotes"),
+      fitnessScore: num("#fitnessScore"),
+      fitnessNotes: str("#fitnessNotes"),
       fitnessGoalScore: num("#fitnessGoalScore"),
-      recoveryDay:      getExclusiveValue("recoveryDay") === "yes",
+      recoveryDay: getExclusiveValue("recoveryDay") === "yes",
 
       /* Wellness */
       wellnessScore: num("#wellnessScore"),
       wellnessNotes: str("#wellnessNotes"),
-      stress:        num("#stressScore"),
-      mood:          Number(getExclusiveValue("mood") ?? 0),
+      stress: num("#stressScore"),
+      mood: Number(getExclusiveValue("mood") ?? 0),
 
       /* Menstrual */
       menstrual: {
@@ -308,8 +315,8 @@
 
       /* Meta */
       activeGoals: userGoals,
-      timestamp:   new Date().toISOString(),
-      
+      timestamp: new Date().toISOString(),
+
       /* Benji Context - what user wanted Benji to know */
       benjiContext: str("#benjiContextInput"),
     };
@@ -318,94 +325,94 @@
     if (!data.recoveryDay) {
       if (userGoals.includes("weight-loss")) {
         data.weightLoss = {
-          calories:     num("#wl-calories"),
+          calories: num("#wl-calories"),
           trainingType: getExclusiveValue("wl-training"),
-          weight:       num("#wl-weight"),
+          weight: num("#wl-weight"),
         };
       }
       if (userGoals.includes("weight-gain")) {
         data.weightGain = {
           calories: num("#wg-calories"),
-          weight:   num("#wg-weight"),
+          weight: num("#wg-weight"),
         };
       }
       if (userGoals.includes("body-recomp")) {
         data.bodyRecomp = {
-          calories:  num("#br-calories"),
-          protein:   num("#br-protein"),
+          calories: num("#br-calories"),
+          protein: num("#br-protein"),
           hydration: num("#br-hydration"),
-          carbs:     num("#br-carbs"),
-          fats:      num("#br-fats"),
-          fiber:     num("#br-fiber"),
-          weight:    num("#br-weight"),
+          carbs: num("#br-carbs"),
+          fats: num("#br-fats"),
+          fiber: num("#br-fiber"),
+          weight: num("#br-weight"),
         };
       }
       if (userGoals.includes("strength")) {
         data.strength = {
-          calories:  num("#st-calories"),
-          protein:   num("#st-protein"),
-          carbs:     num("#st-carbs"),
-          fat:       num("#st-fat"),
+          calories: num("#st-calories"),
+          protein: num("#st-protein"),
+          carbs: num("#st-carbs"),
+          fat: num("#st-fat"),
           hydration: num("#st-hydration"),
-          weight:    num("#st-weight"),
+          weight: num("#st-weight"),
         };
       }
       if (userGoals.includes("cardio")) {
         data.cardio = {
           activityType: getExclusiveValue("cardio-type"),
-          volume:       num("#cardio-volume"),
-          distance:     num("#cardio-distance"),
-          pace:         str("#cardio-pace"),
-          intensity:    num("#cardioIntensity"),
+          volume: num("#cardio-volume"),
+          distance: num("#cardio-distance"),
+          pace: str("#cardio-pace"),
+          intensity: num("#cardioIntensity"),
         };
       }
       if (userGoals.includes("general")) {
         data.general = {
           activity: str("#general-activity"),
-          method:   getExclusiveValue("general-method"),
-          weight:   num("#general-weight"),
+          method: getExclusiveValue("general-method"),
+          weight: num("#general-weight"),
         };
       }
       if (userGoals.includes("mobility")) {
         data.mobility = {
-          sessions:     num("#mob-sessions"),
-          tightness:    num("#mobTightness"),
-          stiffness:    num("#mobStiffness"),
-          soreness:     num("#mobSoreness"),
-          looseness:    num("#mobLooseness"),
-          painLevel:    num("#mobPainLevel"),
+          sessions: num("#mob-sessions"),
+          tightness: num("#mobTightness"),
+          stiffness: num("#mobStiffness"),
+          soreness: num("#mobSoreness"),
+          looseness: num("#mobLooseness"),
+          painLevel: num("#mobPainLevel"),
           painLocation: str("#mob-pain-location"),
-          romNotes:     str("#mob-rom-notes"),
+          romNotes: str("#mob-rom-notes"),
         };
       }
       if (userGoals.includes("injury")) {
         data.injury = {
-          painIntensity:     num("#injPainIntensity"),
-          painLocation:      str("#inj-pain-location"),
-          painType:          getExclusiveValue("inj-pain-type"),
-          painFrequency:     getExclusiveValue("inj-pain-freq"),
-          stiffness:         num("#injStiffness"),
-          functionScore:     num("#injFunctionScore"),
+          painIntensity: num("#injPainIntensity"),
+          painLocation: str("#inj-pain-location"),
+          painType: getExclusiveValue("inj-pain-type"),
+          painFrequency: getExclusiveValue("inj-pain-freq"),
+          stiffness: num("#injStiffness"),
+          functionScore: num("#injFunctionScore"),
           activityTolerance: num("#inj-tolerance"),
         };
       }
       if (userGoals.includes("rehab")) {
         data.rehab = {
-          trainingMinutes:    num("#rehab-minutes"),
-          sessions:           num("#rehab-sessions"),
-          afterEffects:       num("#rehabAfterEffects"),
-          flareup:            getExclusiveValue("rehab-flareup") === "yes",
-          flareupTriggers:    getFlareupTriggers(),
+          trainingMinutes: num("#rehab-minutes"),
+          sessions: num("#rehab-sessions"),
+          afterEffects: num("#rehabAfterEffects"),
+          flareup: getExclusiveValue("rehab-flareup") === "yes",
+          flareupTriggers: getFlareupTriggers(),
           flareupDescription: str("#flareupDesc"),
         };
       }
       if (userGoals.includes("performance")) {
         data.performance = {
           minutesTrained: num("#perf-minutes"),
-          intensity:      num("#perfIntensity"),
-          difficulty:     num("#perfDifficulty"),
-          soreness:       num("#perfSoreness"),
-          fatigue:        num("#perfFatigue"),
+          intensity: num("#perfIntensity"),
+          difficulty: num("#perfDifficulty"),
+          soreness: num("#perfSoreness"),
+          fatigue: num("#perfFatigue"),
         };
       }
     }
@@ -485,6 +492,98 @@
     }
   });
 
+  /* ── Fetch relevant questions for the user ────────── */
+  /* ── Fetch relevant questions for the user ────────── */
+  const fetchRelevantQuestions = async () => {
+    try {
+      const session = window.BenjiAPI?.getSession?.();
+      if (!session || !session.user_id) return [];
+
+      const resp = await fetch("http://localhost:8000/relevant-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: session.user_id,
+          active_goals: JSON.parse(localStorage.getItem("Benji_fitnessGoals") || "[]")
+        })
+      });
+
+      if (!resp.ok) throw new Error("Failed to fetch questions");
+
+      const data = await resp.json();
+
+      // Expecting either an array or an object whose values are arrays
+      if (Array.isArray(data.questions)) return data.questions;
+
+      if (data.questions && typeof data.questions === "object") {
+        return Object.values(data.questions).flat();
+      }
+
+      return [];
+    } catch (err) {
+      console.error("Error fetching relevant questions:", err);
+      return [];
+    }
+  };
+
+  /* ── Hide questions that are not relevant ─────────── */
+  const filterPageByQuestions = (questions) => {
+    if (!questions) return;
+
+    console.log("Filtering page using relevant questions:", questions);
+
+    const questionMap = {
+      "How would you rate your day from 1-10?": "#dayScore",
+      "Any notes about your day?": "#dayNotes",
+      "What tags describe your day?": "#tagsSection",
+      "Rate your eating, drinking, and sleep today.": "#eatScore, #drinkScore, #sleepScore",
+      "Rate your overall fitness today.": "#fitnessScore",
+      "Any notes on your fitness?": "#fitnessNotes",
+      "Rate your fitness goal performance.": "#fitnessGoalScore",
+      "Rate your wellness today.": "#wellnessScore",
+      "Any notes on wellness?": "#wellnessNotes",
+      "Rate your stress level.": "#stressScore",
+      "How is your mood today?": "#moodSection",
+      "When did your last period start?": "#lastPeriodStart",
+      "What is your current flow?": "[name='flow']",
+      "Which symptoms are present?": "[name='symptoms']",
+      "Rate your cramp pain.": "#crampPain",
+      "Do you have any unusual discharge?": "#dischargeNotesWrap",
+      "Are you taking oral contraceptives?": "#ocpDetails",
+      "Which type of OCP?": "#ocpType"
+    };
+
+    let flat = [];
+    if (Array.isArray(questions)) flat = questions;
+    else flat = Object.values(questions).flat();
+
+    Object.values(questionMap).forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        const wrapper = el.closest(".form-group");
+        if (wrapper) wrapper.classList.add("force-hidden");
+      });
+    });
+
+    // questionsArray.forEach(q => {
+    //   const sel = questionMap[q];
+    //   if (!sel) return;
+
+    //   document.querySelectorAll(sel).forEach(el => {
+    //     const wrapper = el.closest(".form-group");
+    //     if (wrapper) wrapper.classList.remove("force-hidden");
+    //   });
+    // });
+  };
+
+  filterPageByQuestions("")
+
+
+  /* ── Run on page load ─────────────────────────────── */
+
+
+  // At the end of your ini
+
+
   /* ── Init ─────────────────────────────────────────── */
   initReadouts();
   initGoalTabs();
@@ -493,5 +592,11 @@
   updateFlareup();
   updateDischargeNotes();
   updateOCPDetails();
+
+  (async () => {
+    const questions = await fetchRelevantQuestions();
+    filterPageByQuestions(questions);
+    setDomain(0);
+  })();
 
 })();
