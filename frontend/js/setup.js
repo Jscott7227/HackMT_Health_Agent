@@ -3,7 +3,7 @@ ROUTE MAP
 Screen 5 (mental health detail) is spliced in or out
 at runtime based on the consent answer on screen 3.
 -------------------------------------------------------- */
-var ROUTE = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13];
+var ROUTE = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 14, 15, 11, 12, 13];
 var returnToReview = false;
 var currentRouteIndex = 0;
 
@@ -17,6 +17,7 @@ var state = {
     mood: null,
     stress: null,
     mentalReflection: null,
+    mentalConsentNote: null,
     height: null,
     heightUnit: 'imperial',
     weight: null,
@@ -28,6 +29,11 @@ var state = {
     constraints: [],
     health: [],
     confidence: null,
+    gender: null,
+    cycleTracking: null,
+    medTracking: null,
+    medList: null,
+    healthDetail: null,
     weightTouched: false,
     activityTouched: false,
     constraintsTouched: false,
@@ -80,7 +86,14 @@ function buildBenjiFacts() {
     if (state.goal) parts.push("Goal: " + (GOAL_LABELS[state.goal] || state.goal));
     if (state.experience) parts.push("Experience: " + (EXP_LABELS[state.experience] || state.experience));
     if (state.constraints && state.constraints.length) parts.push("Constraints: " + state.constraints.join(", "));
-    if (state.health && state.health.length) parts.push("Health: " + state.health.join(", "));
+    if (state.health && state.health.length) {
+        var healthStr = state.health.join(", ");
+        if (state.healthDetail) healthStr += " (" + state.healthDetail + ")";
+        parts.push("Health: " + healthStr);
+    }
+    if (state.gender) parts.push("Gender: " + state.gender);
+    if (state.cycleTracking) parts.push("Cycle tracking: " + state.cycleTracking);
+    if (state.medTracking === 'yes') parts.push("Medications: " + (state.medList || 'Yes'));
     if (state.mentalReflection) parts.push("Notes: " + state.mentalReflection);
     return parts.join(" | ");
 }
@@ -122,6 +135,7 @@ function updateStepLabels() {
 NAVIGATION
 -------------------------------------------------------- */
 function goTo(n) {
+    updateStepLabels();
     if (n === 12) buildReview();
 
     var screens = document.querySelectorAll('.ob-screen');
@@ -129,8 +143,12 @@ function goTo(n) {
 
     var target = document.getElementById('screen-' + n);
     if (target) {
-        // Force animation restart by reflowing before adding class
-        void target.offsetWidth;
+        var card = document.querySelector('.onboarding-card');
+        if (card) {
+            card.classList.remove('animate');
+            void card.offsetWidth;
+            card.classList.add('animate');
+        }
         target.classList.add('active');
     }
 
@@ -251,13 +269,19 @@ function updateCtaForScreen(screenId) {
     if (id === 9) return setCtaLabel(document.querySelector('#screen-9 .ob-cta'), !!state.constraintsTouched);
     if (id === 10) return setCtaLabel(document.querySelector('#screen-10 .ob-cta'), !!state.healthTouched);
     if (id === 11) return setCtaLabel(document.getElementById('cta-11'), !!state.confidence);
+    if (id === 14) return setCtaLabel(document.getElementById('cta-14'), !!state.cycleTracking);
+    if (id === 15) {
+        var medHasData = state.medTracking === 'no' || (state.medTracking === 'yes' && !!state.medList);
+        return setCtaLabel(document.getElementById('cta-15'), medHasData);
+    }
+    if (id === 16) return setCtaLabel(document.getElementById('cta-16'), !!state.gender);
 }
 
 /* --------------------------------------------------------
 CONSENT GATING
 -------------------------------------------------------- */
 function applyConsentRoute() {
-    var base = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13];
+    var base = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 14, 15, 11, 12, 13];
     if (state.mentalConsent === 'yes') {
         // insert screen 5 right after screen 4
         for (var i = 0; i < base.length; i++) {
@@ -273,10 +297,15 @@ SINGLE-SELECT OPTION CARDS
 -------------------------------------------------------- */
 function selectOption(el) {
     var group = el.dataset.group;
+    var wasSelected = el.classList.contains('selected');
     var cards = document.querySelectorAll('.ob-option-card[data-group="' + group + '"]');
     for (var i = 0; i < cards.length; i++) cards[i].classList.remove('selected');
-    el.classList.add('selected');
-    state[group] = el.dataset.value;
+    if (wasSelected) {
+        state[group] = null;
+    } else {
+        el.classList.add('selected');
+        state[group] = el.dataset.value;
+    }
     updateCtaForScreen();
 }
 
@@ -309,16 +338,31 @@ function toggleMultiNone(el, listId) {
 /* --------------------------------------------------------
 1–5 LABELED SCALE  (mood, stress, energy, sleep)
 -------------------------------------------------------- */
-function selectScale(field, value, el) {
+function toggleScale(field, value, el) {
     var containerId = field + 'Scale';
     var container = document.getElementById(containerId);
-    if (container) {
-        var pips = container.querySelectorAll('.ob-scale-pip');
-        for (var i = 0; i < pips.length; i++) pips[i].classList.remove('selected');
+    var descLine = document.getElementById(field + 'Desc');
+    if (el.classList.contains('selected')) {
+        el.classList.remove('selected');
+        state[field] = null;
+        if (descLine) { descLine.textContent = '\u00a0'; descLine.classList.remove('active'); }
+    } else {
+        if (container) {
+            var pips = container.querySelectorAll('.ob-scale-pip');
+            for (var i = 0; i < pips.length; i++) pips[i].classList.remove('selected');
+        }
+        el.classList.add('selected');
+        state[field] = value;
+        if (descLine) { descLine.textContent = el.dataset.desc || ''; descLine.classList.add('active'); }
     }
-    el.classList.add('selected');
-    state[field] = value;
     updateCtaForScreen();
+}
+
+function toggleMentalDesc() {
+    var desc = document.getElementById('mentalConsentDesc');
+    if (desc) {
+        desc.style.display = (state.mentalConsent === 'yes') ? 'block' : 'none';
+    }
 }
 
 /* --------------------------------------------------------
@@ -414,38 +458,42 @@ function buildReview() {
     grid.innerHTML = '';
     var items = [];
     var confMap = { 'not-confident':'Not confident', 'somewhat':'Somewhat confident', 'very':'Very confident' };
+    var genderMap = { 'male':'Male', 'female':'Female', 'other':'Other', 'prefer-not-to-say':'Prefer not to say' };
+    var cycleMap = { 'yes':'Yes', 'no':'No', 'not-applicable':'N/A' };
     var consentLabel = state.mentalConsent === 'yes' ? 'Yes' : state.mentalConsent === 'no' ? 'No' : 'N/A';
 
     function addItem(icon, key, value, editId) {
-        items.push({ icon: icon, key: key, value: value || 'N/A', editId: editId });
+        items.push({ icon: icon, key: key, value: value || '--', editId: editId });
     }
 
-    addItem('<i class="fa-solid fa-bullseye"></i>', 'Goal', state.goal ? (GOAL_LABELS[state.goal] || state.goal) : 'N/A', 2);
-    addItem('<i class="fa-solid fa-brain"></i>', 'Mental health consent', consentLabel, 3);
-    addItem('<i class="fa-solid fa-chart-simple"></i>', 'Experience', state.experience ? EXP_LABELS[state.experience] : 'N/A', 4);
+    addItem('<i class="fa-solid fa-bullseye"></i>', 'Goal', state.goal ? (GOAL_LABELS[state.goal] || state.goal) : '--', 2);
+    addItem('<i class="fa-solid fa-brain"></i>', 'Mental health', consentLabel, 3);
+    addItem('<i class="fa-solid fa-chart-simple"></i>', 'Experience', state.experience ? EXP_LABELS[state.experience] : '--', 4);
 
     if (state.mentalConsent === 'yes') {
-        addItem('<i class="fa-solid fa-face-smile"></i>', 'Mood', state.mood ? GENERIC_SCALE[state.mood] : 'N/A', 5);
-        addItem('<i class="fa-solid fa-spa"></i>', 'Stress', state.stress ? GENERIC_SCALE[state.stress] : 'N/A', 5);
-    } else {
-        addItem('<i class="fa-solid fa-face-smile"></i>', 'Mood', 'N/A', 5);
-        addItem('<i class="fa-solid fa-spa"></i>', 'Stress', 'N/A', 5);
+        addItem('<i class="fa-solid fa-face-smile"></i>', 'Mood', state.mood ? GENERIC_SCALE[state.mood] : '--', 5);
+        addItem('<i class="fa-solid fa-spa"></i>', 'Stress', state.stress ? GENERIC_SCALE[state.stress] : '--', 5);
     }
 
-    addItem('<i class="fa-solid fa-ruler-vertical"></i>', 'Height', state.height || 'N/A', 6);
+    addItem('<i class="fa-solid fa-venus-mars"></i>', 'Gender', state.gender ? (genderMap[state.gender] || state.gender) : '--', 16);
+    addItem('<i class="fa-solid fa-ruler-vertical"></i>', 'Height', state.height || '--', 6);
     if (state.weightSkipped) {
         addItem('<i class="fa-solid fa-weight-scale"></i>', 'Weight', 'Not provided', 7);
     } else {
-        addItem('<i class="fa-solid fa-weight-scale"></i>', 'Weight', state.weight || 'N/A', 7);
+        addItem('<i class="fa-solid fa-weight-scale"></i>', 'Weight', state.weight || '--', 7);
     }
 
-    addItem('<i class="fa-solid fa-person-running"></i>', 'Activity', state.activityTouched ? ACTIVITY_LABELS[state.activity] : 'N/A', 8);
-    addItem('<i class="fa-solid fa-bolt"></i>', 'Energy', state.energy ? GENERIC_SCALE[state.energy] : 'N/A', 8);
-    addItem('<i class="fa-solid fa-moon"></i>', 'Sleep', state.sleep ? SLEEP_LABELS[state.sleep] : 'N/A', 8);
+    addItem('<i class="fa-solid fa-person-running"></i>', 'Activity', state.activityTouched ? ACTIVITY_LABELS[state.activity] : '--', 8);
+    addItem('<i class="fa-solid fa-bolt"></i>', 'Energy', state.energy ? GENERIC_SCALE[state.energy] : '--', 8);
+    addItem('<i class="fa-solid fa-moon"></i>', 'Sleep', state.sleep ? SLEEP_LABELS[state.sleep] : '--', 8);
 
-    addItem('<i class="fa-solid fa-clock"></i>', 'Lifestyle', state.constraints && state.constraints.length ? state.constraints.join(', ') : 'N/A', 9);
-    addItem('<i class="fa-solid fa-heart-pulse"></i>', 'Health', state.health && state.health.length ? state.health.join(', ') : 'N/A', 10);
-    addItem('<i class="fa-solid fa-comment"></i>', 'Confidence', state.confidence ? confMap[state.confidence] : 'N/A', 11);
+    addItem('<i class="fa-solid fa-sun"></i>', 'Lifestyle', state.constraints && state.constraints.length ? state.constraints.join(', ') : '--', 9);
+    var healthVal = state.health && state.health.length ? state.health.join(', ') : '--';
+    if (state.healthDetail) healthVal += ' — ' + state.healthDetail;
+    addItem('<i class="fa-solid fa-heart-pulse"></i>', 'Health', healthVal, 10);
+    addItem('<i class="fa-solid fa-calendar-days"></i>', 'Cycle tracking', state.cycleTracking ? (cycleMap[state.cycleTracking] || state.cycleTracking) : '--', 14);
+    addItem('<i class="fa-solid fa-pills"></i>', 'Medications', state.medTracking === 'yes' ? (state.medList || 'Yes') : state.medTracking === 'no' ? 'None' : '--', 15);
+    addItem('<i class="fa-solid fa-comment"></i>', 'Confidence', state.confidence ? confMap[state.confidence] : '--', 11);
 
     for (var i = 0; i < items.length; i++) {
         var it = items[i];
@@ -456,7 +504,7 @@ function buildReview() {
                     '<span class="ob-review-key">'  + it.key  + '</span>' +
                 '</div>' +
                 '<span class="ob-review-value">' + it.value + '</span>' +
-                (it.editId ? ('<button class="ob-review-edit" type="button" onclick="goToEdit(' + it.editId + ')">Edit</button>') : '') +
+                (it.editId ? ('<button class="ob-review-edit" type="button" onclick="goToEdit(' + it.editId + ')" aria-label="Edit"><i class="fa-solid fa-pencil"></i></button>') : '') +
             '</div>';
     }
 }
@@ -479,6 +527,36 @@ function syncMultiState() {
 }
 
 /* --------------------------------------------------------
+HEALTH DETAIL & MEDICATION INPUT TOGGLES
+-------------------------------------------------------- */
+function toggleHealthDetail() {
+    var list = document.getElementById('healthList');
+    var wrap = document.getElementById('healthDetailWrap');
+    if (!list || !wrap) return;
+    var detailValues = ['joint-pain', 'cardio-concerns', 'metabolic'];
+    var show = false;
+    for (var i = 0; i < detailValues.length; i++) {
+        var card = list.querySelector('[data-value="' + detailValues[i] + '"]');
+        if (card && card.classList.contains('selected')) { show = true; break; }
+    }
+    wrap.style.display = show ? 'block' : 'none';
+    if (!show) {
+        var input = document.getElementById('healthDetailInput');
+        if (input) { input.value = ''; state.healthDetail = null; }
+    }
+}
+
+function toggleMedInput(show) {
+    var wrap = document.getElementById('medInputWrap');
+    if (wrap) wrap.style.display = show ? 'block' : 'none';
+    if (!show) {
+        var input = document.getElementById('medListInput');
+        if (input) { input.value = ''; state.medList = null; }
+    }
+    updateCtaForScreen(15);
+}
+
+/* --------------------------------------------------------
 INIT
 -------------------------------------------------------- */
 document.getElementById('heightMetric').style.display  = 'none';
@@ -489,11 +567,36 @@ updateStepLabels();
 updateCtaForScreen(2);
 updateBackVisibility(1);
 
+var initialCard = document.querySelector('.onboarding-card');
+if (initialCard) initialCard.classList.add('animate');
+
 var reflectionInput = document.getElementById('mentalReflection');
 if (reflectionInput) {
     reflectionInput.addEventListener('input', function () {
         state.mentalReflection = reflectionInput.value.trim() || null;
         updateCtaForScreen(5);
+    });
+}
+
+var mentalConsentNote = document.getElementById('mentalConsentNote');
+if (mentalConsentNote) {
+    mentalConsentNote.addEventListener('input', function () {
+        state.mentalConsentNote = mentalConsentNote.value.trim() || null;
+    });
+}
+
+var healthDetailInput = document.getElementById('healthDetailInput');
+if (healthDetailInput) {
+    healthDetailInput.addEventListener('input', function () {
+        state.healthDetail = healthDetailInput.value.trim() || null;
+    });
+}
+
+var medInput = document.getElementById('medListInput');
+if (medInput) {
+    medInput.addEventListener('input', function () {
+        state.medList = medInput.value.trim() || null;
+        updateCtaForScreen(15);
     });
 }
 

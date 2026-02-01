@@ -709,18 +709,6 @@
       margin-bottom: 0.25rem;
     }
 
-    .forgot-link {
-      color: var(--sage-dark);
-      text-decoration: none;
-      font-weight: 600;
-      transition: color var(--transition-base);
-    }
-
-    .forgot-link:hover {
-      color: var(--sage);
-      text-decoration: underline
-    }
-
     .submit-btn {
       width: 100%;
       padding: 10px;
@@ -801,53 +789,6 @@
 
     .terms-text a:hover {
       text-decoration: underline
-    }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(4px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 24px;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal-card {
-      width: 100%;
-      max-width: 460px;
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      padding: 24px;
-      text-align: center;
-      animation: fadeInUp .4s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-
-    .modal-title {
-      font-family: var(--font-display);
-      font-size: 1.6rem;
-      color: var(--text-primary);
-      margin-bottom: 6px;
-    }
-
-    .modal-text {
-      color: var(--text-secondary);
-      font-size: 1rem;
-      margin-bottom: 18px;
-    }
-
-    .modal-actions {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
     }
 
     /* ── loading overlay ── */
@@ -1128,14 +1069,6 @@
                   </div>
                 </div>
 
-                <div class="row-between">
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="login-rememberMe" />
-                    <label for="login-rememberMe">Remember me</label>
-                  </div>
-                  <a href="../html/forgot-password.html" class="forgot-link">Forgot Password?</a>
-                </div>
-
                 <button type="submit" class="submit-btn">Log In</button>
               </form>
 
@@ -1238,16 +1171,6 @@
     <div class="loading-content">
       <div class="loading-spinner"></div>
       <p class="loading-text" id="loadingText">Signing you in...</p>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="forgotModal" aria-hidden="true">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
-      <div class="modal-title" id="forgotTitle">Too bad!</div>
-      <div class="modal-text">Feature coming soon.</div>
-      <div class="modal-actions">
-        <button class="submit-btn" id="forgotClose" type="button">Close</button>
-      </div>
     </div>
   </div>
 

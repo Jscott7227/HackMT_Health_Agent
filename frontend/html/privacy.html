@@ -13,7 +13,6 @@
 </head>
 
 <body data-page="privacy">
-  <div id="benji-root"></div>
 
   <div class="background-layers">
     <div class="grain"></div>
@@ -27,7 +26,7 @@
       <div class="header-content">
         <h1 class="Benji-title" style="font-size: 2.6rem;">Privacy Policy</h1>
         <p class="Benji-subtitle" style="margin-top: 2px;">
-          Clear and simple for your prototype.
+          A short summary of what we store and why.
         </p>
       </div>
     </header>
@@ -38,36 +37,22 @@
       </div>
 
       <div class="agent-message" style="font-size: 1rem;">
-        <p>This prototype stores a small amount of data <strong>in your browser</strong>:</p>
+        <p>We store information to personalize your experience:</p>
         <ul style="padding-left: 1.2rem; margin-top: .5rem; color: var(--text-primary);">
-          <li><code>sanctuary_session</code> (login state)</li>
-          <li><code>sanctuary_user</code> (optional name/email from signup)</li>
-          <li>Any check-in / app content you decide to store (if/when you implement it)</li>
+          <li><strong>Account data</strong> (name, email) in the app database</li>
+          <li><strong>Profile info</strong> (height, weight, notes) if you save it</li>
+          <li><strong>Session data</strong> in your browser to keep you signed in</li>
         </ul>
 
         <p style="margin-top: var(--space-sm);">
-          No data is sent to a server in this UI-only version.
+          You can clear local storage below. Server‑side deletion can be requested within the app when available.
         </p>
       </div>
 
-      <div class="domain-header" style="margin-top: var(--space-lg);">
-        <h2 class="domain-title">Clear local data</h2>
-      </div>
-
-      <div style="display:flex; gap: var(--space-sm); flex-wrap: wrap;">
-        <button class="danger-btn" id="clearLocal">Clear localStorage</button>
-        <button class="danger-btn" id="clearSession">Clear sessionStorage</button>
-        <a class="secondary-btn" href="./landing.html" style="text-decoration:none;">Back to login</a>
-      </div>
-
-      <div class="help-text" id="clearedMsg" style="display:none; margin-top: var(--space-sm); font-weight: 600; color: var(--sage-dark);">
-        Cleared.
-      </div>
     </div>
   </div>
 
   <!-- Scripts -->
   <script src="../js/privacy.js"></script>
-  <script src="../components/topbar.js"></script>
 </body>
 </html>
