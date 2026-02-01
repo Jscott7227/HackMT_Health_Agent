@@ -74,6 +74,9 @@
   /* Store today's check-in data (if available) for rendering glance */
   var todayCheckinData = null;
 
+  /* Store Benji's Notes from post check-in sensing */
+  var benjiNotesData = null;
+
   /* Helper: Check if a date string or timestamp is "today" (same calendar day) */
   function isToday(dateValue) {
     if (!dateValue) return false;
@@ -223,6 +226,27 @@
     grid.innerHTML = html;
   }
 
+  /* ---------- RENDER: BENJI'S NOTES (post check-in insights) ---------- */
+  function renderBenjiNotes() {
+    var section = el("benjiNotesSection");
+    var container = el("benjiNotesContent");
+    if (!section || !container) return;
+    
+    // Only show if we have notes
+    if (!benjiNotesData || !Array.isArray(benjiNotesData) || benjiNotesData.length === 0) {
+      section.style.display = "none";
+      return;
+    }
+    
+    section.style.display = "block";
+    var html = '<ul class="benji-notes-list">';
+    for (var i = 0; i < benjiNotesData.length; i++) {
+      html += '<li>' + escapeHtml(benjiNotesData[i]) + '</li>';
+    }
+    html += '</ul>';
+    container.innerHTML = html;
+  }
+
   /* ---------- HELPERS: date formatting ---------- */
   function shortDate(iso) {
     var d = new Date(iso + "T00:00:00");
@@ -309,12 +333,15 @@
     window.BenjiCheckinModal = {
       close: closeModal,
       // Called by check-in.js after successful check-in submit
-      onComplete: function (checkinData) {
+      // checkinData: the check-in payload, benjiNotes: array of "Benji's Notes" strings
+      onComplete: function (checkinData, benjiNotes) {
         checkinDone = true;
         todayCheckinData = checkinData || null;
-        console.log("Check-in completed, updating banner and glance");
+        benjiNotesData = benjiNotes || null;
+        console.log("Check-in completed, updating banner, glance, and notes");
         renderBanner();
         renderGlance();
+        renderBenjiNotes();
         closeModal();
       }
     };
@@ -500,6 +527,7 @@
     renderInjuryWarning();
     renderMedicationSchedule();
     renderGlance();
+    renderBenjiNotes();
     renderGoals();
     initCheckinModal();
   }
@@ -665,6 +693,11 @@
                 if (isToday(dateField)) {
                   checkinDone = true;
                   todayCheckinData = c;
+                  // Load Benji's Notes if persisted on the check-in document
+                  if (c.benji_notes && Array.isArray(c.benji_notes)) {
+                    benjiNotesData = c.benji_notes;
+                    console.log("Found Benji's Notes:", benjiNotesData);
+                  }
                   console.log("Found today's check-in:", c);
                   break;
                 }

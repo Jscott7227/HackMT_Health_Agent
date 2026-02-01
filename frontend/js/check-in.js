@@ -460,18 +460,44 @@
         localStorage.setItem(key, JSON.stringify(arr));
       }
 
+      let checkinId = null;
+      let benjiNotes = null;
+      
       if (window.BenjiAPI && window.BenjiAPI.getSession && window.BenjiAPI.postCheckin) {
         const session = window.BenjiAPI.getSession();
         if (session && session.user_id) {
           const body = Object.assign({ user_id: session.user_id, date: new Date().toISOString().slice(0, 10) }, data);
-          await window.BenjiAPI.postCheckin(body).catch((err) => console.warn("Backend check-in save failed:", err));
+          
+          // Save check-in and get the check-in ID
+          try {
+            const checkinResult = await window.BenjiAPI.postCheckin(body);
+            checkinId = checkinResult?.id || null;
+          } catch (err) {
+            console.warn("Backend check-in save failed:", err);
+          }
+          
+          // Call checkin-sense to get Benji's Notes (post check-in insights)
+          if (window.BenjiAPI.postCheckinSense) {
+            try {
+              const senseResult = await window.BenjiAPI.postCheckinSense({
+                user_id: session.user_id,
+                checkin_data: data,
+                checkin_id: checkinId
+              });
+              benjiNotes = senseResult?.notes || null;
+              console.log("Benji's Notes:", benjiNotes);
+            } catch (err) {
+              console.warn("Failed to get Benji's Notes:", err);
+            }
+          }
         }
       }
 
       // Close the modal and update banner/glance if we're inside one (home page)
+      // Pass both the check-in data and Benji's Notes to onComplete
       if (window.BenjiCheckinModal) {
         if (window.BenjiCheckinModal.onComplete) {
-          window.BenjiCheckinModal.onComplete(data);
+          window.BenjiCheckinModal.onComplete(data, benjiNotes);
         } else {
           window.BenjiCheckinModal.close();
         }

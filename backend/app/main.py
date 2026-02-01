@@ -366,18 +366,51 @@ def fetch_profileinfo(user_id: str):
 def run_agent(payload: RunRequest):
     """
     Run BenjiLLM with optional pre-known user facts.
-    If user_id provided, automatically load stored user_facts.
+    If user_id provided, automatically load ProfileInfo, goals, and recent check-ins.
     """
     user_facts = payload.user_facts or {}
 
     if payload.user_id:
-        user = get_user_by_id(payload.user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        # Merge stored facts with request facts
-        stored_facts = user.get("user_facts", {})
-        stored_facts.update(user_facts)
-        user_facts = stored_facts
+        # Load ProfileInfo (preferred over legacy user_facts from users.json)
+        try:
+            profile = get_profileinfo(payload.user_id)
+            user_facts["benji_facts"] = profile.benji_facts
+            user_facts["height"] = profile.height
+            user_facts["weight"] = profile.weight
+        except HTTPException:
+            # Profile not found - try legacy user_facts
+            user = get_user_by_id(payload.user_id)
+            if user:
+                stored_facts = user.get("user_facts", {})
+                stored_facts.update(user_facts)
+                user_facts = stored_facts
+        
+        # Load accepted goals
+        try:
+            goals_data = get_goals(payload.user_id)
+            goals_array = goals_data.get("goals") or goals_data.get("accepted") or []
+            if goals_array:
+                user_facts["goals"] = goals_array
+        except Exception:
+            pass
+        
+        # Load recent check-ins (latest + history for tools)
+        try:
+            docs = list(db.collection("CheckIns")
+                        .where("UserID", "==", payload.user_id)
+                        .limit(10)
+                        .stream())
+            checkins = []
+            for doc in docs:
+                d_data = doc.to_dict()
+                checkins.append(d_data)
+            # Sort by createdAt descending
+            checkins.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+            if checkins:
+                user_facts["latest_checkin"] = checkins[0]
+                user_facts["checkin_history"] = checkins
+        except Exception as e:
+            print(f"Warning: failed to load check-ins for run: {e}")
 
     output = benji.run(
         user_input=payload.user_input,
@@ -459,6 +492,7 @@ def chat_endpoint(req: ChatRequest):
     
     user_facts = {}
     if req.user_id:
+        # Load ProfileInfo
         try:
             d = get_profileinfo(req.user_id)
             user_facts = {
@@ -469,6 +503,34 @@ def chat_endpoint(req: ChatRequest):
         except HTTPException:
             # Profile not found - continue with empty facts
             pass
+        
+        # Load accepted goals (same as /checkin-recommendations)
+        try:
+            goals_data = get_goals(req.user_id)
+            goals_array = goals_data.get("goals") or goals_data.get("accepted") or []
+            if goals_array:
+                user_facts["goals"] = goals_array
+        except Exception:
+            # Goals not found - continue without
+            pass
+        
+        # Load recent check-ins (last 7 days)
+        try:
+            docs = list(db.collection("CheckIns")
+                        .where("UserID", "==", req.user_id)
+                        .limit(7)
+                        .stream())
+            recent_checkins = []
+            for doc in docs:
+                d_data = doc.to_dict()
+                recent_checkins.append(d_data)
+            # Sort by createdAt descending and store
+            recent_checkins.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+            if recent_checkins:
+                user_facts["recent_checkins"] = recent_checkins
+                user_facts["latest_checkin"] = recent_checkins[0]
+        except Exception as e:
+            print(f"Warning: failed to load recent check-ins for chat: {e}")
 
     # Call chat function, passing LangChain message objects
     reply = benji.chat(req.user_input, history=history_msgs, user_facts=user_facts)
@@ -808,6 +870,88 @@ def get_checkin_recommendations(payload: CheckinRecommendationsRequest):
     )
     
     return CheckinRecommendationsResponse(response=response_text)
+
+
+# ---------- Check-in Sense (Post Check-in "Benji's Notes") ----------
+class CheckinSenseRequest(BaseModel):
+    user_id: str
+    checkin_data: dict  # The check-in payload just submitted
+    checkin_id: Optional[str] = None  # Optional: if we want to update an existing check-in doc
+
+class CheckinSenseResponse(BaseModel):
+    notes: list  # List of 2-4 "Benji's Notes" strings
+
+@app.post("/checkin-sense", response_model=CheckinSenseResponse)
+def sense_checkin(payload: CheckinSenseRequest):
+    """
+    Generate "Benji's Notes" - post check-in insights based on the submitted check-in,
+    correlated with the user's goals and theme.
+    Optionally stores the notes on the check-in document.
+    """
+    # Validate user exists
+    user_snap = db.collection("User").document(payload.user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Load profile info
+    user_facts = {}
+    try:
+        profile = get_profileinfo(payload.user_id)
+        user_facts = {
+            "benji_facts": profile.benji_facts,
+            "height": profile.height,
+            "weight": profile.weight,
+        }
+    except HTTPException:
+        # Profile not found - continue with empty facts
+        pass
+    
+    # Load goals
+    try:
+        goals_data = get_goals(payload.user_id)
+        # Use 'goals' array (new format) or 'accepted' (legacy)
+        goals_array = goals_data.get("goals") or goals_data.get("accepted") or []
+        if goals_array:
+            user_facts["goals"] = goals_array
+    except Exception:
+        # Goals not found - continue without
+        pass
+    
+    # Load recent check-ins for trend context (last 5, excluding today)
+    recent_checkins = []
+    try:
+        docs = list(db.collection("CheckIns")
+                    .where("UserID", "==", payload.user_id)
+                    .limit(6)
+                    .stream())
+        for doc in docs:
+            d = doc.to_dict()
+            # Skip today's check-in (the one we're sensing)
+            if payload.checkin_id and doc.id == payload.checkin_id:
+                continue
+            recent_checkins.append(d)
+        # Sort by createdAt descending and take top 5
+        recent_checkins.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+        recent_checkins = recent_checkins[:5]
+    except Exception as e:
+        print(f"Warning: failed to load recent check-ins: {e}")
+    
+    # Call LLM to generate notes
+    notes = benji.checkin_sense(
+        checkin_data=payload.checkin_data,
+        user_facts=user_facts,
+        recent_checkins=recent_checkins
+    )
+    
+    # Optionally persist notes on the check-in document
+    if payload.checkin_id:
+        try:
+            doc_ref = db.collection("CheckIns").document(payload.checkin_id)
+            doc_ref.update({"benji_notes": notes})
+        except Exception as e:
+            print(f"Warning: failed to persist benji_notes: {e}")
+    
+    return CheckinSenseResponse(notes=notes)
 
 
 @app.delete("/user/{user_id}", response_model=DeleteUserResponse)
