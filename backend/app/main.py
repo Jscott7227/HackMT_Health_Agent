@@ -615,10 +615,13 @@ def get_goals(user_id: str):
 @app.post("/goals/{user_id}/accepted")
 def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
     """Save accepted goals for user in Firestore."""
+    print(user_id)
     user_snap = db.collection("User").document(user_id).get()
+    print(user_snap.exists)
     if not user_snap.exists:
         raise HTTPException(status_code=404, detail="User not found")
     doc_ref = db.collection("Goals").document(user_id)
+    print("TEST")
     doc_ref.set({"UserID": user_id, "accepted": payload.goals}, merge=True)
     return {"message": "Goals saved", "goals": payload.goals}
 
