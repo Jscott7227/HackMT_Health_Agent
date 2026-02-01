@@ -60,6 +60,28 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
+class CreateProfileInfoRequest(BaseModel):
+    benji_facts: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[str] = None
+
+class UpdateProfileInfoRequest(BaseModel):
+    benji_facts: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[str] = None
+
+class ProfileInfoOut(BaseModel):
+    user_id: str
+    benji_facts: Optional[str] = None
+    height: Optional[str] = None
+    weight: Optional[str] = None
+
+class UserInfoOut(BaseModel):
+    user_id: str
+    first_name: str
+    last_name: str
+    email: str
+
 
 class RunGoalsRequest(BaseModel):
     user_goal: str
@@ -90,9 +112,10 @@ if not os.path.exists(USERS_DB_FILE):
         json.dump({}, f)
         
 class SignupRequest(BaseModel):
+    first_name: str
+    last_name: str
     email: str
     password: str
-    name: str
 
 class LoginRequest(BaseModel):
     email: str
@@ -158,24 +181,22 @@ class RunRequest(BaseModel):
 class RunResponse(BaseModel):
     response: str
     
-def authenticate(email: str, password: str) -> Optional[str]:
+def authenticate_firestore(email: str, password: str) -> Optional[str]:
     docs = (
         db.collection("User")
           .where("email", "==", email)
           .limit(1)
           .stream()
     )
-
     doc = next(docs, None)
     if not doc:
         return None
 
     user = doc.to_dict() or {}
-    if user.get("password") != hash_password(password):
+    if user.get("password") != password:
         return None
 
     return doc.id
-
 
 
 def load_users() -> dict:
@@ -192,16 +213,13 @@ def save_users(users: dict):
     with open(USERS_DB_FILE, "w") as f:
         json.dump(users, f, indent=2)
 
-def hash_password(password: str) -> str:
-    return sha256(password.encode()).hexdigest()
-
 def authenticate(username: str, password: str) -> Optional[str]:
     """
     Returns user_id if authentication succeeds, None otherwise.
     """
     users = load_users()
     for uid, user in users.items():
-        if user["username"] == username and user["password"] == hash_password(password):
+        if user["username"] == username and user["password"] == password:
             return uid
     return None
 
@@ -211,32 +229,23 @@ def get_user_by_id(user_id: str) -> Optional[dict]:
 
 @app.post("/signup", response_model=LoginResponse)
 def signup(request: SignupRequest):
-    # 1) Enforce unique email
-    existing_email = (
+    # unique email
+    existing = (
         db.collection("User")
           .where("email", "==", request.email)
           .limit(1)
           .stream()
     )
-    if next(existing_email, None) is not None:
+    if next(existing, None) is not None:
         raise HTTPException(status_code=400, detail="Email already exists")
 
-    # 2) Enforce unique username
-    existing_username = (
-        db.collection("User")
-          .where("username", "==", request.username)
-          .limit(1)
-          .stream()
-    )
-    if next(existing_username, None) is not None:
-        raise HTTPException(status_code=400, detail="Username already exists")
-
-    # 3) Create Firestore doc with auto-generated ID
+    # Firestore auto-ID
     doc_ref = db.collection("User").document()
     doc_ref.set({
+        "first_name": request.first_name,
+        "last_name": request.last_name,
         "email": request.email,
-        "username": request.username,
-        "password": hash_password(request.password)  # store hash (recommended)
+        "password": request.password
     })
 
     return LoginResponse(user_id=doc_ref.id, message="User created successfully")
@@ -244,10 +253,26 @@ def signup(request: SignupRequest):
 
 @app.post("/login", response_model=LoginResponse)
 def login(request: LoginRequest):
-    user_id = authenticate(request.email, request.password)
+    user_id = authenticate_firestore(request.email, request.password)
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     return LoginResponse(user_id=user_id, message="Login successful")
+
+
+@app.get("/user/{user_id}", response_model=UserInfoOut)
+def get_user_info(user_id: str):
+    """Retrieve basic user info (name, email) from Firestore."""
+    snap = db.collection("User").document(user_id).get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    d = snap.to_dict() or {}
+    return UserInfoOut(
+        user_id=user_id,
+        first_name=d.get("first_name", ""),
+        last_name=d.get("last_name", ""),
+        email=d.get("email", ""),
+    )
+
 
 @app.post("/update_facts")
 def update_facts(update: UpdateUserFacts):
@@ -349,4 +374,78 @@ def chat_endpoint(req: ChatRequest):
     # Call chat function, passing LangChain message objects
     reply = benji.chat(req.user_input, history=history_msgs)
     return ChatResponse(response=reply)
+
+@app.post("/profileinfo/{user_id}", response_model=ProfileInfoOut)
+def create_profileinfo(user_id: str, payload: CreateProfileInfoRequest):
+    # Optional: verify the User exists
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    doc_ref = db.collection("ProfileInfo").document(user_id)
+
+    if doc_ref.get().exists:
+        raise HTTPException(status_code=409, detail="ProfileInfo already exists for this user")
+
+    doc_data = {"UserID": user_id}
+
+    if payload.benji_facts is not None:
+        doc_data["BenjiFacts"] = payload.benji_facts
+    if payload.height is not None:
+        doc_data["Height"] = payload.height
+    if payload.weight is not None:
+        doc_data["Weight"] = payload.weight
+
+    doc_ref.set(doc_data)
+
+    return ProfileInfoOut(
+        user_id=user_id,
+        benji_facts=doc_data.get("BenjiFacts"),
+        height=doc_data.get("Height"),
+        weight=doc_data.get("Weight"),
+    )
+
+@app.get("/profileinfo/{user_id}", response_model=ProfileInfoOut)
+def get_profileinfo(user_id: str):
+    snap = db.collection("ProfileInfo").document(user_id).get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="ProfileInfo not found")
+
+    d = snap.to_dict() or {}
+    return ProfileInfoOut(
+        user_id=user_id,
+        benji_facts=d.get("BenjiFacts"),
+        height=d.get("Height"),
+        weight=d.get("Weight"),
+    )
+
+
+@app.patch("/profileinfo/{user_id}", response_model=ProfileInfoOut)
+def update_profileinfo(user_id: str, payload: UpdateProfileInfoRequest):
+    doc_ref = db.collection("ProfileInfo").document(user_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="ProfileInfo not found")
+
+    updates = {}
+    if payload.benji_facts is not None:
+        updates["BenjiFacts"] = payload.benji_facts
+    if payload.height is not None:
+        updates["Height"] = payload.height
+    if payload.weight is not None:
+        updates["Weight"] = payload.weight
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields provided to update")
+
+    # UserID is untouched because we never update it
+    doc_ref.update(updates)
+
+    d = (doc_ref.get().to_dict() or {})
+    return ProfileInfoOut(
+        user_id=user_id,
+        benji_facts=d.get("BenjiFacts"),
+        height=d.get("Height"),
+        weight=d.get("Weight"),
+    )
 

@@ -1,7 +1,7 @@
 import os
 import json
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Optional, Dict
 load_dotenv()
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -133,7 +133,8 @@ class BenjiLLM:
         except TypeError:
             return {"skipped": True}  
 
-    def run(self, user_input: str, user_facts: dict | None = None) -> str:
+    def run(self, user_input: str, user_facts: Optional[Dict] = None) -> str:
+
         """
         Main agent loop: collect facts, call tools, respond.
         """
