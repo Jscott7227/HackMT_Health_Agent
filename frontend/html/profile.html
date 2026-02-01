@@ -95,8 +95,26 @@
     }
 
     .card-title {
+      font-family: var(--font-display);
+      font-size: 20px;
       font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+      color: var(--clay-800);
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--clay-600);
       margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .card-note {
+      font-size: 12px;
+      color: var(--clay-600);
+      opacity: 0.7;
+      margin-top: -6px;
     }
 
     .form-grid {
@@ -117,7 +135,10 @@
 
     .form-label {
       font-size: 13px;
+      font-weight: 600;
       color: var(--clay-600);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
     .form-input,
@@ -130,15 +151,107 @@
       background: white;
     }
 
+    textarea.form-input {
+      resize: none;
+    }
+
     .form-input[readonly] {
       background: var(--clay-50);
       color: var(--clay-600);
     }
 
+    .unit-toggle {
+      display: inline-flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .unit-btn {
+      border: 1px solid var(--border);
+      background: var(--clay-50);
+      color: var(--clay-600);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .unit-btn.active {
+      background: var(--sage);
+      border-color: var(--sage);
+      color: white;
+    }
+
+    .metric-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .metric-row .form-input {
+      flex: 1;
+    }
+
+    .metric-unit {
+      font-size: 12px;
+      color: var(--clay-600);
+      white-space: nowrap;
+    }
+
+    .summary-box {
+      background: var(--clay-50);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--clay-600);
+      min-height: 64px;
+    }
+
+    .section-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 0 16px;
+    }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 14px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--clay-800);
+    }
+
+    .checkbox-item input {
+      accent-color: var(--sage);
+    }
+
     .actions {
       display: flex;
-      gap: 10px;
-      margin-top: 12px;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .actions .btn {
+      min-width: 140px;
+    }
+
+    .body-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .body-grid .form-field.full {
+      grid-column: 1 / -1;
     }
 
     .btn {
@@ -185,6 +298,7 @@
 
     @media (max-width: 720px) {
       .form-grid { grid-template-columns: 1fr; }
+      .checkbox-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -198,54 +312,248 @@
     </div>
 
     <div id="profileContent" style="display:none;">
-      <div class="profile-header">
-        <div class="profile-avatar" id="avatarInitials">--</div>
-        <div class="profile-name" id="displayName">--</div>
-        <div class="profile-email" id="displayEmail">--</div>
-        <div class="meta-row">
-          <span>Height<strong id="metaHeight">--</strong></span>
-          <span>Weight<strong id="metaWeight">--</strong></span>
-        </div>
+      <div class="section-intro">
+        <h2 class="section-title">Your Profile</h2>
+        <p class="section-description">These are configurations set during your initial setup. Tailor to meet your needs.</p>
       </div>
 
       <div class="card">
-        <div class="card-title">Account Information</div>
-        <div class="form-grid">
-          <div class="form-field">
-            <label class="form-label">First Name</label>
-            <input id="firstName" class="form-input" type="text" readonly />
-          </div>
-          <div class="form-field">
-            <label class="form-label">Last Name</label>
-            <input id="lastName" class="form-input" type="text" readonly />
-          </div>
+        <div class="card-title">Body &amp; Identity</div>
+        <div class="body-grid">
           <div class="form-field full">
-            <label class="form-label">Email</label>
-            <input id="email" class="form-input" type="email" readonly />
+            <label class="form-label">Gender</label>
+            <select id="gender" class="form-input">
+              <option value="">--</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
+            </select>
           </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Health Basics</div>
-        <div class="form-grid">
           <div class="form-field">
             <label class="form-label">Height</label>
-            <input id="height" class="form-input" type="text" placeholder="e.g. 5'10&quot; or 178 cm" />
+            <div class="unit-toggle" id="heightUnitToggle">
+              <button class="unit-btn active" type="button" data-unit="imperial">ft/in</button>
+              <button class="unit-btn" type="button" data-unit="metric">cm</button>
+            </div>
+            <div class="metric-row" id="heightImperial">
+              <input id="heightFt" class="form-input" type="number" min="0" placeholder="ft" />
+              <input id="heightIn" class="form-input" type="number" min="0" max="11" placeholder="in" />
+            </div>
+            <div class="metric-row" id="heightMetric" style="display:none;">
+              <input id="heightCm" class="form-input" type="number" min="0" placeholder="cm" />
+              <span class="metric-unit">cm</span>
+            </div>
           </div>
           <div class="form-field">
             <label class="form-label">Weight</label>
-            <input id="weight" class="form-input" type="text" placeholder="e.g. 165 lb or 75 kg" />
+            <div class="unit-toggle" id="weightUnitToggle">
+              <button class="unit-btn active" type="button" data-unit="imperial">lb</button>
+              <button class="unit-btn" type="button" data-unit="metric">kg</button>
+            </div>
+            <div class="metric-row" id="weightImperial">
+              <input id="weightLb" class="form-input" type="number" min="0" placeholder="lb" />
+              <span class="metric-unit">lb</span>
+            </div>
+            <div class="metric-row" id="weightMetric" style="display:none;">
+              <input id="weightKg" class="form-input" type="number" min="0" placeholder="kg" />
+              <span class="metric-unit">kg</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Goals &amp; Activity</div>
+        <div class="card-subtitle">What you’re working toward and how you’re feeling day‑to‑day.</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Goal</label>
+            <select id="goal" class="form-input">
+              <option value="">--</option>
+              <option value="lose-fat">Lose body fat</option>
+              <option value="build-muscle">Build muscle</option>
+              <option value="endurance">Improve endurance</option>
+              <option value="feel-healthier">Feel healthier overall</option>
+              <option value="not-sure">Not sure yet</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Experience</label>
+            <select id="experience" class="form-input">
+              <option value="">--</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Confidence about goal</label>
+            <select id="confidence" class="form-input">
+              <option value="">--</option>
+              <option value="not-confident">Not confident</option>
+              <option value="somewhat">Somewhat confident</option>
+              <option value="very">Very confident</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Activity</label>
+            <select id="activity" class="form-input">
+              <option value="">--</option>
+              <option value="0">Very inactive</option>
+              <option value="1">Lightly active</option>
+              <option value="2">Moderately active</option>
+              <option value="3">Very active</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Energy</label>
+            <select id="energy" class="form-input">
+              <option value="">--</option>
+              <option value="1">Very low</option>
+              <option value="2">Low</option>
+              <option value="3">Moderate</option>
+              <option value="4">Good</option>
+              <option value="5">Very high</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Sleep</label>
+            <select id="sleep" class="form-input">
+              <option value="">--</option>
+              <option value="1">Terrible</option>
+              <option value="2">Poor</option>
+              <option value="3">Okay</option>
+              <option value="4">Good</option>
+              <option value="5">Great</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Mental Wellbeing</div>
+        <div class="card-subtitle">Optional insights to help Benji support you.</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Mental Health</label>
+            <select id="mentalConsent" class="form-input">
+              <option value="">--</option>
+              <option value="yes">Include</option>
+              <option value="no">Skip</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Mood</label>
+            <select id="mood" class="form-input">
+              <option value="">--</option>
+              <option value="1">Very low</option>
+              <option value="2">Low</option>
+              <option value="3">Moderate</option>
+              <option value="4">Good</option>
+              <option value="5">Very high</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Stress</label>
+            <select id="stress" class="form-input">
+              <option value="">--</option>
+              <option value="1">Very low</option>
+              <option value="2">Low</option>
+              <option value="3">Moderate</option>
+              <option value="4">High</option>
+              <option value="5">Very high</option>
+            </select>
           </div>
           <div class="form-field full">
-            <label class="form-label">Notes for Benji</label>
-            <textarea id="benjiFacts" class="form-input" rows="3"></textarea>
+            <label class="form-label">Reflection</label>
+            <textarea id="mentalReflection" class="form-input" rows="3"></textarea>
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Consent Note</label>
+            <textarea id="mentalConsentNote" class="form-input" rows="2"></textarea>
           </div>
         </div>
-        <div class="actions">
-          <button class="btn primary" id="saveBtn">Save Profile</button>
-          <button class="btn" id="resetBtn">Reset</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Constraints &amp; Health</div>
+        <div class="card-subtitle">Let Benji know about limits or conditions.</div>
+        <div class="form-field full">
+          <label class="form-label">Lifestyle Constraints</label>
+          <div class="checkbox-grid" id="constraintsGroup">
+            <label class="checkbox-item"><input type="checkbox" value="limited-time">Limited time</label>
+            <label class="checkbox-item"><input type="checkbox" value="high-stress">High stress</label>
+            <label class="checkbox-item"><input type="checkbox" value="limited-gym">Limited gym accessibility</label>
+            <label class="checkbox-item"><input type="checkbox" value="irregular-schedule">Irregular schedule</label>
+            <label class="checkbox-item"><input type="checkbox" value="none-constraints">None of the above</label>
+          </div>
         </div>
+        <div class="section-divider"></div>
+        <div class="form-field full">
+          <label class="form-label">Health Considerations</label>
+          <div class="checkbox-grid" id="healthGroup">
+            <label class="checkbox-item"><input type="checkbox" value="joint-pain">Joint pain or injuries</label>
+            <label class="checkbox-item"><input type="checkbox" value="cardio-concerns">Cardiovascular concerns</label>
+            <label class="checkbox-item"><input type="checkbox" value="metabolic">Metabolic conditions</label>
+            <label class="checkbox-item"><input type="checkbox" value="prefer-not-health">Prefer not to say</label>
+            <label class="checkbox-item"><input type="checkbox" value="none-health">None</label>
+          </div>
+        </div>
+        <div class="form-field full" style="margin-top: 12px;">
+          <label class="form-label">Health Detail</label>
+          <textarea id="healthDetail" class="form-input" rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Cycle Tracking</div>
+        <div class="card-subtitle">Optional details to personalize guidance.</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Cycle Tracking</label>
+            <select id="cycleTracking" class="form-input">
+              <option value="">--</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+              <option value="not-applicable">Not applicable</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Medications</div>
+        <div class="card-subtitle">Optional details to personalize guidance.</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Medications</label>
+            <select id="medTracking" class="form-input">
+              <option value="">--</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div class="form-field full" id="medListWrap">
+            <label class="form-label">Medication List</label>
+            <input id="medList" class="form-input" type="text" placeholder="e.g. Metformin, Vitamin D" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Benji Notes</div>
+        <div class="card-subtitle">A quick summary of your setup choices.</div>
+        <div id="setupSummary" class="summary-box">--</div>
+        <div class="form-field full" style="margin-top: 12px;">
+          <label class="form-label">Notes for Benji</label>
+          <textarea id="benjiFacts" class="form-input" rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="saveBtn">Save Profile</button>
+        <button class="btn" id="resetBtn">Reset</button>
       </div>
     </div>
   </div>

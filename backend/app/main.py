@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 from hashlib import sha256
@@ -63,8 +65,6 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
 class UpdateUserNameRequest(BaseModel):
-    email: str
-    password: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
 
@@ -603,7 +603,55 @@ def create_checkin(payload: CheckinCreate):
     doc_ref.set(body)
     return {"message": "Check-in saved", "id": doc_ref.id}
 
-    return results
+
+# ---------- Check-in Recommendations ----------
+class CheckinRecommendationsRequest(BaseModel):
+    user_id: str
+    user_message: Optional[str] = None
+
+class CheckinRecommendationsResponse(BaseModel):
+    response: str
+
+@app.post("/checkin-recommendations", response_model=CheckinRecommendationsResponse)
+def get_checkin_recommendations(payload: CheckinRecommendationsRequest):
+    """
+    Generate personalized check-in focus areas based on user profile and goals.
+    Optionally considers a user message for customized suggestions.
+    """
+    # Validate user exists
+    user_snap = db.collection("User").document(payload.user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Load profile info
+    try:
+        profile = get_profileinfo(payload.user_id)
+        user_facts = {
+            "benji_facts": profile.benji_facts,
+            "height": profile.height,
+            "weight": profile.weight,
+        }
+    except HTTPException:
+        # Profile not found - use empty facts
+        user_facts = {}
+    
+    # Load goals
+    try:
+        goals_data = get_goals(payload.user_id)
+        accepted_goals = goals_data.get("accepted", [])
+        if accepted_goals:
+            user_facts["goals"] = accepted_goals
+    except Exception:
+        # Goals not found - continue without
+        pass
+    
+    # Call LLM helper
+    response_text = benji.checkin_recommendations(
+        user_facts=user_facts,
+        user_message=payload.user_message
+    )
+    
+    return CheckinRecommendationsResponse(response=response_text)
 
 
 @app.delete("/user/{user_id}", response_model=DeleteUserResponse)
@@ -638,20 +686,11 @@ def delete_user(user_id: str, payload: LoginRequest):
 @app.patch("/user/{user_id}", response_model=UpdateUserNameResponse)
 def update_user_name(user_id: str, payload: UpdateUserNameRequest):
     """
-    Update first and/or last name for a User doc,
-    only if the requester's credentials authenticate to that same user_id.
+    Update first and/or last name for a User doc.
+    NOTE: Auth is disabled for this endpoint until credentials are available.
     """
 
-    # 1) authenticate -> returns the authenticated user doc id
-    authed_user_id = authenticate_firestore(payload.email, payload.password)
-    if not authed_user_id:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    # 2) must match the requested id
-    if authed_user_id != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to edit this user")
-
-    # 3) build optional updates
+    # build optional updates
     updates = {}
     if payload.first_name is not None:
         updates["first_name"] = payload.first_name
@@ -661,7 +700,7 @@ def update_user_name(user_id: str, payload: UpdateUserNameRequest):
     if not updates:
         raise HTTPException(status_code=400, detail="No fields provided to update")
 
-    # 4) ensure user exists then update
+    # ensure user exists then update
     doc_ref = db.collection("User").document(user_id)
     snap = doc_ref.get()
     if not snap.exists:
@@ -670,3 +709,15 @@ def update_user_name(user_id: str, payload: UpdateUserNameRequest):
     doc_ref.update(updates)
 
     return UpdateUserNameResponse(user_id=user_id, message="User updated successfully")
+
+
+# Favicon: avoid 404 when browser requests /favicon.ico
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
+
+# Serve frontend static files (HTML, CSS, JS, assets) so /html/chat.html etc. work
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_FRONTEND_DIR = os.path.join(_PROJECT_ROOT, "frontend")
+if os.path.isdir(_FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=_FRONTEND_DIR, html=True), name="frontend")

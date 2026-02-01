@@ -196,6 +196,7 @@ function goTo(n) {
 // Used by screen 3 CTA – updates the route first, then advances
 function advanceFrom(fromScreen) {
     if (fromScreen === 3) applyConsentRoute();
+    if (fromScreen === 16) applyGenderRoute();
     var idx = ROUTE.indexOf(fromScreen);
     if (idx < ROUTE.length - 1) goTo(ROUTE[idx + 1]);
 }
@@ -297,6 +298,22 @@ function applyConsentRoute() {
     updateStepLabels();
 }
 
+// Update route for cycle screen: remove for male, ensure present for non-male
+function applyGenderRoute() {
+    if (state.gender === 'male') {
+        state.cycleTracking = 'not-applicable';
+        var idx = ROUTE.indexOf(14);
+        if (idx !== -1) ROUTE.splice(idx, 1);
+    } else {
+        // Ensure cycle screen is in route (e.g. user changed from male to female)
+        if (ROUTE.indexOf(14) === -1) {
+            var insertAt = ROUTE.indexOf(10) + 1;
+            if (insertAt > 0) ROUTE.splice(insertAt, 0, 14);
+        }
+    }
+    updateStepLabels();
+}
+
 /* --------------------------------------------------------
 SINGLE-SELECT OPTION CARDS
 -------------------------------------------------------- */
@@ -311,6 +328,7 @@ function selectOption(el) {
         el.classList.add('selected');
         state[group] = el.dataset.value;
     }
+    if (group === 'gender') applyGenderRoute();
     updateCtaForScreen();
 }
 
@@ -496,7 +514,9 @@ function buildReview() {
     var healthVal = state.health && state.health.length ? state.health.join(', ') : '--';
     if (state.healthDetail) healthVal += ' — ' + state.healthDetail;
     addItem('<i class="fa-solid fa-heart-pulse"></i>', 'Health', healthVal, 10);
-    addItem('<i class="fa-solid fa-calendar-days"></i>', 'Cycle tracking', state.cycleTracking ? (cycleMap[state.cycleTracking] || state.cycleTracking) : '--', 14);
+    if (state.gender !== 'male') {
+        addItem('<i class="fa-solid fa-calendar-days"></i>', 'Cycle tracking', state.cycleTracking ? (cycleMap[state.cycleTracking] || state.cycleTracking) : '--', 14);
+    }
     addItem('<i class="fa-solid fa-pills"></i>', 'Medications', state.medTracking === 'yes' ? (state.medList || 'Yes') : state.medTracking === 'no' ? 'None' : '--', 15);
     addItem('<i class="fa-solid fa-comment"></i>', 'Confidence', state.confidence ? confMap[state.confidence] : '--', 11);
 

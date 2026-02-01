@@ -2317,6 +2317,148 @@ body {
     color: var(--text-primary);
 }
 
+/* Journal Container & Entry List */
+.journal-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.journal-entry {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.journal-entry:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Journal Metrics */
+.journal-metric {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) 0;
+    font-size: 0.95rem;
+}
+
+.journal-metric .metric-icon {
+    font-size: 1.1rem;
+    width: 24px;
+    flex-shrink: 0;
+}
+
+.journal-metric .metric-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.journal-metric .metric-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Recovery Badge */
+.journal-metric.recovery-badge {
+    background: linear-gradient(135deg, rgba(180, 165, 196, 0.15), rgba(180, 165, 196, 0.08));
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    width: fit-content;
+    margin: var(--space-xs) 0;
+}
+
+.journal-metric.recovery-badge .metric-value {
+    color: var(--lavender);
+    font-weight: 600;
+}
+
+/* Journal Notes */
+.journal-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    background: var(--clay-50);
+    border-radius: var(--radius-sm);
+    margin: var(--space-xs) 0;
+}
+
+.journal-note .note-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.journal-note .note-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    font-style: italic;
+}
+
+/* Journal Tags */
+.journal-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: var(--space-xs) 0;
+}
+
+.journal-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: var(--forest-50);
+    color: var(--sage-dark);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    text-transform: capitalize;
+}
+
+/* Mini Metrics Grid */
+.journal-metrics-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    border-top: 1px solid var(--clay-100);
+    border-bottom: 1px solid var(--clay-100);
+    margin: var(--space-xs) 0;
+}
+
+.mini-metric {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    background: var(--clay-50);
+    border-radius: var(--radius-sm);
+}
+
+.mini-metric span:first-child {
+    font-size: 0.95rem;
+}
+
+/* Journal Page Responsive */
+@media (max-width: 768px) {
+    .journal-metrics-grid {
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .mini-metric {
+        width: 100%;
+    }
+
+    .journal-metric {
+        flex-wrap: wrap;
+    }
+}
+
 .insight-card {
     background: linear-gradient(135deg, rgba(139, 157, 131, 0.05), rgba(180, 165, 196, 0.05));
     border-radius: var(--radius-lg);
@@ -3731,6 +3873,210 @@ textarea:focus-visible {
     color: var(--text-primary);
 }
 
+/* ============================================================
+   BENJI RECOMMENDATIONS SECTION (Check-in Modal)
+   ============================================================ */
+.benji-recommendations-section {
+    background: linear-gradient(135deg, var(--forest-50), rgba(153, 218, 192, 0.15));
+    border: 1px solid rgba(79, 193, 147, 0.25);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.recommendations-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
+.recommendations-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--sage-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.recommendations-title i {
+    color: var(--sage);
+}
+
+.recommendations-response {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-sm);
+    min-height: 60px;
+}
+
+.recommendations-response .recommendations-placeholder {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+    margin: 0;
+}
+
+.recommendations-response .recommendations-content {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.recommendations-response .recommendations-content p {
+    margin: 0.5em 0;
+}
+
+.recommendations-response .recommendations-content strong {
+    color: var(--sage-dark);
+}
+
+.recommendations-response .recommendations-content ol,
+.recommendations-response .recommendations-content ul {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+.recommendations-response .recommendations-content li {
+    margin: 0.4em 0;
+}
+
+.recommendations-loading {
+    text-align: center;
+    padding: var(--space-md);
+}
+
+.benji-input-section {
+    border-top: 1px solid rgba(79, 193, 147, 0.2);
+    padding-top: var(--space-sm);
+    margin-top: var(--space-xs);
+}
+
+.benji-input-section .form-label {
+    font-size: 0.875rem;
+    color: var(--sage-dark);
+    margin-bottom: var(--space-xs);
+}
+
+.benji-input-section .text-area {
+    font-size: 0.9rem;
+    min-height: 50px;
+    resize: vertical;
+}
+
+/* Button styles for recommendations */
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.8125rem;
+    border-radius: var(--radius-sm);
+}
+
+.btn-sm i {
+    margin-right: 4px;
+}
+
+/* Recommendations error state */
+.recommendations-error {
+    color: var(--terracotta);
+    font-size: 0.9rem;
+    padding: var(--space-xs);
+    background: rgba(199, 126, 93, 0.1);
+    border-radius: var(--radius-sm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .recommendations-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .recommendations-title {
+        font-size: 1rem;
+    }
+
+    .benji-recommendations-section {
+        padding: var(--space-sm);
+    }
+}
+
+/* ============================================================
+   MEDICATION MODAL POPUP
+   ============================================================ */
+.medication-modal-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.medication-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.medication-modal-body {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  padding: var(--space-lg);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.medication-modal-overlay.active .medication-modal-body {
+  transform: translateY(0) scale(1);
+}
+
+.medication-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 50%;
+  z-index: 2;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.medication-modal-close:hover {
+  color: var(--text-primary);
+  background: var(--clay-100);
+}
+
+.medication-modal-content .domain-title {
+  margin-bottom: var(--space-md);
+  padding-right: 36px;
+}
+
 /* Make the banner-cta button look like the original anchor */
 button.banner-cta {
     border: none;
@@ -3836,4 +4182,1044 @@ body[data-page="chat"] {
 @keyframes blink {
   0%, 50%, 100% { opacity: 0; }
   25%, 75% { opacity: 1; }
+}
+
+/* ====================================
+   Menstrual / Cycle Tracker Page
+   ==================================== */
+
+/* Phase overview card */
+.cycle-phase-card {
+    position: relative;
+}
+
+.cycle-phase-overview {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-md);
+}
+
+.cycle-ring-wrap {
+    flex-shrink: 0;
+}
+
+.cycle-ring-wrap svg {
+    display: block;
+}
+
+.cycle-phase-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.cycle-day-number {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+
+.cycle-phase-name {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.cycle-phase-range {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.cycle-set-date {
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Calendar navigation */
+.cal-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.cal-month-label {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+    min-width: 140px;
+    text-align: center;
+}
+
+.cal-nav .btn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+}
+
+.cal-nav .btn-icon:hover {
+    background: var(--forest-50);
+    color: var(--sage);
+}
+
+/* Calendar legend */
+.cal-legend {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-sm);
+    padding: var(--space-xs) 0;
+}
+
+.cal-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.cal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.cal-dot-period     { background: #c77e5d; }
+.cal-dot-follicular { background: #4fc193; }
+.cal-dot-ovulation  { background: #b4a5c4; }
+.cal-dot-luteal     { background: #e8a87c; }
+
+/* Calendar grid */
+.cal-grid {
+    width: 100%;
+}
+
+.cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--space-xs);
+}
+
+.cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.cal-day {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    cursor: default;
+    transition: var(--transition-fast);
+}
+
+.cal-day-empty {
+    cursor: default;
+}
+
+.cal-day-num {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.cal-phase-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 3px;
+}
+
+/* Phase backgrounds on calendar days */
+.cal-day-menstrual  { background: rgba(199, 126, 93, 0.12); }
+.cal-day-follicular { background: rgba(79, 193, 147, 0.10); }
+.cal-day-ovulation  { background: rgba(180, 165, 196, 0.15); }
+.cal-day-luteal     { background: rgba(232, 168, 124, 0.12); }
+
+.cal-day-today {
+    outline: 2px solid var(--sage);
+    outline-offset: -2px;
+    font-weight: 700;
+}
+
+.cal-day-today .cal-day-num {
+    font-weight: 700;
+    color: var(--sage-dark);
+}
+
+/* Recommendation cards */
+.cycle-rec-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.cycle-rec-card {
+    display: flex;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+}
+
+.cycle-rec-card:hover {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: var(--shadow-sm);
+}
+
+.cycle-rec-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--forest-50);
+    color: var(--sage);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.cycle-rec-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.cycle-rec-title {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.cycle-rec-text {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Clickable calendar days */
+.cal-day-clickable {
+    cursor: pointer;
+}
+
+.cal-day-clickable:hover {
+    background: rgba(1, 104, 68, 0.08);
+    transform: scale(1.05);
+}
+
+/* Flow-logged days */
+.cal-day-has-flow {
+    background: rgba(199, 126, 93, 0.2);
+}
+
+.cal-day-has-flow:hover {
+    background: rgba(199, 126, 93, 0.3);
+}
+
+.cal-day-indicators {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    justify-content: center;
+    min-height: 8px;
+}
+
+.cal-flow-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #c77e5d;
+}
+
+/* Cycle link in description */
+.cycle-link {
+    color: var(--sage);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: var(--transition-fast);
+}
+
+.cycle-link:hover {
+    border-bottom-color: var(--sage);
+}
+
+/* ── Flow Editor Popup ──────────────────────────────── */
+.flow-editor-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.flow-editor-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.flow-editor {
+    background: white;
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 460px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    transform: scale(0.92);
+    transition: transform 0.25s ease;
+    overflow: hidden;
+}
+
+.flow-editor-overlay.active .flow-editor {
+    transform: scale(1);
+}
+
+.flow-editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-md) var(--space-sm);
+}
+
+.flow-editor-title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.flow-editor-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+}
+
+.flow-editor-close:hover {
+    background: var(--clay-100);
+    color: var(--text-primary);
+}
+
+.flow-editor-body {
+    padding: 0 var(--space-md) var(--space-sm);
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.flow-btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: var(--space-xs);
+}
+
+.flow-btn {
+    flex: 1;
+    min-width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 6px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: white;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.flow-btn i {
+    font-size: 0.9rem;
+    color: var(--terracotta);
+}
+
+.flow-btn:hover {
+    border-color: var(--terracotta-light);
+    background: rgba(199, 126, 93, 0.05);
+}
+
+.flow-btn.active {
+    border-color: var(--terracotta);
+    background: rgba(199, 126, 93, 0.1);
+    color: var(--text-primary);
+}
+
+.flow-editor-footer {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: flex-end;
+    padding: var(--space-sm) var(--space-md) var(--space-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.flow-editor-footer .btn {
+    padding: 0.6rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--text-secondary);
+    transition: var(--transition-fast);
+}
+
+.flow-editor-footer .btn:hover {
+    background: var(--clay-50);
+}
+
+.flow-editor-footer .btn-primary {
+    background: linear-gradient(135deg, var(--sage-light), var(--sage));
+    color: white;
+    border-color: transparent;
+}
+
+.flow-editor-footer .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(1, 104, 68, 0.25);
+}
+
+/* Flow editor sections */
+.fe-section {
+    margin-bottom: var(--space-md);
+}
+
+.fe-section:last-child {
+    margin-bottom: var(--space-xs);
+}
+
+.fe-section .scale-labels span:first-child,
+.fe-section .scale-labels span:last-child {
+    text-align: center;
+}
+
+
+/* Symptom checkbox group inside popup */
+.fe-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-top: var(--space-xs);
+}
+
+.fe-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 20px;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    user-select: none;
+}
+
+.fe-check:hover {
+    border-color: var(--lavender);
+    background: rgba(180, 165, 196, 0.06);
+}
+
+.fe-check input[type="checkbox"],
+.fe-check input[type="radio"] {
+    display: none;
+}
+
+.fe-check:has(input:checked) {
+    border-color: var(--lavender);
+    background: rgba(180, 165, 196, 0.15);
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Data dot (non-flow entries like symptoms-only) */
+.cal-day-has-data {
+    background: rgba(180, 165, 196, 0.12);
+}
+
+.cal-data-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--lavender);
+}
+
+/* ── 7-Day Flow Reminder Banner ── */
+.flow-reminder-banner {
+    background: rgba(199, 126, 93, 0.12);
+    border: 1px solid rgba(199, 126, 93, 0.3);
+    border-radius: var(--radius-lg, 16px);
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.flow-reminder-content {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+}
+
+.flow-reminder-icon {
+    color: var(--terracotta);
+    font-size: 1.25rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.flow-reminder-text {
+    flex: 1;
+}
+
+.flow-reminder-text strong {
+    display: block;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+}
+
+.flow-reminder-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.flow-reminder-dismiss {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.flow-reminder-dismiss:hover {
+    color: var(--text-primary);
+}
+
+/* ============================================================
+   CHAT PAGE - BENJI WELLNESS ASSISTANT
+   ============================================================ */
+
+/* Chat Page Layout */
+.chat-page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md);
+    padding-top: 100px;
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* Chat Header */
+.chat-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    margin-bottom: var(--space-md);
+    animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chat-header-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--sage-light), var(--sage));
+    padding: 3px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(1, 104, 68, 0.2);
+}
+
+.chat-header-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.chat-header-info {
+    flex: 1;
+}
+
+.chat-header-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 2px 0;
+}
+
+.chat-header-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.chat-header-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(79, 193, 147, 0.1);
+    border-radius: 20px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--sage-light);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.status-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Chat Container */
+body[data-page="chat"] .chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+    max-width: none;
+    margin: 0;
+}
+
+/* Chat History */
+body[data-page="chat"] #chatHistory {
+    flex: 1;
+    padding: var(--space-lg);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    min-height: 400px;
+    max-height: calc(100vh - 380px);
+    background: linear-gradient(180deg, 
+        rgba(255, 255, 255, 0.5) 0%, 
+        rgba(230, 245, 239, 0.3) 100%);
+}
+
+/* Welcome Screen */
+.chat-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-xl) var(--space-md);
+    animation: fadeIn 0.8s ease both;
+}
+
+.chat-welcome-icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--sage-light), var(--sage));
+    border-radius: 50%;
+    font-size: 2rem;
+    color: white;
+    margin-bottom: var(--space-md);
+    box-shadow: 0 8px 24px rgba(1, 104, 68, 0.3);
+    animation: float 3s ease-in-out infinite;
+}
+
+.chat-welcome h2 {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.chat-welcome p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    line-height: 1.6;
+    margin: 0 0 var(--space-lg) 0;
+}
+
+/* Suggestion Chips */
+.chat-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    justify-content: center;
+    max-width: 500px;
+}
+
+.suggestion-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: white;
+    border: 1.5px solid var(--border-color);
+    border-radius: 24px;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.suggestion-chip i {
+    color: var(--sage);
+    font-size: 0.9rem;
+}
+
+.suggestion-chip:hover {
+    background: var(--forest-50);
+    border-color: var(--sage-light);
+    color: var(--sage-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 104, 68, 0.15);
+}
+
+/* Chat Messages */
+body[data-page="chat"] .message {
+    max-width: 80%;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-lg);
+    line-height: 1.6;
+    word-wrap: break-word;
+    animation: messageSlide 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body[data-page="chat"] .message.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--sage), var(--sage-dark));
+    color: white;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 12px rgba(1, 104, 68, 0.25);
+}
+
+body[data-page="chat"] .message.user b {
+    display: none;
+}
+
+body[data-page="chat"] .message.assistant {
+    align-self: flex-start;
+    background: white;
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+body[data-page="chat"] .message.assistant b {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    color: var(--sage);
+    margin-bottom: 6px;
+}
+
+/* Assistant message markdown styling */
+body[data-page="chat"] .message.assistant p {
+    margin: 0.5em 0;
+}
+
+body[data-page="chat"] .message.assistant p:first-of-type {
+    margin-top: 0;
+}
+
+body[data-page="chat"] .message.assistant p:last-of-type {
+    margin-bottom: 0;
+}
+
+body[data-page="chat"] .message.assistant ul,
+body[data-page="chat"] .message.assistant ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+body[data-page="chat"] .message.assistant li {
+    margin: 0.25em 0;
+}
+
+body[data-page="chat"] .message.assistant strong {
+    color: var(--sage-dark);
+}
+
+body[data-page="chat"] .message.assistant code {
+    background: var(--clay-100);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* Thinking animation */
+body[data-page="chat"] .message.assistant.thinking {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.9) 25%, 
+        rgba(230, 245, 239, 0.9) 50%, 
+        rgba(255, 255, 255, 0.9) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+}
+
+body[data-page="chat"] .message.assistant.thinking::after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    margin-left: 4px;
+}
+
+body[data-page="chat"] .message.assistant.thinking::after {
+    content: '...';
+    animation: typingDots 1.4s infinite;
+}
+
+@keyframes typingDots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}
+
+/* Input Section */
+body[data-page="chat"] #inputSection {
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid var(--border-color);
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-sm);
+    background: var(--clay-50);
+    border: 2px solid transparent;
+    border-radius: var(--radius-lg);
+    padding: 8px;
+    transition: all var(--transition-base);
+}
+
+.input-wrapper:focus-within {
+    background: white;
+    border-color: var(--sage);
+    box-shadow: 0 0 0 4px rgba(1, 104, 68, 0.1);
+}
+
+body[data-page="chat"] #llmInput {
+    flex: 1;
+    padding: var(--space-sm);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    min-height: 24px;
+    max-height: 150px;
+    line-height: 1.5;
+}
+
+body[data-page="chat"] #llmInput::placeholder {
+    color: var(--text-muted);
+}
+
+body[data-page="chat"] #sendBtn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--sage-light), var(--sage));
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    flex-shrink: 0;
+}
+
+body[data-page="chat"] #sendBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(1, 104, 68, 0.3);
+}
+
+body[data-page="chat"] #sendBtn:active {
+    transform: scale(0.95);
+}
+
+.input-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin: var(--space-xs) 0 0 0;
+}
+
+/* Hide welcome when messages exist */
+body[data-page="chat"] #chatHistory:has(.message) .chat-welcome {
+    display: none;
+}
+
+/* Chat Page Responsive */
+@media (max-width: 768px) {
+    .chat-page-wrapper {
+        padding: var(--space-sm);
+        padding-top: 80px;
+    }
+
+    .chat-header {
+        padding: var(--space-sm) var(--space-md);
+        gap: var(--space-sm);
+    }
+
+    .chat-header-avatar {
+        width: 44px;
+        height: 44px;
+    }
+
+    .chat-header-title {
+        font-size: 1.25rem;
+    }
+
+    .chat-header-status {
+        display: none;
+    }
+
+    body[data-page="chat"] #chatHistory {
+        padding: var(--space-md);
+        min-height: 300px;
+        max-height: calc(100vh - 320px);
+    }
+
+    body[data-page="chat"] .message {
+        max-width: 90%;
+    }
+
+    .chat-suggestions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .suggestion-chip {
+        justify-content: center;
+    }
+
+    body[data-page="chat"] #inputSection {
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .chat-welcome-icon {
+        width: 64px;
+        height: 64px;
+        font-size: 1.5rem;
+    }
+
+    .chat-welcome h2 {
+        font-size: 1.5rem;
+    }
+
+    .chat-welcome p {
+        font-size: 0.9rem;
+    }
 }

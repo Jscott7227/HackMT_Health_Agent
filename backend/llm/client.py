@@ -9,23 +9,10 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 
 from backend.llm.tools import MANDATORY_TOOLS, OPTIONAL_TOOLS, BenjiGoalsTool, UpcomingPlanTool
+from backend.llm.instructions import format_agent_instructions, get_system_prompt_base
 
-SYSTEM_PROMPT = """
-You are a professional fitness and wellness coach named Benji.
-
-Your role:
-- Answer the user's question clearly and directly
-- Use the provided background facts as context, not as the main topic
-- Personalize advice when relevant
-- Avoid making medical diagnoses
-- Encourage professional guidance for medical concerns
-
-Guidelines:
-- Focus primarily on the user's question
-- Use facts only when they improve relevance
-- Be practical, actionable, and supportive
-- Keep responses structured and easy to follow
-"""
+# Base prompt; full personality/scope/constraints come from instructions.py (MCP-style)
+SYSTEM_PROMPT = get_system_prompt_base()
 
 def format_user_facts(user_facts: dict) -> str:
     if not user_facts:
@@ -176,20 +163,17 @@ class BenjiLLM:
         for name, out in tool_outputs.items():
             combined += f"{name}: {out}\n"
             
-        messages = [
-            SystemMessage(
-                content="""You are a smart fitness and wellness coach. Use tool outputs for advice.
-                
-When generating medication schedules:
-- Check for contraindications (drug-drug, drug-food interactions)
-- Consider time-of-day (morning, afternoon, evening, night) based on medication frequency
-- Note if medications should be taken with or without food
-- Space medications appropriately (e.g., 2+ hours apart if contraindicated)
-- Always recommend consulting with healthcare providers for medical decisions
-- Format schedules clearly with time slots and safety warnings
+        # Same Agent Protocol Instructions (scope + constraints) so agent run stays on-topic and safe
+        agent_instructions = format_agent_instructions()
+        medication_notes = (
+            "When generating medication schedules: check contraindications, "
+            "consider time-of-day and food instructions, space medications appropriately, "
+            "recommend consulting healthcare providers, format with time slots and safety warnings."
+        )
+        system_content = agent_instructions + "\n\n" + medication_notes + "\n\nUse tool outputs for advice. Be clear and actionable."
 
-Provide clear, actionable guidance while emphasizing the importance of professional medical supervision."""
-            ),
+        messages = [
+            SystemMessage(content=system_content),
             HumanMessage(content=combined)
         ]
 
@@ -287,11 +271,13 @@ Provide clear, actionable guidance while emphasizing the importance of professio
     def chat(self, user_input: str, history: list = None, user_facts: dict = None):
         history = history or []
 
+        # Structured Agent Protocols: personality, scope, and constraints from instructions.py
+        agent_instructions = format_agent_instructions()
         facts_context = format_user_facts(user_facts=user_facts)
 
         messages = [
-            SystemMessage(content=SYSTEM_PROMPT),
-            SystemMessage(content=facts_context),
+            SystemMessage(content=agent_instructions),
+            SystemMessage(content=SYSTEM_PROMPT + "\n\n" + facts_context),
             *history,
             HumanMessage(content=user_input),
         ]
@@ -304,6 +290,78 @@ Provide clear, actionable guidance while emphasizing the importance of professio
 
         return response.content
 
+    def checkin_recommendations(self, user_facts: dict, user_message: str = None) -> str:
+        """
+        Generate personalized check-in focus areas based on user profile, goals, and optional message.
+        
+        Args:
+            user_facts: Dictionary containing benji_facts, height, weight, goals, etc.
+            user_message: Optional message from user about what they want Benji to consider.
+            
+        Returns:
+            String with 3-5 short, actionable check-in focus areas or prompts.
+        """
+        # Build context from user facts
+        context_parts = []
+        
+        if user_facts.get("benji_facts"):
+            benji_facts = user_facts["benji_facts"]
+            if isinstance(benji_facts, str):
+                context_parts.append(f"User Profile: {benji_facts}")
+            else:
+                context_parts.append(f"User Profile: {benji_facts}")
+        
+        if user_facts.get("height"):
+            context_parts.append(f"Height: {user_facts['height']}")
+        
+        if user_facts.get("weight"):
+            context_parts.append(f"Weight: {user_facts['weight']}")
+        
+        if user_facts.get("goals"):
+            goals = user_facts["goals"]
+            if isinstance(goals, list) and len(goals) > 0:
+                goals_summary = []
+                for g in goals[:5]:  # Limit to 5 goals
+                    if isinstance(g, dict):
+                        label = g.get("label") or g.get("goal") or g.get("specific") or str(g)
+                        goals_summary.append(f"- {label}")
+                    else:
+                        goals_summary.append(f"- {g}")
+                context_parts.append("Active Goals:\n" + "\n".join(goals_summary))
+        
+        context = "\n".join(context_parts) if context_parts else "No profile or goals data available."
+        
+        # Build the user input
+        user_input = f"""Based on the user's profile and goals, generate 3-5 personalized check-in focus areas or prompts for today.
+
+User Context:
+{context}"""
+        
+        if user_message:
+            user_input += f"""
+
+The user also said: "{user_message}"
+Consider this when suggesting focus areas for their check-in today."""
+        
+        # System prompt for focused output
+        system_prompt = """You are Benji, a supportive wellness companion. Your task is to generate personalized check-in focus areas.
+
+IMPORTANT: Output ONLY a numbered list of 3-5 short, actionable check-in focus areas or prompts. Each should be 1-2 sentences max.
+
+Format example:
+1. **[Focus Area]**: Brief actionable prompt
+2. **[Focus Area]**: Brief actionable prompt
+...
+
+Focus on what matters most for this user today based on their profile, goals, and any context they provided. Be specific and encouraging. No introductions or conclusions - just the list."""
+
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_input),
+        ]
+
+        response = self.model.invoke(messages)
+        return response.content
 
     
 if __name__ == "__main__":

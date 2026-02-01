@@ -101,6 +101,46 @@
     <div class="checkin-modal-body">
       <button type="button" class="checkin-modal-close" id="closeCheckinBtn">&times;</button>
 
+      <!-- Recommendations by Benji Section -->
+      <div class="benji-recommendations-section" id="benjiRecommendationsSection">
+        <div class="recommendations-header">
+          <h3 class="recommendations-title">
+            <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+            Recommendations by Benji
+          </h3>
+          <button type="button" class="btn btn-sm" id="getRecommendationsBtn">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            Get Recommendations
+          </button>
+        </div>
+
+        <!-- Recommendations Response Area -->
+        <div class="recommendations-response" id="recommendationsResponse">
+          <p class="recommendations-placeholder">Click "Get Recommendations" to receive personalized check-in focus areas based on your profile and goals.</p>
+        </div>
+
+        <!-- Loading State -->
+        <div class="recommendations-loading" id="recommendationsLoading" style="display: none;">
+          <div class="loading-spinner" style="width: 24px; height: 24px; margin: 0 auto;"></div>
+          <p style="margin-top: 8px; font-size: 0.875rem; color: var(--text-muted);">Getting personalized recommendations...</p>
+        </div>
+
+        <!-- User Input Section -->
+        <div class="benji-input-section">
+          <label class="form-label" for="benjiContextInput">What should Benji know today?</label>
+          <textarea 
+            id="benjiContextInput" 
+            class="text-area" 
+            placeholder="e.g., poor sleep last night, big meeting tomorrow, feeling stressed..." 
+            rows="2"
+          ></textarea>
+          <button type="button" class="btn btn-primary btn-sm" id="getCustomRecommendationsBtn" style="margin-top: 8px;">
+            <i class="fa-solid fa-sparkles" aria-hidden="true"></i>
+            Get Customized Suggestions
+          </button>
+        </div>
+      </div>
+
       <!-- Domain Navigation Tabs -->
       <nav class="Benji-nav" id="checkinTabs">
         <button class="nav-tab active" data-domain="day">
