@@ -131,6 +131,38 @@
         return r.json();
       });
     },
+
+    // AI schedule cache (localStorage) – agent runs only on "Benji's suggested schedule" click
+    AI_SCHEDULE_CACHE_KEY_PREFIX: "Benji_medication_schedule_ai_cache_",
+
+    getCachedAiSchedule: function (userId) {
+      if (!userId || typeof localStorage === "undefined") return null;
+      try {
+        var raw = localStorage.getItem(this.AI_SCHEDULE_CACHE_KEY_PREFIX + userId);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (e) {
+        return null;
+      }
+    },
+
+    setCachedAiSchedule: function (userId, data) {
+      if (!userId || typeof localStorage === "undefined" || !data) return;
+      try {
+        localStorage.setItem(this.AI_SCHEDULE_CACHE_KEY_PREFIX + userId, JSON.stringify(data));
+      } catch (e) {
+        // ignore quota or parse errors
+      }
+    },
+
+    clearCachedAiSchedule: function (userId) {
+      if (!userId || typeof localStorage === "undefined") return;
+      try {
+        localStorage.removeItem(this.AI_SCHEDULE_CACHE_KEY_PREFIX + userId);
+      } catch (e) {
+        // ignore
+      }
+    },
   };
 
   global.BenjiAPI = BenjiAPI;
