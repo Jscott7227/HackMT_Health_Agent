@@ -708,6 +708,10 @@ if (finalGoalInput) {
     });
 }
 
+function digitsOnly(el) {
+  el.value = (el.value || "").replace(/[^\d]/g, "");
+}
+
 /* --------------------------------------------------------
 COMPLETE SETUP - Redirect to main app
 -------------------------------------------------------- */
