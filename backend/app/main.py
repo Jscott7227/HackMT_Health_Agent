@@ -473,3 +473,68 @@ def update_profileinfo(user_id: str, payload: UpdateProfileInfoRequest):
         weight=d.get("Weight"),
     )
 
+
+# ---------- Firestore: Goals (accepted + generated) ----------
+class GoalsAcceptedRequest(BaseModel):
+    goals: List[Dict[str, Any]] = Field(default_factory=list, description="List of accepted goal objects")
+
+
+@app.get("/goals/{user_id}")
+def get_goals(user_id: str):
+    """Return stored goals for user (accepted and optionally generated) from Firestore."""
+    doc_ref = db.collection("Goals").document(user_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        return {"accepted": [], "generated": []}
+    d = snap.to_dict() or {}
+    return {
+        "accepted": d.get("accepted", []),
+        "generated": d.get("generated", []),
+    }
+
+
+@app.post("/goals/{user_id}/accepted")
+def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
+    """Save accepted goals for user in Firestore."""
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    doc_ref = db.collection("Goals").document(user_id)
+    doc_ref.set({"UserID": user_id, "accepted": payload.goals}, merge=True)
+    return {"message": "Goals saved", "goals": payload.goals}
+
+
+# ---------- Firestore: Check-ins ----------
+class CheckinCreate(BaseModel):
+    model_config = {"extra": "allow"}
+    user_id: str
+    date: Optional[str] = None
+
+
+@app.get("/checkins/{user_id}")
+def get_checkins(user_id: str):
+    """Return check-ins for user from Firestore (e.g. list of docs)."""
+    docs = list(db.collection("CheckIns").where("UserID", "==", user_id).limit(100).stream())
+    out = []
+    for doc in docs:
+        d = doc.to_dict()
+        d["id"] = doc.id
+        out.append(d)
+    out.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+    return out
+
+
+@app.post("/checkins")
+def create_checkin(payload: CheckinCreate):
+    """Save one check-in to Firestore."""
+    from datetime import datetime
+    user_snap = db.collection("User").document(payload.user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    body = payload.model_dump()
+    body["UserID"] = payload.user_id
+    body["createdAt"] = datetime.utcnow().isoformat() + "Z"
+    doc_ref = db.collection("CheckIns").document()
+    doc_ref.set(body)
+    return {"message": "Check-in saved", "id": doc_ref.id}
+
