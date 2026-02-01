@@ -14,6 +14,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const userId = session.user_id || null;
 
   function appendMessage(sender, text) {
+    // Hide welcome screen when first message is sent
+    const welcomeEl = chatHistoryEl.querySelector('.chat-welcome');
+    if (welcomeEl) {
+      welcomeEl.style.display = 'none';
+    }
+
     const messageEl = document.createElement("div");
     messageEl.classList.add("message", sender === "You" ? "user" : "assistant");
     messageEl.innerHTML = `<b>${sender}:</b> ${marked.parse(text)}`;
@@ -21,17 +27,18 @@ document.addEventListener("DOMContentLoaded", () => {
     chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
   }
 
-  async function sendMessage() {
-    const text = inputEl.value.trim();
+  async function sendMessage(customText = null) {
+    const text = customText || inputEl.value.trim();
     if (!text) return;
 
     appendMessage("You", text);
     inputEl.value = "";
+    inputEl.style.height = "auto";
     inputEl.focus();
 
     const thinkingEl = document.createElement("div");
     thinkingEl.classList.add("message", "assistant", "thinking");
-    thinkingEl.innerHTML = "<b>Benji:</b>";
+    thinkingEl.innerHTML = "<b>Benji:</b> Thinking";
     chatHistoryEl.appendChild(thinkingEl);
     chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
 
@@ -57,12 +64,12 @@ document.addEventListener("DOMContentLoaded", () => {
       conversationHistory.push({ role: "assistant", content: data.response });
     } catch (err) {
       thinkingEl.remove();
-      appendMessage("Benji", "Error talking to server.");
+      appendMessage("Benji", "I'm having trouble connecting right now. Please check if the server is running and try again.");
       console.error(err);
     }
   }
 
-  btn.addEventListener("click", sendMessage);
+  btn.addEventListener("click", () => sendMessage());
 
   inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -73,6 +80,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   inputEl.addEventListener("input", () => {
     inputEl.style.height = "auto";
-    inputEl.style.height = inputEl.scrollHeight + "px";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 150) + "px";
   });
+
+  // Handle suggestion chip clicks
+  const suggestionChips = document.querySelectorAll('.suggestion-chip');
+  suggestionChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const suggestion = chip.getAttribute('data-suggestion');
+      if (suggestion) {
+        sendMessage(suggestion);
+      }
+    });
+  });
+
+  // Focus input on page load
+  setTimeout(() => {
+    inputEl.focus();
+  }, 500);
 });

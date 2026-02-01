@@ -55,35 +55,6 @@
         </div>
       </div>
 
-      <!-- Add/Edit Medication Form -->
-      <div id="medicationForm" class="form-domain" style="display: none; margin-bottom: var(--space-lg);">
-        <div class="domain-header">
-          <h3 class="domain-title" id="formTitle">Add Medication</h3>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Medication Name *</label>
-          <input type="text" id="medName" class="text-input" placeholder="e.g., Lisinopril" required>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Strength *</label>
-          <input type="text" id="medStrength" class="text-input" placeholder="e.g., 10 mg" required>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">How Often / Frequency *</label>
-          <input type="text" id="medFrequency" class="text-input" placeholder="e.g., once daily in morning, twice daily with meals" required>
-        </div>
-
-        <div class="button-group" style="margin-top: var(--space-md);">
-          <button class="btn btn-primary" id="saveMedBtn">
-            <span id="saveBtnText">Save Medication</span>
-          </button>
-          <button class="btn" id="cancelMedBtn">Cancel</button>
-        </div>
-      </div>
-
       <!-- Schedule Section -->
       <div class="form-domain">
         <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -103,6 +74,40 @@
 
     </div>
 
+  </div>
+
+  <!-- Add/Edit Medication Modal Popup -->
+  <div class="medication-modal-overlay" id="medicationModal" aria-hidden="true">
+    <div class="medication-modal-body" role="dialog" aria-labelledby="formTitle" aria-modal="true">
+      <button type="button" class="medication-modal-close" id="medicationModalClose" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="medication-modal-content">
+        <h3 class="domain-title" id="formTitle">Add Medication</h3>
+
+        <div class="form-group">
+          <label class="form-label" for="medName">Medication Name *</label>
+          <input type="text" id="medName" class="text-input" placeholder="e.g., Lisinopril" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="medStrength">Strength *</label>
+          <input type="text" id="medStrength" class="text-input" placeholder="e.g., 10 mg" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="medFrequency">How Often / Frequency *</label>
+          <input type="text" id="medFrequency" class="text-input" placeholder="e.g., once daily in morning, twice daily with meals" required>
+        </div>
+
+        <div class="button-group" style="margin-top: var(--space-md);">
+          <button class="btn btn-primary" id="saveMedBtn">
+            <span id="saveBtnText">Save Medication</span>
+          </button>
+          <button class="btn" id="cancelMedBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Loading Overlay -->
