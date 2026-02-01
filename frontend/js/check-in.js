@@ -381,6 +381,14 @@
         localStorage.setItem(key, JSON.stringify(arr));
       }
 
+      if (window.BenjiAPI && window.BenjiAPI.getSession && window.BenjiAPI.postCheckin) {
+        const session = window.BenjiAPI.getSession();
+        if (session && session.user_id) {
+          const body = Object.assign({ user_id: session.user_id, date: new Date().toISOString().slice(0, 10) }, data);
+          await window.BenjiAPI.postCheckin(body).catch((err) => console.warn("Backend check-in save failed:", err));
+        }
+      }
+
       // Close the modal if we're inside one (home page)
       if (window.BenjiCheckinModal) {
         window.BenjiCheckinModal.close();

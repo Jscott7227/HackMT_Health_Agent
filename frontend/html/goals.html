@@ -581,6 +581,7 @@
         </div>
     </div>
 
+    <script src="../js/api.js"></script>
     <script>
         // Synthetic goal pool (simulating what would come from LLM)
         const GOAL_POOL = [
@@ -891,9 +892,17 @@
                 return;
             }
 
-            // Save to localStorage (or send to backend)
+            // Save to localStorage and to backend when logged in
             localStorage.setItem('benjiAcceptedGoals', JSON.stringify(acceptedGoals));
             console.log('Accepted goals:', acceptedGoals);
+            if (window.BenjiAPI) {
+                var session = BenjiAPI.getSession();
+                if (session && session.user_id) {
+                    BenjiAPI.postGoalsAccepted(session.user_id, acceptedGoals).catch(function (err) {
+                        console.warn('Backend save goals failed:', err);
+                    });
+                }
+            }
 
             // Smooth fade-out then navigate to main app (no popup)
             document.body.classList.add('page-transition-out');

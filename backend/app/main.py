@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 from hashlib import sha256
 from uuid import uuid4
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
 
 import json
 import os
@@ -461,142 +460,69 @@ def update_profileinfo(user_id: str, payload: UpdateProfileInfoRequest):
     )
 
 
-@app.post("/goalsdb/{user_id}", response_model=GoalEntryOut)
-def create_goal_entry(user_id: str, payload: CreateGoalEntryRequest):
-    """
-    Create a new Goals entry for a specific UserID (User doc id).
-    Multiple entries per user are allowed.
-    """
-    # verify user exists (same style as ProfileInfo create)
-    user_snap = db.collection("User").document(user_id).get()
-    if not user_snap.exists:
-        raise HTTPException(status_code=404, detail="User not found")
+# ---------- Firestore: Goals (accepted + generated) ----------
+class GoalsAcceptedRequest(BaseModel):
+    goals: List[Dict[str, Any]] = Field(default_factory=list, description="List of accepted goal objects")
 
-    doc_data = {
-        "UserID": user_id,
-        "DateCreated": datetime.utcnow(),
-        "EndDate": payload.end_date,
-        "CheckIns": payload.check_ins or []
+
+@app.get("/goals/{user_id}")
+def get_goals(user_id: str):
+    """Return stored goals for user (accepted and optionally generated) from Firestore."""
+    doc_ref = db.collection("Goals").document(user_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        return {"accepted": [], "generated": []}
+    d = snap.to_dict() or {}
+    return {
+        "accepted": d.get("accepted", []),
+        "generated": d.get("generated", []),
     }
 
-    # Firestore auto-generated ID
-    doc_ref = db.collection("Goals").document()
-    doc_ref.set(doc_data)
 
-    return GoalEntryOut(
-        goal_id=doc_ref.id,
-        user_id=user_id,
-        date_created=doc_data["DateCreated"],
-        end_date=doc_data["EndDate"],
-        check_ins=doc_data["CheckIns"],
-    )
-
-
-@app.patch("/goalsdb/{user_id}/{goal_id}", response_model=GoalEntryOut)
-def update_goal_entry(user_id: str, goal_id: str, payload: UpdateGoalEntryRequest):
-    """
-    Update a Goals entry (fields optional). UserID is not editable.
-    Requires the entry to belong to the provided user_id.
-    """
-    doc_ref = db.collection("Goals").document(goal_id)
-    snap = doc_ref.get()
-    if not snap.exists:
-        raise HTTPException(status_code=404, detail="Goal entry not found")
-
-    data = snap.to_dict() or {}
-    if data.get("UserID") != user_id:
-        # treat as not found (prevents leaking ids between users)
-        raise HTTPException(status_code=404, detail="Goal entry not found")
-
-    updates = {}
-    if payload.date_created is not None:
-        updates["DateCreated"] = payload.date_created
-    if payload.end_date is not None:
-        updates["EndDate"] = payload.end_date
-    if payload.check_ins is not None:
-        updates["CheckIns"] = payload.check_ins
-
-    if not updates:
-        raise HTTPException(status_code=400, detail="No fields provided to update")
-
-    doc_ref.update(updates)
-
-    # return fresh doc
-    updated = doc_ref.get().to_dict() or {}
-    return GoalEntryOut(
-        goal_id=goal_id,
-        user_id=updated.get("UserID"),
-        date_created=updated.get("DateCreated"),
-        end_date=updated.get("EndDate"),
-        check_ins=updated.get("CheckIns") or [],
-    )
-
-
-@app.delete("/goalsdb/{user_id}/{goal_id}", response_model=DeleteGoalEntryResponse)
-def delete_goal_entry(user_id: str, goal_id: str):
-    """
-    Delete a Goals entry by goal_id, but only if it belongs to the given user_id.
-    """
-    doc_ref = db.collection("Goals").document(goal_id)
-    snap = doc_ref.get()
-    if not snap.exists:
-        raise HTTPException(status_code=404, detail="Goal entry not found")
-
-    data = snap.to_dict() or {}
-    if data.get("UserID") != user_id:
-        raise HTTPException(status_code=404, detail="Goal entry not found")
-
-    doc_ref.delete()
-    return DeleteGoalEntryResponse(message="Goal entry deleted successfully")
-
-
-@app.get("/goalsdb/{goal_id}", response_model=GoalEntryOut)
-def get_goal_entry_by_id(goal_id: str):
-    """
-    Pull a specific Goals entry by its document id.
-    """
-    snap = db.collection("Goals").document(goal_id).get()
-    if not snap.exists:
-        raise HTTPException(status_code=404, detail="Goal entry not found")
-
-    d = snap.to_dict() or {}
-    return GoalEntryOut(
-        goal_id=goal_id,
-        user_id=d.get("UserID"),
-        date_created=d.get("DateCreated"),
-        end_date=d.get("EndDate"),
-        check_ins=d.get("CheckIns") or [],
-    )
-
-
-@app.get("/goalsdb/by-user/{user_id}", response_model=List[GoalEntryOut])
-def list_goal_entries_for_user(user_id: str):
-    """
-    Pull all Goals entries for a given user_id.
-    """
-    # optional: verify user exists (keeps behavior consistent)
+@app.post("/goals/{user_id}/accepted")
+def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
+    """Save accepted goals for user in Firestore."""
     user_snap = db.collection("User").document(user_id).get()
     if not user_snap.exists:
         raise HTTPException(status_code=404, detail="User not found")
+    doc_ref = db.collection("Goals").document(user_id)
+    doc_ref.set({"UserID": user_id, "accepted": payload.goals}, merge=True)
+    return {"message": "Goals saved", "goals": payload.goals}
 
-    docs = (
-        db.collection("Goals")
-          .where("UserID", "==", user_id)
-          .stream()
-    )
 
-    results: List[GoalEntryOut] = []
+# ---------- Firestore: Check-ins ----------
+class CheckinCreate(BaseModel):
+    model_config = {"extra": "allow"}
+    user_id: str
+    date: Optional[str] = None
+
+
+@app.get("/checkins/{user_id}")
+def get_checkins(user_id: str):
+    """Return check-ins for user from Firestore (e.g. list of docs)."""
+    docs = list(db.collection("CheckIns").where("UserID", "==", user_id).limit(100).stream())
+    out = []
     for doc in docs:
-        d = doc.to_dict() or {}
-        results.append(
-            GoalEntryOut(
-                goal_id=doc.id,
-                user_id=d.get("UserID"),
-                date_created=d.get("DateCreated"),
-                end_date=d.get("EndDate"),
-                check_ins=d.get("CheckIns") or [],
-            )
-        )
+        d = doc.to_dict()
+        d["id"] = doc.id
+        out.append(d)
+    out.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+    return out
+
+
+@app.post("/checkins")
+def create_checkin(payload: CheckinCreate):
+    """Save one check-in to Firestore."""
+    from datetime import datetime
+    user_snap = db.collection("User").document(payload.user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    body = payload.model_dump()
+    body["UserID"] = payload.user_id
+    body["createdAt"] = datetime.utcnow().isoformat() + "Z"
+    doc_ref = db.collection("CheckIns").document()
+    doc_ref.set(body)
+    return {"message": "Check-in saved", "id": doc_ref.id}
 
     return results
 
