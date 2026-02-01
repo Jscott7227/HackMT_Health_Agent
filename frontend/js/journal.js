@@ -373,21 +373,6 @@
     const title = goal.Specific || goal.Description || "Untitled Goal";
     const icon = getIconForGoal(title);
 
-    // Build SMART details
-    let smartDetails = "";
-    if (goal.Measurable) {
-      smartDetails += `<div class="smart-detail"><strong>Measurable:</strong> ${escapeHtml(goal.Measurable)}</div>`;
-    }
-    if (goal.Attainable) {
-      smartDetails += `<div class="smart-detail"><strong>Attainable:</strong> ${escapeHtml(goal.Attainable)}</div>`;
-    }
-    if (goal.Relevant) {
-      smartDetails += `<div class="smart-detail"><strong>Relevant:</strong> ${escapeHtml(goal.Relevant)}</div>`;
-    }
-    if (goal.Time_Bound) {
-      smartDetails += `<div class="smart-detail"><strong>Time-bound:</strong> ${escapeHtml(goal.Time_Bound)}</div>`;
-    }
-
     card.innerHTML = `
       <div class="goal-header">
         <div class="goal-icon">
@@ -398,7 +383,6 @@
           <span class="goal-type-badge ${goalType}">${goalType}</span>
         </div>
       </div>
-      ${smartDetails ? `<div class="goal-smart-details">${smartDetails}</div>` : ""}
     `;
 
     return card;

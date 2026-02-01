@@ -118,7 +118,6 @@
     if (!smartGrid) return;
 
     const smartFields = [
-      { key: "Specific", label: "Specific", icon: "fa-crosshairs" },
       { key: "Measurable", label: "Measurable", icon: "fa-ruler" },
       { key: "Attainable", label: "Attainable", icon: "fa-check-circle" },
       { key: "Relevant", label: "Relevant", icon: "fa-link" },

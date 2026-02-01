@@ -5,7 +5,7 @@ at runtime based on the consent answer on screen 3.
 Screen 14 (menstrual cycle) is added only for non-male genders.
 12 screens by default, 13 if menstrual cycle is included.
 -------------------------------------------------------- */
-var ROUTE = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 15, 11, 12, 13];
+var ROUTE = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 15, 11, 12];
 var returnToReview = false;
 var currentRouteIndex = 0;
 const session = JSON.parse(
@@ -120,7 +120,7 @@ function totalSteps() {
     var count = 0;
     for (var i = 0; i < ROUTE.length; i++) {
         var s = ROUTE[i];
-        if (s !== 1 && s !== 12 && s !== 13) count++;
+        if (s !== 1 && s !== 12) count++;
     }
     return count;
 }
@@ -129,7 +129,7 @@ function currentStep(screenId) {
     var step = 0;
     for (var i = 0; i < ROUTE.length; i++) {
         var s = ROUTE[i];
-        if (s !== 1 && s !== 12 && s !== 13) step++;
+        if (s !== 1 && s !== 12) step++;
         if (s === screenId) return step;
     }
     return 0;
@@ -150,68 +150,39 @@ function updateStepLabels() {
 NAVIGATION
 -------------------------------------------------------- */
 async function goTo(n) {
-    updateStepLabels();
-    if (n === 12) buildReview();
+  updateStepLabels();
+  if (n === 12) buildReview();
 
-    var screens = document.querySelectorAll('.ob-screen');
-    for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
+  var screens = document.querySelectorAll('.ob-screen');
+  for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
 
-    var target = document.getElementById('screen-' + n);
-    if (target) {
-        var card = document.querySelector('.onboarding-card');
-        if (card) {
-            card.classList.remove('animate');
-            void card.offsetWidth;
-            card.classList.add('animate');
-        }
-        target.classList.add('active');
+  var target = document.getElementById('screen-' + n);
+  if (target) {
+    var card = document.querySelector('.onboarding-card');
+    if (card) {
+      card.classList.remove('animate');
+      void card.offsetWidth;
+      card.classList.add('animate');
     }
+    target.classList.add('active');
+  }
 
-    // progress bar
-    var idx = ROUTE.indexOf(n);
-    var pct = idx <= 0 ? 0 : Math.round(idx / (ROUTE.length - 1) * 100);
-    if (pct > 100) pct = 100;
-    document.getElementById('progressFill').style.width = pct + '%';
-    if (idx >= 0) currentRouteIndex = idx;
+  // progress bar
+  var idx = ROUTE.indexOf(n);
+  var pct = idx <= 0 ? 0 : Math.round(idx / (ROUTE.length - 1) * 100);
+  if (pct > 100) pct = 100;
 
-    // re-trigger ring on analysis screen
-    /*
-    if (n === 13) {
-        var ring = target.querySelector('.ob-ring-fill');
-        if (ring) {
-            ring.style.animation = 'none';
-            void ring.offsetWidth;
-            ring.style.animation = '';
-        }
-    }
-    */
-    if (n === 13) {
-        var ring = target.querySelector('.ob-ring-fill');
-        if (ring) {
-            ring.style.animation = 'none';
-            void ring.offsetWidth;
-            ring.style.animation = '';
-        }
-        fetchGoalsAndContinue()
-            .then(function (smartGoals) {
-                // Save the fetched goals to localStorage
-                localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
+  var fill = document.getElementById('progressFill');
+  if (fill) fill.style.width = pct + '%';
 
-                // Do any follow-up work here, e.g., run completeSetup
-                completeSetup();
-            })
-            .catch(function (err) {
-                console.error("Goal fetch error:", err);
-            });
-    }
+  if (idx >= 0) currentRouteIndex = idx;
 
-    updateCtaForScreen(n);
-    updateBackVisibility(n);
+  updateCtaForScreen(n);
+  updateBackVisibility(n);
+
+  if (target) {
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-async function startAnalysis() {
-    await goTo(13);
+  }
 }
 
 async function fetchGoalsAndContinue() {
@@ -244,6 +215,28 @@ async function fetchGoalsAndContinue() {
         console.error("Goal fetch error:", err); // fail forward instead of trapping user
     }
 }
+
+async function startAnalysis() {
+    // Button feedback (so it never feels like "nothing happened")
+    var btn = document.querySelector('#screen-12 .ob-cta');
+    if (btn) {
+        btn.textContent = 'Building your plan...';
+        btn.disabled = true;
+    }
+
+    // Call /goals and stash results
+    try {
+        var smartGoals = await fetchGoalsAndContinue();
+        localStorage.setItem('smartGoals', JSON.stringify(smartGoals || []));
+    } catch (err) {
+        console.error("Goal fetch error:", err);
+        localStorage.setItem('smartGoals', JSON.stringify([]));
+    }
+
+    // Finish onboarding + redirect
+    completeSetup();
+}
+
 
 
 // Used by screen 3 CTA – updates the route first, then advances
@@ -353,7 +346,7 @@ function updateCtaForScreen(screenId) {
 CONSENT GATING
 -------------------------------------------------------- */
 function applyConsentRoute() {
-    var base = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 15, 11, 12, 13];
+    var base = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 15, 11, 12];
     if (state.mentalConsent === 'yes') {
         // insert screen 5 right after screen 4
         for (var i = 0; i < base.length; i++) {
@@ -792,8 +785,7 @@ async function completeSetup() {
     }
 
     // Smooth fade-out then transition to goals
-    document.body.classList.add('page-transition-out');
     setTimeout(function () {
-        window.location.href = 'goals.html';
+        window.location.href = 'journal.html';
     }, 450);
 }
