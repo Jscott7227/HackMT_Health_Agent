@@ -400,6 +400,10 @@ def MedicationScheduleTool(facts: Dict) -> Dict:
     night_keywords = ["night", "bedtime", "sleep", "before bed"]
     
     # Parse frequency and assign time slots
+    # For demo: when frequency is unclear, alternate between morning and evening (8 AM / 6 PM)
+    default_slot_cycle = ["morning", "evening"]
+    default_slot_index = [0]  # use list so we can mutate inside loop
+
     for med in medications:
         name = med.get("name", "Unknown")
         strength = med.get("strength", "")
@@ -424,8 +428,10 @@ def MedicationScheduleTool(facts: Dict) -> Dict:
             schedule["afternoon"].append(f"{med_info} (2nd dose)")
             schedule["evening"].append(f"{med_info} (3rd dose)")
         else:
-            # Default to morning if unclear
-            schedule["morning"].append(med_info)
+            # Distribute between morning and evening for demo (avoid stacking all at 8 AM)
+            slot = default_slot_cycle[default_slot_index[0] % len(default_slot_cycle)]
+            default_slot_index[0] += 1
+            schedule[slot].append(med_info)
         
         # Food instructions
         if "with food" in frequency or "with meal" in frequency:
