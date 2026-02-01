@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycle Tracker &bull; Benji</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+      body { opacity: 0; transition: opacity 0.4s ease; }
+      body.page-visible { opacity: 1; }
+    </style>
+</head>
+
+<body data-page="cycle">
+
+  <div id="benji-root"></div>
+
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <div class="container">
+    <div class="content-wrapper">
+
+      <!-- Page Header -->
+      <div class="section-intro">
+        <h2 class="section-title">Cycle Tracker</h2>
+        <p class="section-description">Tap any day to log flow, symptoms, and more.</p>
+      </div>
+
+      <!-- 7-Day Flow Reminder Banner -->
+      <div class="flow-reminder-banner" id="flowReminderBanner" style="display:none;">
+        <div class="flow-reminder-content">
+          <i class="fa-solid fa-circle-info flow-reminder-icon"></i>
+          <div class="flow-reminder-text">
+            <strong>Still on your period?</strong>
+            <p>You've logged flow for 7+ days. If your period has ended, tap those days and update to "No Flow."</p>
+          </div>
+          <button class="flow-reminder-dismiss" id="flowReminderDismiss" title="Dismiss">&times;</button>
+        </div>
+      </div>
+
+      <!-- Cycle Phase Overview -->
+      <div class="form-domain cycle-phase-card" id="phaseCard">
+        <div class="cycle-phase-overview">
+          <div class="cycle-ring-wrap" id="cycleRing"></div>
+          <div class="cycle-phase-details">
+            <span class="cycle-day-number" id="cycleDayNumber">--</span>
+            <span class="cycle-phase-name" id="cyclePhaseName">Tap a day below to start logging</span>
+            <span class="cycle-phase-range" id="cyclePhaseRange"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar -->
+      <div class="form-domain">
+        <div class="domain-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 class="domain-title">Cycle Calendar</h3>
+          <div class="cal-nav">
+            <button class="btn-icon" id="calPrev" title="Previous month"><i class="fa-solid fa-chevron-left"></i></button>
+            <span class="cal-month-label" id="calMonthLabel"></span>
+            <button class="btn-icon" id="calNext" title="Next month"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div class="cal-legend">
+          <span class="cal-legend-item"><span class="cal-dot cal-dot-period"></span> Period</span>
+          <span class="cal-legend-item"><span class="cal-dot cal-dot-follicular"></span> Follicular</span>
+          <span class="cal-legend-item"><span class="cal-dot cal-dot-ovulation"></span> Ovulation</span>
+          <span class="cal-legend-item"><span class="cal-dot cal-dot-luteal"></span> Luteal</span>
+        </div>
+
+        <div class="cal-grid">
+          <div class="cal-weekdays">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div class="cal-days" id="calDays"></div>
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="form-domain" id="recSection">
+        <div class="domain-header">
+          <h3 class="domain-title" id="recTitle">Phase Recommendations</h3>
+        </div>
+        <p class="checkin-hint" style="margin-bottom: var(--space-sm);">These recommendations will be personalized by Benji based on your cycle data and check-in history.</p>
+        <div class="cycle-rec-grid" id="recGrid"></div>
+      </div>
+
+</div>
+  </div>
+
+  <!-- Day Editor Popup -->
+  <div class="flow-editor-overlay" id="flowEditorOverlay">
+    <div class="flow-editor">
+      <div class="flow-editor-header">
+        <h3 class="flow-editor-title" id="flowEditorTitle">Log Flow</h3>
+        <button class="flow-editor-close" id="flowEditorClose">&times;</button>
+      </div>
+
+      <div class="flow-editor-body">
+
+        <!-- Menstrual Flow -->
+        <div class="fe-section">
+          <label class="form-label"><strong>Menstrual flow</strong></label>
+          <div class="flow-btn-group" id="flowBtnGroup">
+            <button type="button" class="flow-btn" data-flow="none"><span>No Flow</span></button>
+            <button type="button" class="flow-btn" data-flow="light"><span>Light</span></button>
+            <button type="button" class="flow-btn" data-flow="medium"><span>Medium</span></button>
+            <button type="button" class="flow-btn" data-flow="heavy"><span>Heavy</span></button>
+            <button type="button" class="flow-btn" data-flow="clots"><span>Blood clots</span></button>
+          </div>
+        </div>
+
+        <!-- Symptoms -->
+        <div class="fe-section">
+          <label class="form-label"><strong>Symptoms</strong></label>
+          <div class="fe-checkbox-group" id="feSymptoms">
+            <label class="fe-check"><input type="checkbox" value="fine"><span>Everything is fine</span></label>
+            <label class="fe-check"><input type="checkbox" value="cramps"><span>Cramps</span></label>
+            <label class="fe-check"><input type="checkbox" value="headache"><span>Headache</span></label>
+            <label class="fe-check"><input type="checkbox" value="acne"><span>Acne</span></label>
+            <label class="fe-check"><input type="checkbox" value="backache"><span>Backache</span></label>
+            <label class="fe-check"><input type="checkbox" value="fatigue"><span>Fatigue</span></label>
+            <label class="fe-check"><input type="checkbox" value="hot-flashes"><span>Hot flashes</span></label>
+            <label class="fe-check"><input type="checkbox" value="night-sweats"><span>Night sweats</span></label>
+            <label class="fe-check"><input type="checkbox" value="brain-fog"><span>Brain fog</span></label>
+            <label class="fe-check"><input type="checkbox" value="cravings"><span>Cravings</span></label>
+            <label class="fe-check"><input type="checkbox" value="abdominal-pain"><span>Abdominal pain</span></label>
+            <label class="fe-check"><input type="checkbox" value="dryness"><span>Dryness</span></label>
+          </div>
+        </div>
+
+        <!-- Cramp / pain level -->
+        <div class="fe-section">
+          <label class="form-label"><strong>Cramp / pain level (0&ndash;10)</strong></label>
+          <div class="scale-input">
+            <input type="range" min="0" max="10" value="0" id="feCrampPain" class="range-slider stress">
+            <div class="scale-labels"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
+          </div>
+        </div>
+
+        <!-- Discharge -->
+        <div class="fe-section">
+          <label class="form-label"><strong>Discharge</strong></label>
+          <div class="fe-checkbox-group" id="feDischargeGroup">
+            <label class="fe-check"><input type="radio" name="discharge" value="none"><span>No discharge</span></label>
+            <label class="fe-check"><input type="radio" name="discharge" value="creamy"><span>Creamy</span></label>
+            <label class="fe-check"><input type="radio" name="discharge" value="watery"><span>Watery</span></label>
+            <label class="fe-check"><input type="radio" name="discharge" value="sticky"><span>Sticky</span></label>
+            <label class="fe-check"><input type="radio" name="discharge" value="egg-white"><span>Egg white</span></label>
+            <label class="fe-check"><input type="radio" name="discharge" value="spotting"><span>Spotting</span></label>
+            <label class="fe-check"><input type="radio" name="discharge" value="unusual"><span>Unusual</span></label>
+            <label class="fe-check"><input type="radio" name="discharge" value="clumpy-white"><span>Clumpy white</span></label>
+            <label class="fe-check"><input type="radio" name="discharge" value="gray"><span>Gray</span></label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flow-editor-footer">
+        <button class="btn" id="flowEditorDelete" style="display:none;">Clear Day</button>
+        <button class="btn btn-primary" id="flowEditorSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../components/topbar.js"></script>
+  <script src="../js/menstrual.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.classList.add('page-visible');
+    });
+  </script>
+
+</body>
+</html>
