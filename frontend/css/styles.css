@@ -806,6 +806,10 @@
     }
 }
 
+.hidden {
+  display: none !important;
+}
+
 .ob-analysis-dots {
     display: flex;
     justify-content: center;
@@ -827,6 +831,10 @@
 
 .ob-analysis-dot:nth-child(3) {
     animation-delay: 0.4s;
+}
+
+.force-hidden {
+  display: none !important;
 }
 
 @keyframes dotPulse {

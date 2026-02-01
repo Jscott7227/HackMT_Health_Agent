@@ -145,6 +145,7 @@ class RunGoalsRequest(BaseModel):
 class RunUpcomingRequest(BaseModel):
     user_facts: Optional[Dict[str, Any]] = None
     user_id: Optional[str] = None
+    selected_goal: Optional[Dict[str, Any]] = None  # Optional: pass specific goal for targeted plan
 
 
 class RunUpcomingResponse(BaseModel):
@@ -178,6 +179,13 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     user_id: str
     message: str
+
+class QuestionRequest(BaseModel):
+    active_goals: List[str]
+    user_id: str  # take user id instead of raw facts
+
+class QuestionResponse(BaseModel):
+    questions: Dict[str, List[str]]
 
 class UpdateUserFacts(BaseModel):
     user_id: str
@@ -277,9 +285,56 @@ def authenticate(username: str, password: str) -> Optional[str]:
             return uid
     return None
 
+class AddCheckInRequest(BaseModel):
+    check_in_data: Dict[str, Any]  # Raw JSON object - no validation
+
+class AddCheckInResponse(BaseModel):
+    goal_id: str
+    check_in_id: str
+    message: str
+
 def get_user_by_id(user_id: str) -> Optional[dict]:
     users = load_users()
     return users.get(user_id)
+
+def update_user_facts(user_id: str, user_facts: dict) -> None:
+    """
+    Update user_facts for a user in users.json.
+    No-op if user_id is not in users.json (Firestore-only users).
+    
+    Args:
+        user_id: The user ID to update
+        user_facts: Dictionary of facts to merge into user["user_facts"]
+    """
+    users = load_users()
+    if user_id not in users:
+        # No-op for Firestore-only users
+        return
+    
+    user = users[user_id]
+    if "user_facts" not in user:
+        user["user_facts"] = {}
+    
+    user["user_facts"].update(user_facts)
+    save_users(users)
+
+
+def _json_safe(val):
+    """Convert a value to JSON-serializable form (e.g. Firestore datetime -> string)."""
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val.isoformat()
+    if hasattr(val, "isoformat"):  # Firestore Timestamp, date, etc.
+        return val.isoformat()
+    if isinstance(val, dict):
+        return {k: _json_safe(v) for k, v in val.items()}
+    if isinstance(val, list):
+        return [_json_safe(v) for v in val]
+    if isinstance(val, (str, int, float, bool)):
+        return val
+    return str(val)
+
 
 @app.post("/signup", response_model=LoginResponse)
 def signup(request: SignupRequest):
@@ -312,6 +367,35 @@ def login(request: LoginRequest):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     return LoginResponse(user_id=user_id, message="Login successful")
 
+@app.post("/relevant-questions", response_model=QuestionResponse)
+def get_relevant_questions(payload: QuestionRequest):
+    """
+    Return relevant check-in questions based on active goals and user's existing facts.
+    """
+    try:
+        # Fetch the user facts from the backend
+        print(payload.user_id)
+        d = get_profileinfo(payload.user_id)
+        user_facts = {
+            "benji_facts": d.benji_facts,
+            "height": d.height,
+            "weight": d.weight,
+        }
+        print(user_facts)
+        if user_facts is None:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        relevant = benji.select_relevant_questions(
+            active_goals={},
+            user_facts=user_facts
+        )
+        print(relevant)
+        return QuestionResponse(questions=relevant)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/user/{user_id}", response_model=UserInfoOut)
 def get_user_info(user_id: str):
@@ -439,7 +523,6 @@ def run_goals_endpoint(payload: RunGoalsRequest):
     try:
         print("Payload received:", payload)
         
-
         user_facts = fetch_profileinfo(payload.user_id)
         result = benji.run_goals(
             user_goal=payload.user_goal,
@@ -461,25 +544,73 @@ def run_upcoming_endpoint(payload: RunUpcomingRequest):
     Generate a 2-day upcoming plan using stored SMART goals
     and optionally persist it to user facts.
     """
+    if not payload.user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
 
     try:
-        d =  get_profileinfo(payload.user_id)
-
-        user_facts = {
-            "benji_facts": d.benji_facts,
-            "height": d.height,
-            "weight": d.weight,
-        }
+        # Use fetch_profileinfo so missing profile does not raise 404 -> 500
+        d = fetch_profileinfo(payload.user_id)
+        if d is None:
+            user_facts = {"benji_facts": {}, "height": None, "weight": None}
+        else:
+            user_facts = {
+                "benji_facts": d.get("benji_facts") or {},
+                "height": d.get("height"),
+                "weight": d.get("weight"),
+            }
+        
+        # Fetch goals from Firestore and add as smart_goals
+        goals_data = get_goals(payload.user_id)
+        goals_array = goals_data.get("goals") or goals_data.get("accepted") or []
+        
+        # Sanitize goals so Firestore datetimes/timestamps are JSON-serializable for the LLM
+        goals_array = [_json_safe(g) for g in goals_array] if goals_array else []
+        
+        # If a selected_goal is provided, prioritize it (for fitness/wellness specific plans)
+        if payload.selected_goal:
+            selected_safe = _json_safe(payload.selected_goal)
+            # Put selected goal first; avoid duplicate by id if present
+            sel_id = selected_safe.get("goal_id") or selected_safe.get("id")
+            others = [g for g in goals_array if (g.get("goal_id") or g.get("id")) != sel_id]
+            smart_goals = [selected_safe] + others
+        else:
+            smart_goals = goals_array
+        
+        # Add smart_goals to user_facts so run_upcoming_plan can use them
+        user_facts["smart_goals"] = smart_goals
+        user_facts = _json_safe(user_facts)
         
         result = benji.run_upcoming_plan(
             user_facts=user_facts,
             user_id=payload.user_id
         )
 
-        upcoming = result.get("upcoming", {})
-        return {"upcoming": upcoming}
+        upcoming_raw = result.get("upcoming", {})
+        
+        # Normalize response: convert today/tomorrow arrays to day1/day2 strings
+        today_activities = upcoming_raw.get("today", [])
+        tomorrow_activities = upcoming_raw.get("tomorrow", [])
+        
+        # Format arrays as bullet-pointed strings (coerce items to str for join)
+        def format_activities(activities):
+            if not activities:
+                return ""
+            if isinstance(activities, list):
+                return "\n• " + "\n• ".join(str(a) for a in activities)
+            return str(activities)
+        
+        upcoming_normalized = {
+            "day1": format_activities(today_activities),
+            "day2": format_activities(tomorrow_activities)
+        }
+        
+        return {"upcoming": upcoming_normalized}
 
+    except HTTPException:
+        raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post("/chat", response_model=ChatResponse)
@@ -1612,6 +1743,51 @@ def get_health_history(user_id: str, limit: int = 30):
     
     return HealthHistoryResponse(days=days)
 
+# Add this endpoint after the delete_goal_entry endpoint (around line 1075)
+@app.post("/goals/{goal_id}/checkins", response_model=AddCheckInResponse)
+def add_check_in_to_goal(goal_id: str, payload: AddCheckInRequest):
+    """
+    Add a check-in to a specific goal. Stores check-ins as a JSON string array
+    in the CheckIn field.
+    """
+    # Verify goal exists
+    goal_ref = db.collection("Goals").document(goal_id)
+    goal_snap = goal_ref.get()
+    
+    if not goal_snap.exists:
+        raise HTTPException(status_code=404, detail=f"Goal with ID '{goal_id}' not found")
+    
+    goal_data = goal_snap.to_dict()
+    
+    # Generate check-in ID
+    check_in_id = f"checkin_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:8]}"
+    
+    # Add check_in_id to the data
+    payload.check_in_data["check_in_id"] = check_in_id
+    
+    # Get existing check-ins
+    existing_checkins = []
+    if "CheckIn" in goal_data and goal_data["CheckIn"]:
+        try:
+            existing_checkins = json.loads(goal_data["CheckIn"])
+            if not isinstance(existing_checkins, list):
+                existing_checkins = []
+        except json.JSONDecodeError:
+            existing_checkins = []
+    
+    # Append new check-in
+    existing_checkins.append(payload.check_in_data)
+    
+    # Update goal with JSON string
+    goal_ref.update({
+        "CheckIn": json.dumps(existing_checkins)
+    })
+    
+    return AddCheckInResponse(
+        goal_id=goal_id,
+        check_in_id=check_in_id,
+        message=f"Check-in added to goal"
+    )
 
 # Favicon: avoid 404 when browser requests /favicon.ico
 @app.get("/favicon.ico", include_in_schema=False)

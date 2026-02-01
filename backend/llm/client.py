@@ -2,6 +2,7 @@ import os
 import json
 from dotenv import load_dotenv
 from typing import Optional, Dict
+import time
 load_dotenv()
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -340,7 +341,7 @@ class BenjiLLM:
                 from backend.app.main import update_user_facts
                 update_user_facts(
                     user_id=user_id,
-                    user_facts={"upcoming_plan": facts["upcoming_plan"]}
+                    user_facts={"upcoming_plan": plan.get("upcoming", {})}
                 )
             except Exception as e:
                 print(f"Warning: failed to save upcoming plan for user {user_id}: {e}")
@@ -477,6 +478,124 @@ Format example:
 
         response = self.model.invoke(messages)
         return response.content
+
+    def categorize_questions(self) -> Dict[str, list[str]]:
+        """
+        Define all possible questions mapped to categories/goals.
+        This mirrors the JS payload structure.
+        """
+        return {
+            "overall_day": [
+                "How would you rate your day from 1-10?",
+                "Any notes about your day?",
+                "What tags describe your day?",
+                "Rate your eating, drinking, and sleep today."
+            ],
+            "fitness": [
+                "Rate your overall fitness today.",
+                "Any notes on your fitness?",
+                "Rate your fitness goal performance."
+            ],
+            "wellness": [
+                "Rate your wellness today.",
+                "Any notes on wellness?",
+                "Rate your stress level.",
+                "How is your mood today?"
+            ],
+            "menstrual": [
+                "When did your last period start?",
+                "What is your current flow?",
+                "Which symptoms are present?",
+                "Rate your cramp pain.",
+                "Do you have any unusual discharge?",
+                "Are you taking oral contraceptives?",
+                "Which type of OCP?"
+            ],
+            # Goal-specific questions
+            "weight-loss": ["Calories consumed?", "Training type?", "Current weight?"],
+            "weight-gain": ["Calories consumed?", "Current weight?"],
+            "body-recomp": ["Calories?", "Protein?", "Hydration?", "Carbs?", "Fats?", "Fiber?", "Weight?"],
+            "strength": ["Calories?", "Protein?", "Carbs?", "Fat?", "Hydration?", "Weight?"],
+            "cardio": ["Activity type?", "Volume?", "Distance?", "Pace?", "Intensity?"],
+            "general": ["Activity?", "Method?", "Weight?"],
+            "mobility": ["Sessions?", "Tightness?", "Stiffness?", "Soreness?", "Looseness?", "Pain level?", "Pain location?", "ROM notes?"],
+            "injury": ["Pain intensity?", "Pain location?", "Pain type?", "Pain frequency?", "Stiffness?", "Function score?", "Activity tolerance?"],
+            "rehab": ["Training minutes?", "Sessions?", "After effects?", "Any flare-ups?", "Flare-up triggers?", "Flare-up description?"],
+            "performance": ["Minutes trained?", "Intensity?", "Difficulty?", "Soreness?", "Fatigue?"]
+        }
+
+    def select_relevant_questions(
+            self,
+            active_goals: list[str],
+            user_facts: Optional[Dict] = None
+        ) -> Dict[str, list[str]]:
+        """
+            Generate relevant check-in questions for a user based on their active goals and context.
+
+            Args:
+                facts: Existing user facts/context (optional)
+                active_goals: List of user's active goals
+                model: LLM object with `invoke(messages)` method
+
+            Returns:
+                Dict mapping category -> list of questions (JSON)
+            """
+        questions = self.categorize_questions()
+        relevant_questions = {}
+        
+        facts_str = json.dumps(user_facts, indent=2)
+        if len(facts_str) > 2000:
+            facts_str = facts_str[:2000] + " … truncated …"
+
+        questions_str = json.dumps(questions, indent=2)
+        if len(questions_str) > 2000:
+            questions_str = questions_str[:2000] + " … truncated …"
+            # Build the prompt
+        prompt = (
+            "You are a professional fitness and wellness coach.\n\n"
+            "Your task is to generate relevant check-in questions for a user.\n"
+            "Consider their active goals and any known user facts/context.\n\n"
+            "Rules:\n"
+            "- Include at least the core categories: overall_day, fitness, wellness, menstrual.\n"
+            "- Include goal-specific questions only for the user's active goals.\n"
+            "- Return STRICT JSON ONLY, in the same format as the example below.\n\n"
+            f"EXAMPLE FORMAT:\n{json.dumps({k: [] for k in questions.keys()}, indent=2)}\n\n"
+            "Only output valid JSON, nothing else.\n\n"
+            f"USER ACTIVE GOALS:\n{json.dumps(active_goals, indent=2)}\n\n"
+            f"USER FACTS (if any):\n{facts_str}\n\n"
+            f"POSSIBLE QUESTIONS TO CHOOSE FROM:\n{questions_str}"
+        )
+        # Build the message structure
+        messages = [
+            SystemMessage(content="Output only valid JSON."),
+            HumanMessage(content=prompt)
+        ]
+
+        
+        # Invoke the model
+        response = self.model.invoke(messages)
+        raw = response.content.strip()
+
+        print(raw)
+        # Remove markdown fences if present
+        if raw.startswith("```"):
+            lines = raw.split("\n")[1:-1]
+            raw = "\n".join(lines)
+
+        # Parse JSON
+        try:
+            questions_json = json.loads(raw)
+        except json.JSONDecodeError:
+            # fallback: return empty lists for each category
+            questions_json = {
+                "overall_day": [],
+                "fitness": [],
+                "wellness": [],
+                "menstrual": [],
+                **{goal: [] for goal in active_goals}
+            }
+
+        return questions_json
 
     def checkin_sense(self, checkin_data: dict, user_facts: dict, recent_checkins: list = None) -> list:
         """

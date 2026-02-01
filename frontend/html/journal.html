@@ -257,6 +257,9 @@
     }
 
     .modal-form .form-input {
+      width: 100%;
+      display: block;
+
       font-family: 'DM Sans', sans-serif;
       font-size: 0.95rem;
       padding: 0.875rem 1rem;
@@ -679,14 +682,14 @@
       <!-- Phase 1: user input -->
       <div class="form-group" id="goalPhaseGeneral">
         <label class="form-label" for="goalGeneral">What is your general goal?</label>
-        <input
-          type="text"
+        <textarea
           id="goalGeneral"
-          class="form-input"
+          class="form-input form-textarea"
           placeholder="What exactly do you want to accomplish?"
           required
-          maxlength="100"
-        />
+          maxlength="200"
+          rows="3"
+        ></textarea>
         <small class="form-hint">Think sleep, mood, stress, recovery.</small>
       </div>
 
