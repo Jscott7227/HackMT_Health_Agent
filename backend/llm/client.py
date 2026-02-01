@@ -9,23 +9,10 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 
 from backend.llm.tools import MANDATORY_TOOLS, OPTIONAL_TOOLS, BenjiGoalsTool, UpcomingPlanTool
+from backend.llm.instructions import format_agent_instructions, get_system_prompt_base
 
-SYSTEM_PROMPT = """
-You are a professional fitness and wellness coach named Benji.
-
-Your role:
-- Answer the user's question clearly and directly
-- Use the provided background facts as context, not as the main topic
-- Personalize advice when relevant
-- Avoid making medical diagnoses
-- Encourage professional guidance for medical concerns
-
-Guidelines:
-- Focus primarily on the user's question
-- Use facts only when they improve relevance
-- Be practical, actionable, and supportive
-- Keep responses structured and easy to follow
-"""
+# Base prompt; full personality/scope/constraints come from instructions.py (MCP-style)
+SYSTEM_PROMPT = get_system_prompt_base()
 
 def format_user_facts(user_facts: dict) -> str:
     if not user_facts:
@@ -176,20 +163,17 @@ class BenjiLLM:
         for name, out in tool_outputs.items():
             combined += f"{name}: {out}\n"
             
-        messages = [
-            SystemMessage(
-                content="""You are a smart fitness and wellness coach. Use tool outputs for advice.
-                
-When generating medication schedules:
-- Check for contraindications (drug-drug, drug-food interactions)
-- Consider time-of-day (morning, afternoon, evening, night) based on medication frequency
-- Note if medications should be taken with or without food
-- Space medications appropriately (e.g., 2+ hours apart if contraindicated)
-- Always recommend consulting with healthcare providers for medical decisions
-- Format schedules clearly with time slots and safety warnings
+        # Same Agent Protocol Instructions (scope + constraints) so agent run stays on-topic and safe
+        agent_instructions = format_agent_instructions()
+        medication_notes = (
+            "When generating medication schedules: check contraindications, "
+            "consider time-of-day and food instructions, space medications appropriately, "
+            "recommend consulting healthcare providers, format with time slots and safety warnings."
+        )
+        system_content = agent_instructions + "\n\n" + medication_notes + "\n\nUse tool outputs for advice. Be clear and actionable."
 
-Provide clear, actionable guidance while emphasizing the importance of professional medical supervision."""
-            ),
+        messages = [
+            SystemMessage(content=system_content),
             HumanMessage(content=combined)
         ]
 
@@ -287,11 +271,13 @@ Provide clear, actionable guidance while emphasizing the importance of professio
     def chat(self, user_input: str, history: list = None, user_facts: dict = None):
         history = history or []
 
+        # Structured Agent Protocols: personality, scope, and constraints from instructions.py
+        agent_instructions = format_agent_instructions()
         facts_context = format_user_facts(user_facts=user_facts)
 
         messages = [
-            SystemMessage(content=SYSTEM_PROMPT),
-            SystemMessage(content=facts_context),
+            SystemMessage(content=agent_instructions),
+            SystemMessage(content=SYSTEM_PROMPT + "\n\n" + facts_context),
             *history,
             HumanMessage(content=user_input),
         ]

@@ -52,13 +52,14 @@
         const profile = await profileRes.value.json();
         $("#height").value = profile.height || "";
         $("#weight").value = profile.weight || "";
-        $("#benjiFacts").value = profile.benji_facts || "";
+        // BenjiFacts may be stored as JSON string { "text": "..." } or plain string
+        $("#benjiFacts").value = parseBenjiFactsForDisplay(profile.benji_facts) || "";
         $("#metaHeight").textContent = profile.height || "--";
         $("#metaWeight").textContent = profile.weight || "--";
         originalProfile = {
           height: profile.height || "",
           weight: profile.weight || "",
-          benji_facts: profile.benji_facts || ""
+          benji_facts: parseBenjiFactsForDisplay(profile.benji_facts) || ""
         };
       } else {
         const onboardingRaw = localStorage.getItem("userProfile");
@@ -88,20 +89,34 @@
     }
   }
 
+  // Backend expects BenjiFacts as valid JSON; we store as { text: "..." }
+  function parseBenjiFactsForDisplay(val) {
+    if (!val) return "";
+    try {
+      const parsed = JSON.parse(val);
+      if (parsed && typeof parsed.text === "string") return parsed.text;
+      if (parsed && typeof parsed.summary === "string") return parsed.summary;
+    } catch (_) {}
+    return typeof val === "string" ? val : "";
+  }
+
   async function saveProfile() {
     const height = $("#height").value.trim();
     const weight = $("#weight").value.trim();
     const benjiFacts = $("#benjiFacts").value.trim();
 
-    const body = {};
-    if (height) body.height = height;
-    if (weight) body.weight = weight;
-    if (benjiFacts) body.benji_facts = benjiFacts;
+    // Backend expects { profile: { Height?, Weight?, BenjiFacts? } } (PascalCase)
+    const profileFields = {};
+    if (height) profileFields.Height = height;
+    if (weight) profileFields.Weight = weight;
+    if (benjiFacts) profileFields.BenjiFacts = JSON.stringify({ text: benjiFacts });
 
-    if (!Object.keys(body).length) {
+    if (!Object.keys(profileFields).length) {
       showToast("Nothing to save.", true);
       return;
     }
+
+    const body = { profile: profileFields };
 
     try {
       let res = await fetch(`${API_BASE}/profileinfo/${userId}`, {

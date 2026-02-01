@@ -634,25 +634,31 @@ async function completeSetup() {
     btn.disabled = true;
 
     // Persist profile info to backend if available
+    // Backend expects: { profile: { BenjiFacts?, Height?, Weight? } } (nested, PascalCase)
     try {
         var session = getSession();
         if (session && session.user_id) {
-            var payload = {};
-            if (state.height) payload.height = state.height;
-            if (state.weight) payload.weight = state.weight;
+            var profileFields = {};
+            if (state.height) profileFields.Height = state.height;
+            if (state.weight) profileFields.Weight = state.weight;
             var facts = buildBenjiFacts();
-            if (facts) payload.benji_facts = facts;
+            if (facts) {
+                // Backend requires BenjiFacts to be a valid JSON string
+                profileFields.BenjiFacts = JSON.stringify({ summary: facts });
+            }
 
-            if (Object.keys(payload).length) {
+            if (Object.keys(profileFields).length) {
+                var payload = { profile: profileFields };
+                // Try POST first (create) – new users don't have a profile yet, so this avoids 404
                 var res = await fetch(API_BASE + "/profileinfo/" + session.user_id, {
-                    method: "PATCH",
+                    method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-
-                if (res.status === 404) {
+                // If profile already exists (e.g. user re-did setup), update with PATCH
+                if (res.status === 409) {
                     await fetch(API_BASE + "/profileinfo/" + session.user_id, {
-                        method: "POST",
+                        method: "PATCH",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload)
                     });
