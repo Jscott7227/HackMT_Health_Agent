@@ -2942,6 +2942,117 @@ textarea:focus-visible {
 }
 
 /* ====================================
+   404 Error Page
+   ==================================== */
+.error-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2xl) var(--space-md);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.error-badge {
+    background: var(--forest-50);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg) var(--space-2xl);
+    border: 1px solid rgba(1, 104, 68, 0.2);
+    box-shadow: var(--shadow-lg);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    margin-bottom: var(--space-lg);
+}
+
+.error-code {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    color: var(--sage);
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.error-status {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.error-content {
+    max-width: 550px;
+    margin: 0 auto;
+}
+
+.error-content h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 3vw, 3rem);
+    color: var(--clay-800);
+    margin-bottom: var(--space-sm);
+}
+
+.error-message {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-lg);
+}
+
+.error-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-lg);
+}
+
+.error-cta {
+    border-radius: 999px;
+    padding: 0.65rem 1.5rem;
+    min-width: 150px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-body);
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.error-cta.btn {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.error-cta.btn-primary {
+    background: linear-gradient(135deg, var(--sage-light), var(--sage));
+    color: white;
+    border-color: transparent;
+}
+
+.error-hint {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.error-hint ul {
+    padding-left: 1.25rem;
+    text-align: left;
+    margin: var(--space-xs) 0 0;
+}
+
+.error-hint li + li {
+    margin-top: 0.35rem;
+}
+
+/* ====================================
    Check-in: Fitness Goal Tabs
    ==================================== */
 .fitness-goal-tabs {
@@ -5378,12 +5489,20 @@ body[data-page="chat"] .message.assistant {
 body[data-page="chat"] .message.assistant b {
     display: inline;
     font-family: var(--font-display);
-    font-size: 1.3rem;
+    font-size: 1.35rem;
     letter-spacing: 0.02em;
     color: var(--sage);
-    margin-bottom: 0;
+    font-weight: 600;
+    margin: 0 0.35rem 0 0;
     line-height: 1.2;
     vertical-align: baseline;
+}
+
+body[data-page="chat"] .message.assistant.thinking .message-body {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    flex-wrap: wrap;
 }
 
 .message-avatar img {

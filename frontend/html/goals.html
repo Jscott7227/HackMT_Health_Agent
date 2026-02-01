@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../css/styles.css">
     <style>
         body {
@@ -15,9 +16,9 @@
         }
 
         .goals-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 3rem 2rem;
         }
 
         .goals-header {
@@ -27,7 +28,7 @@
 
         .goals-headline {
             font-family: 'Crimson Pro', serif;
-            font-size: 2.5rem;
+            font-size: 2.75rem;
             font-weight: 600;
             color: var(--text-primary, #1a1a1a);
             margin-bottom: 1rem;
@@ -36,27 +37,30 @@
 
         .goals-subtext {
             font-family: 'DM Sans', sans-serif;
-            font-size: 1.1rem;
+            font-size: 1.125rem;
             color: var(--text-secondary, #666);
-            max-width: 600px;
+            max-width: 650px;
             margin: 0 auto;
+            line-height: 1.6;
         }
 
         .goals-list {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
         .goal-card {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border: 2px solid rgba(140, 162, 145, 0.2);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 2rem;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(10, 24, 16, 0.08);
         }
 
         .goal-card::before {
@@ -71,45 +75,45 @@
             transition: opacity 0.3s ease;
         }
 
+        .goal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(10, 24, 16, 0.12);
+        }
+
         .goal-card:hover::before {
             opacity: 1;
         }
 
         .goal-card.accepted {
             border-color: var(--sage, #8ca291);
-            background: rgba(140, 162, 145, 0.05);
+            background: rgba(140, 162, 145, 0.08);
         }
 
         .goal-card.accepted::before {
             opacity: 1;
         }
 
-        .goal-card.skipped {
-            background: rgba(0, 0, 0, 0.03);
-            border-color: rgba(0, 0, 0, 0.1);
-            opacity: 0.6;
-        }
-
-        .goal-card.skipped .goal-title,
-        .goal-card.skipped .goal-description {
-            color: var(--text-secondary, #999);
-        }
-
-        .goal-card.replacing {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
         .goal-header {
             display: flex;
             align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
         }
 
         .goal-icon {
-            font-size: 2rem;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(140, 162, 145, 0.1), rgba(140, 162, 145, 0.15));
+            border-radius: 12px;
             flex-shrink: 0;
+        }
+
+        .goal-icon i {
+            font-size: 1.5rem;
+            color: var(--sage, #8ca291);
         }
 
         .goal-content {
@@ -121,33 +125,67 @@
             font-size: 1.5rem;
             font-weight: 600;
             color: var(--text-primary, #1a1a1a);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
         }
 
-        .goal-description {
+        .goal-smart-details {
+            display: grid;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .smart-item {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .smart-label {
             font-family: 'DM Sans', sans-serif;
-            font-size: 1rem;
-            color: var(--text-secondary, #666);
+            font-size: 0.813rem;
+            font-weight: 600;
+            color: var(--sage, #8ca291);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 100px;
+            padding-top: 2px;
+        }
+
+        .smart-text {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.938rem;
+            color: var(--text-secondary, #555);
             line-height: 1.6;
-            margin-bottom: 1rem;
+            flex: 1;
         }
 
         .goal-actions {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             margin-top: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .goal-btn {
             flex: 1;
-            padding: 0.75rem 1.5rem;
+            min-width: 120px;
+            padding: 0.875rem 1.5rem;
             border: none;
             border-radius: 12px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 1rem;
-            font-weight: 500;
+            font-size: 0.938rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .goal-btn i {
+            font-size: 1rem;
         }
 
         .goal-btn-accept {
@@ -157,33 +195,40 @@
 
         .goal-btn-accept:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(140, 162, 145, 0.3);
+            box-shadow: 0 6px 16px rgba(140, 162, 145, 0.35);
         }
 
-        .goal-btn-reject {
-            background: rgba(0, 0, 0, 0.05);
+        .goal-btn-edit {
+            background: white;
+            border: 2px solid rgba(140, 162, 145, 0.3);
             color: var(--text-secondary, #666);
         }
 
-        .goal-btn-reject:hover {
-            background: rgba(0, 0, 0, 0.1);
+        .goal-btn-edit:hover {
+            border-color: var(--sage, #8ca291);
+            color: var(--sage, #8ca291);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(140, 162, 145, 0.2);
         }
 
         .goal-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            transform: none !important;
         }
 
         .goal-status {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
+            gap: 0.625rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.875rem;
-            font-weight: 500;
+            font-size: 0.938rem;
+            font-weight: 600;
             margin-top: 1rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
         }
 
         .goal-status.accepted {
@@ -191,23 +236,23 @@
             color: var(--sage, #8ca291);
         }
 
-        .goal-status.skipped {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--text-secondary, #999);
+        .goal-status.accepted:hover {
+            background: rgba(140, 162, 145, 0.22);
         }
 
         .goals-count {
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.9rem;
+            font-size: 1rem;
             color: var(--text-secondary, #666);
             text-align: center;
             margin-bottom: 2rem;
+            font-weight: 500;
         }
 
         .finalize-section {
             text-align: center;
             margin-top: 3rem;
-            padding-top: 2rem;
+            padding-top: 2.5rem;
             border-top: 2px solid rgba(140, 162, 145, 0.2);
         }
 
@@ -215,37 +260,37 @@
             display: flex;
             gap: 1rem;
             justify-content: center;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             margin-bottom: 1rem;
-            align-items: stretch;
-            max-width: 100%;
         }
 
         .finalize-btn,
         .secondary-btn {
             padding: 1rem 1.5rem;
-            border-radius: 12px;
+            border-radius: 14px;
             font-family: 'DM Sans', sans-serif;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
-            height: auto;
-            line-height: 1.5;
-            white-space: nowrap;
-            flex: 0 1 auto;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.625rem;
+            min-width: 220px;
+            flex: 1 1 220px;
+            max-width: 280px;
         }
 
         .finalize-btn {
             background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
             color: white;
-            border: 2px solid transparent;
         }
 
         .finalize-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(140, 162, 145, 0.4);
+            box-shadow: 0 8px 24px rgba(140, 162, 145, 0.4);
         }
 
         .finalize-btn:disabled {
@@ -260,28 +305,66 @@
         }
 
         .secondary-btn:hover {
-            background: rgba(140, 162, 145, 0.05);
+            background: rgba(140, 162, 145, 0.08);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(140, 162, 145, 0.2);
+            box-shadow: 0 6px 18px rgba(140, 162, 145, 0.25);
         }
 
-        .replacing-indicator {
-            display: inline-block;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.875rem;
-            color: var(--text-secondary, #666);
+        .finalize-validation-msg {
+            display: none;
             margin-top: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            background: rgba(200, 80, 80, 0.1);
+            color: #b33;
+            font-size: 0.938rem;
+            font-family: 'DM Sans', sans-serif;
         }
 
-        .spinner {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(140, 162, 145, 0.3);
+        .finalize-validation-msg.visible {
+            display: block;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(140, 162, 145, 0.2);
             border-top-color: var(--sage, #8ca291);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin-right: 0.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .loading-text {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            color: var(--text-secondary, #666);
         }
 
         @keyframes spin {
@@ -296,7 +379,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -313,14 +396,14 @@
 
         .modal-content {
             background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            max-width: 500px;
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 600px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            transform: scale(0.9);
+            box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3);
+            transform: scale(0.95);
             transition: transform 0.3s ease;
         }
 
@@ -329,12 +412,12 @@
         }
 
         .modal-header {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .modal-title {
             font-family: 'Crimson Pro', serif;
-            font-size: 1.75rem;
+            font-size: 2rem;
             font-weight: 600;
             color: var(--text-primary, #1a1a1a);
             margin-bottom: 0.5rem;
@@ -342,25 +425,25 @@
 
         .modal-subtitle {
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.9rem;
+            font-size: 1rem;
             color: var(--text-secondary, #666);
         }
 
         .modal-form {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.625rem;
         }
 
         .form-label {
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.9rem;
+            font-size: 0.938rem;
             font-weight: 600;
             color: var(--text-primary, #1a1a1a);
         }
@@ -369,52 +452,67 @@
         .form-textarea {
             font-family: 'DM Sans', sans-serif;
             font-size: 1rem;
-            padding: 0.75rem;
-            border: 2px solid rgba(140, 162, 145, 0.3);
-            border-radius: 8px;
-            transition: border-color 0.3s ease;
-            box-sizing: border-box;
+            padding: 1rem 1.25rem;
+            border: 2px solid rgba(140, 162, 145, 0.25);
+            border-radius: 14px;
+            transition: all 0.25s ease;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary, #1a1a1a);
         }
 
         .form-input:focus,
         .form-textarea:focus {
             outline: none;
             border-color: var(--sage, #8ca291);
+            box-shadow: 0 0 0 4px rgba(140, 162, 145, 0.1);
+            background: white;
         }
 
         .form-textarea {
             resize: vertical;
             min-height: 100px;
+            line-height: 1.6;
         }
 
-        .emoji-picker {
+        .icon-picker {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 0.5rem;
-            padding: 0.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+            gap: 0.75rem;
+            padding: 1rem;
             background: rgba(140, 162, 145, 0.05);
-            border-radius: 8px;
+            border-radius: 12px;
         }
 
-        .emoji-option {
-            font-size: 1.5rem;
-            padding: 0.5rem;
+        .icon-option {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border: 2px solid transparent;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s ease;
-            text-align: center;
+            background: white;
         }
 
-        .emoji-option:hover {
-            background: white;
-            border-color: var(--sage, #8ca291);
-            transform: scale(1.1);
+        .icon-option i {
+            font-size: 1.5rem;
+            color: var(--sage, #8ca291);
         }
 
-        .emoji-option.selected {
-            background: white;
+        .icon-option:hover {
             border-color: var(--sage, #8ca291);
+            transform: scale(1.05);
+        }
+
+        .icon-option.selected {
+            background: var(--sage, #8ca291);
+            border-color: var(--sage, #8ca291);
+        }
+
+        .icon-option.selected i {
+            color: white;
         }
 
         .modal-actions {
@@ -425,8 +523,8 @@
 
         .modal-btn {
             flex: 1;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            border-radius: 14px;
             font-family: 'DM Sans', sans-serif;
             font-size: 1rem;
             font-weight: 600;
@@ -442,7 +540,7 @@
 
         .modal-btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(140, 162, 145, 0.3);
+            box-shadow: 0 6px 16px rgba(140, 162, 145, 0.35);
         }
 
         .modal-btn-secondary {
@@ -454,7 +552,7 @@
             background: rgba(0, 0, 0, 0.1);
         }
 
-        /* Page transition: fade-in on load, fade-out before leaving */
+        /* Page transitions */
         body {
             transition: opacity 0.4s ease;
         }
@@ -468,25 +566,11 @@
             opacity: 0;
             pointer-events: none;
         }
-        .finalize-validation-msg {
-            display: none;
-            margin-top: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-            background: rgba(200, 80, 80, 0.1);
-            color: #b33;
-            font-size: 0.95rem;
-        }
-        .finalize-validation-msg.visible {
-            display: block;
-        }
     </style>
 </head>
 <body data-page="goals" class="page-loading">
 
-    <!-- ============================================================
-        BACKGROUND
-        ============================================================ -->
+    <!-- Background -->
     <div class="background-layers">
         <div class="grain"></div>
         <div class="gradient-orb orb-1"></div>
@@ -494,27 +578,39 @@
         <div class="gradient-orb orb-3"></div>
     </div>
 
-    <!-- ============================================================
-        GOALS CONTENT
-        ============================================================ -->
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Generating personalized goals...</p>
+        </div>
+    </div>
+
+    <!-- Goals Content -->
     <div class="goals-container">
         <div class="goals-header">
             <h1 class="goals-headline">Your Personalized Goals</h1>
-            <p class="goals-subtext">Review your goals below. Accept the ones you like or skip any to get a new suggestion.</p>
+            <p class="goals-subtext">Review your SMART goals below. Accept the ones that resonate with you or edit them to better fit your journey.</p>
         </div>
 
-        <p class="goals-count"><span id="acceptedCount">0</span> of 3 goals accepted</p>
-        
+        <p class="goals-count"><span id="acceptedCount">0</span> / <span id="totalCount">0</span> goals accepted</p>
+
         <div class="goals-list" id="goalsList"></div>
 
         <div class="finalize-section">
             <p class="finalize-validation-msg" id="finalizeValidationMsg">Please accept at least one goal before continuing.</p>
             <div class="button-group">
                 <button class="finalize-btn" id="finalizeBtn" disabled onclick="finalizeGoals()">
+                    <i class="fas fa-check-circle"></i>
                     Continue with Selected Goals
                 </button>
-                <button class="secondary-btn" onclick="manuallyInputGoals()">
-                    Manually Input Goals
+                <button class="secondary-btn" id="regenerateBtn" type="button">
+                    <i class="fas fa-sync-alt"></i>
+                    Regenerate Suggestions
+                </button>
+                <button class="secondary-btn" type="button" onclick="openManualInputModal()">
+                    <i class="fas fa-plus-circle"></i>
+                    Add Custom Goal
                 </button>
             </div>
         </div>
@@ -524,54 +620,116 @@
     <div class="modal-overlay" id="manualInputModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Create Your Own Goal</h2>
-                <p class="modal-subtitle">Add a custom goal that's meaningful to you</p>
+                <h2 class="modal-title">Create SMART Goal</h2>
+                <p class="modal-subtitle">Design a goal that's Specific, Measurable, Attainable, Relevant, and Time-bound</p>
             </div>
 
             <form class="modal-form" id="manualGoalForm">
                 <div class="form-group">
                     <label class="form-label">Select an Icon</label>
-                    <div class="emoji-picker" id="emojiPicker">
-                        <div class="emoji-option" data-emoji="🎯" onclick="selectEmoji(this)">🎯</div>
-                        <div class="emoji-option" data-emoji="💪" onclick="selectEmoji(this)">💪</div>
-                        <div class="emoji-option" data-emoji="🏃" onclick="selectEmoji(this)">🏃</div>
-                        <div class="emoji-option" data-emoji="🥗" onclick="selectEmoji(this)">🥗</div>
-                        <div class="emoji-option" data-emoji="😴" onclick="selectEmoji(this)">😴</div>
-                        <div class="emoji-option" data-emoji="🧘" onclick="selectEmoji(this)">🧘</div>
-                        <div class="emoji-option" data-emoji="📊" onclick="selectEmoji(this)">📊</div>
-                        <div class="emoji-option" data-emoji="🚶" onclick="selectEmoji(this)">🚶</div>
-                        <div class="emoji-option" data-emoji="💧" onclick="selectEmoji(this)">💧</div>
-                        <div class="emoji-option" data-emoji="🍎" onclick="selectEmoji(this)">🍎</div>
-                        <div class="emoji-option" data-emoji="⏰" onclick="selectEmoji(this)">⏰</div>
-                        <div class="emoji-option" data-emoji="🎧" onclick="selectEmoji(this)">🎧</div>
-                        <div class="emoji-option" data-emoji="📝" onclick="selectEmoji(this)">📝</div>
-                        <div class="emoji-option" data-emoji="🏋️" onclick="selectEmoji(this)">🏋️</div>
-                        <div class="emoji-option" data-emoji="🔄" onclick="selectEmoji(this)">🔄</div>
-                        <div class="emoji-option selected" data-emoji="✨" onclick="selectEmoji(this)">✨</div>
+                    <div class="icon-picker" id="iconPicker">
+                        <div class="icon-option selected" data-icon="fa-bullseye" onclick="selectIcon(this)">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-dumbbell" onclick="selectIcon(this)">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-running" onclick="selectIcon(this)">
+                            <i class="fas fa-running"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-heartbeat" onclick="selectIcon(this)">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-bed" onclick="selectIcon(this)">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-spa" onclick="selectIcon(this)">
+                            <i class="fas fa-spa"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-chart-line" onclick="selectIcon(this)">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-walking" onclick="selectIcon(this)">
+                            <i class="fas fa-walking"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-tint" onclick="selectIcon(this)">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-apple-alt" onclick="selectIcon(this)">
+                            <i class="fas fa-apple-alt"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-trophy" onclick="selectIcon(this)">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-fire" onclick="selectIcon(this)">
+                            <i class="fas fa-fire"></i>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="goalTitle">Goal Title *</label>
-                    <input 
-                        type="text" 
-                        id="goalTitle" 
-                        class="form-input" 
-                        placeholder="e.g., Walk 10,000 steps daily"
+                    <label class="form-label" for="goalSpecific">Specific *</label>
+                    <textarea
+                        id="goalSpecific"
+                        name="goalSpecific"
+                        class="form-textarea"
+                        placeholder="What exactly do you want to accomplish?"
                         required
-                        maxlength="60"
-                    />
+                        maxlength="200"
+                        rows="2"
+                    ></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="goalDescription">Goal Description *</label>
-                    <textarea 
-                        id="goalDescription" 
-                        class="form-textarea" 
-                        placeholder="Describe your goal in detail. What do you want to achieve and how will you do it?"
+                    <label class="form-label" for="goalMeasurable">Measurable *</label>
+                    <textarea
+                        id="goalMeasurable"
+                        name="goalMeasurable"
+                        class="form-textarea"
+                        placeholder="How will you track your progress?"
                         required
-                        maxlength="300"
+                        maxlength="200"
+                        rows="2"
                     ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="goalAttainable">Attainable *</label>
+                    <textarea
+                        id="goalAttainable"
+                        name="goalAttainable"
+                        class="form-textarea"
+                        placeholder="How will you achieve this goal?"
+                        required
+                        maxlength="200"
+                        rows="2"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="goalRelevant">Relevant *</label>
+                    <textarea
+                        id="goalRelevant"
+                        name="goalRelevant"
+                        class="form-textarea"
+                        placeholder="Why is this goal important to you?"
+                        required
+                        maxlength="200"
+                        rows="2"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="goalTimeBound">Timeframe *</label>
+                    <input
+                        type="text"
+                        id="goalTimeBound"
+                        name="goalTimeBound"
+                        class="form-input"
+                        placeholder="When will you achieve this goal?"
+                        required
+                        maxlength="100"
+                    />
                 </div>
 
                 <div class="modal-actions">
@@ -579,7 +737,8 @@
                         Cancel
                     </button>
                     <button type="submit" class="modal-btn modal-btn-primary">
-                        Add Goal
+                        <i class="fas fa-save"></i>
+                        Save Goal
                     </button>
                 </div>
             </form>
@@ -588,163 +747,115 @@
 
     <script src="../js/api.js"></script>
     <script>
-        // Synthetic goal pool (simulating what would come from LLM)
-        const GOAL_POOL = [
-            {
-                icon: "🏃",
-                title: "Build a Consistent Cardio Routine",
-                description: "Commit to 30 minutes of moderate cardio 3 times per week. Start with walking or cycling and gradually increase intensity as your endurance improves."
-            },
-            {
-                icon: "💪",
-                title: "Progressive Strength Training",
-                description: "Begin a 3-day strength training program focusing on major muscle groups. Start with bodyweight exercises and add resistance as you build confidence and form."
-            },
-            {
-                icon: "🥗",
-                title: "Balanced Nutrition Habits",
-                description: "Focus on whole foods and balanced meals. Aim for protein at every meal, 5+ servings of vegetables daily, and stay hydrated with 8 glasses of water."
-            },
-            {
-                icon: "😴",
-                title: "Optimize Sleep Recovery",
-                description: "Establish a consistent sleep schedule of 7-8 hours per night. Create a wind-down routine 30 minutes before bed to improve sleep quality and recovery."
-            },
-            {
-                icon: "🧘",
-                title: "Stress Management Practice",
-                description: "Incorporate 10-15 minutes of mindfulness or meditation daily. This can be breathing exercises, yoga, or guided meditation to manage stress and improve focus."
-            },
-            {
-                icon: "📊",
-                title: "Track Your Progress Weekly",
-                description: "Log your workouts, meals, and how you feel each week. Use this data to identify patterns and make informed adjustments to your routine."
-            },
-            {
-                icon: "🚶",
-                title: "Increase Daily Movement",
-                description: "Add 8,000-10,000 steps to your daily routine. Take walking breaks, use stairs instead of elevators, and incorporate movement into everyday tasks."
-            },
-            {
-                icon: "🎯",
-                title: "Set Specific Performance Goals",
-                description: "Define measurable milestones like running a 5K, doing 10 pushups, or holding a plank for 60 seconds. Celebrate small wins along the way."
-            },
-            {
-                icon: "🍎",
-                title: "Meal Prep Sundays",
-                description: "Dedicate 2-3 hours each Sunday to prepare healthy meals for the week. This removes decision fatigue and ensures nutritious options are always available."
-            },
-            {
-                icon: "💧",
-                title: "Hydration Challenge",
-                description: "Drink half your body weight in ounces of water daily. Start your morning with 16oz and keep a reusable bottle with you throughout the day."
-            },
-            {
-                icon: "🔄",
-                title: "Active Recovery Days",
-                description: "Schedule 1-2 active recovery sessions weekly with gentle activities like stretching, yoga, or easy walking to promote muscle recovery and prevent burnout."
-            },
-            {
-                icon: "📝",
-                title: "Mindful Eating Practice",
-                description: "Eat without distractions, chew slowly, and listen to hunger cues. This improves digestion and helps prevent overeating."
-            },
-            {
-                icon: "🏋️",
-                title: "Functional Fitness Focus",
-                description: "Incorporate exercises that mimic daily movements like squats, lunges, and carries. This improves overall strength and reduces injury risk in everyday life."
-            },
-            {
-                icon: "⏰",
-                title: "Morning Movement Ritual",
-                description: "Start each day with 10 minutes of light movement or stretching. This energizes your body and sets a positive tone for the day ahead."
-            },
-            {
-                icon: "🎧",
-                title: "Find Your Workout Motivation",
-                description: "Create energizing playlists, find a workout buddy, or join a community. Discover what makes exercise enjoyable and sustainable for you."
-            }
-        ];
-
-        // Current state
+        const MAX_INITIAL_GOALS = 3;
+        let selectedIcon = 'fa-bullseye';
+        let editingGoalId = null;
         let displayedGoals = [];
-        let usedGoalIndices = new Set();
 
         // Initialize goals on page load
         document.addEventListener('DOMContentLoaded', () => {
             initializeGoals();
-            
-            // Set up modal form listener
-            document.getElementById('manualGoalForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const title = document.getElementById('goalTitle').value.trim();
-                const description = document.getElementById('goalDescription').value.trim();
-                
-                if (!title || !description) {
-                    alert('Please fill in all required fields.');
-                    return;
-                }
-
-                // Add the custom goal to the displayed goals
-                const newGoal = {
-                    icon: selectedEmoji,
-                    title: title,
-                    description: description,
-                    id: Date.now() + Math.random(),
-                    status: 'pending'
-                };
-
-                displayedGoals.push(newGoal);
-                renderGoals();
-                closeManualInputModal();
-            });
-
-            // Close modal when clicking outside
-            document.getElementById('manualInputModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeManualInputModal();
-                }
-            });
+            setupEventListeners();
         });
 
-        // Initialize with 5 random goals
-        function initializeGoals() {
-            displayedGoals = [];
-            usedGoalIndices.clear();
+        function setupEventListeners() {
+            const form = document.getElementById('manualGoalForm');
+            if (form) form.addEventListener('submit', handleManualFormSubmit);
 
-            for (let i = 0; i < 3; i++) {
-                const goal = getRandomUnusedGoal();
-                displayedGoals.push({
-                    ...goal,
-                    id: Date.now() + Math.random(),
-                    status: 'pending'
+            const modal = document.getElementById('manualInputModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) closeManualInputModal();
                 });
             }
 
-            renderGoals();
+            const regenerateBtn = document.getElementById('regenerateBtn');
+            if (regenerateBtn) regenerateBtn.addEventListener('click', regenerateGoals);
         }
 
-        // Get a random goal that hasn't been used yet
-        function getRandomUnusedGoal() {
-            let availableIndices = [];
-            for (let i = 0; i < GOAL_POOL.length; i++) {
-                if (!usedGoalIndices.has(i)) {
-                    availableIndices.push(i);
+        // Initialize goals from LLM
+        async function initializeGoals() {
+            showLoading(true);
+
+            try {
+                const session = BenjiAPI.getSession();
+                if (!session || !session.user_id) {
+                    throw new Error('No session found');
                 }
+
+                // Get user profile info for context
+                const profileInfo = await BenjiAPI.getProfileInfo(session.user_id);
+
+                // Generate goals from LLM
+                const response = await BenjiAPI.postGoalsGenerate({
+                    user_id: session.user_id,
+                    profile_info: profileInfo,
+                    count: MAX_INITIAL_GOALS
+                });
+
+                if (response.smart_goals && Array.isArray(response.smart_goals)) {
+                    displayedGoals = response.smart_goals.map(goal => ({
+                        ...goal,
+                        icon: goal.icon || 'fa-bullseye',
+                        id: Date.now() + Math.random(),
+                        status: 'pending',
+                        start_date: goal.start_date || new Date().toISOString()
+                    }));
+                } else {
+                    throw new Error('Invalid goals response');
+                }
+
+            } catch (error) {
+                console.error('Failed to generate goals:', error);
+                // Fallback to empty state
+                displayedGoals = [];
+            } finally {
+                showLoading(false);
+                renderGoals();
             }
+        }
 
-            // If we've used all goals, reset the pool
-            if (availableIndices.length === 0) {
-                usedGoalIndices.clear();
-                availableIndices = Array.from({ length: GOAL_POOL.length }, (_, i) => i);
+        // Regenerate goals (keep accepted ones)
+        async function regenerateGoals() {
+            showLoading(true);
+
+            try {
+                const session = BenjiAPI.getSession();
+                if (!session || !session.user_id) {
+                    throw new Error('No session found');
+                }
+
+                const acceptedGoals = displayedGoals.filter(g => g.status === 'accepted');
+                const neededCount = Math.max(MAX_INITIAL_GOALS - acceptedGoals.length, 1);
+
+                const profileInfo = await BenjiAPI.getProfileInfo(session.user_id);
+
+                const response = await BenjiAPI.postGoalsGenerate({
+                    user_id: session.user_id,
+                    profile_info: profileInfo,
+                    count: neededCount,
+                    exclude_goals: acceptedGoals
+                });
+
+                if (response.smart_goals && Array.isArray(response.smart_goals)) {
+                    const newGoals = response.smart_goals.map(goal => ({
+                        ...goal,
+                        icon: goal.icon || 'fa-bullseye',
+                        id: Date.now() + Math.random(),
+                        status: 'pending',
+                        start_date: goal.start_date || new Date().toISOString()
+                    }));
+
+                    displayedGoals = [...acceptedGoals, ...newGoals];
+                }
+
+            } catch (error) {
+                console.error('Failed to regenerate goals:', error);
+                alert('Unable to generate new goals. Please try again.');
+            } finally {
+                showLoading(false);
+                renderGoals();
             }
-
-            const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-            usedGoalIndices.add(randomIndex);
-
-            return { ...GOAL_POOL[randomIndex] };
         }
 
         // Render all goals to the DOM
@@ -752,10 +863,14 @@
             const goalsList = document.getElementById('goalsList');
             goalsList.innerHTML = '';
 
-            displayedGoals.forEach((goal) => {
-                const goalCard = createGoalCard(goal);
-                goalsList.appendChild(goalCard);
-            });
+            if (displayedGoals.length === 0) {
+                goalsList.innerHTML = '<p style="text-align: center; color: #999;">No goals yet. Add a custom goal to get started.</p>';
+            } else {
+                displayedGoals.forEach((goal) => {
+                    const goalCard = createGoalCard(goal);
+                    goalsList.appendChild(goalCard);
+                });
+            }
 
             updateGoalCount();
         }
@@ -763,37 +878,55 @@
         // Create a single goal card element
         function createGoalCard(goal) {
             const card = document.createElement('div');
-            card.className = `goal-card ${goal.status === 'accepted' ? 'accepted' : ''} ${goal.status === 'skipped' ? 'skipped' : ''}`;
+            card.className = `goal-card ${goal.status === 'accepted' ? 'accepted' : ''}`;
             card.id = `goal-${goal.id}`;
 
-            let statusContent = '';
-            let buttonLabel = 'Accept Goal';
-            let buttonAction = `acceptGoal('${goal.id}')`;
+            // Use Specific field as title, truncate if too long
+            const goalTitle = goal.Specific
+                ? (goal.Specific.length > 80 ? goal.Specific.substring(0, 77) + '...' : goal.Specific)
+                : (goal.title || 'Untitled Goal');
 
-            if (goal.status === 'accepted') {
-                statusContent = '<div class="goal-status accepted" onclick="unacceptGoal(\'' + goal.id + '\')" style="cursor: pointer;">Undo</div>';
-            } else if (goal.status === 'skipped') {
-                statusContent = '<div class="goal-status skipped" onclick="unskipGoal(\'' + goal.id + '\')" style="cursor: pointer;">Undo</div>';
-            } else {
-                statusContent = `<div class="goal-actions">
-                    <button class="goal-btn goal-btn-accept" onclick="acceptGoal('${goal.id}')">
-                        Accept Goal
-                    </button>
-                    <button class="goal-btn goal-btn-reject" onclick="skipGoal('${goal.id}')">
-                        Skip for Now
-                    </button>
+            // Format start date if available
+            const startDate = goal.start_date
+                ? new Date(goal.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : null;
+
+            const smartDetails = `
+                ${goal.Measurable ? `<div class="smart-item"><div class="smart-label">Measurable</div><div class="smart-text">${goal.Measurable}</div></div>` : ''}
+                ${goal.Attainable ? `<div class="smart-item"><div class="smart-label">Attainable</div><div class="smart-text">${goal.Attainable}</div></div>` : ''}
+                ${goal.Relevant ? `<div class="smart-item"><div class="smart-label">Relevant</div><div class="smart-text">${goal.Relevant}</div></div>` : ''}
+                ${goal.Time_Bound ? `<div class="smart-item"><div class="smart-label">Timeframe</div><div class="smart-text">${goal.Time_Bound}</div></div>` : ''}
+            `;
+
+            const actions = goal.status === 'accepted'
+                ? `<div class="goal-status accepted" onclick="unacceptGoal('${goal.id}')">
+                        <i class="fas fa-check-circle"></i>
+                        Accepted · tap to undo
+                   </div>`
+                : `<div class="goal-actions">
+                        <button class="goal-btn goal-btn-accept" onclick="acceptGoal('${goal.id}')">
+                            <i class="fas fa-check-circle"></i>
+                            Accept
+                        </button>
+                        <button class="goal-btn goal-btn-edit" onclick="editGoal('${goal.id}')">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </button>
                    </div>`;
-            }
 
             card.innerHTML = `
                 <div class="goal-header">
-                    <span class="goal-icon">${goal.icon}</span>
+                    <div class="goal-icon">
+                        <i class="fas ${goal.icon}"></i>
+                    </div>
                     <div class="goal-content">
-                        <h3 class="goal-title">${goal.title}</h3>
+                        <h3 class="goal-title">${goalTitle}</h3>
                     </div>
                 </div>
-                <p class="goal-description">${goal.description}</p>
-                ${statusContent}
+                <div class="goal-smart-details">
+                    ${smartDetails}
+                </div>
+                ${actions}
             `;
 
             return card;
@@ -808,7 +941,7 @@
             }
         }
 
-        // Unaccept a goal (toggle back to pending)
+        // Unaccept a goal
         function unacceptGoal(goalId) {
             const goal = displayedGoals.find(g => g.id.toString() === goalId.toString());
             if (goal) {
@@ -817,73 +950,113 @@
             }
         }
 
-        // Skip a goal for now (grey it out)
-        function skipGoal(goalId) {
+        // Edit a goal
+        function editGoal(goalId) {
             const goal = displayedGoals.find(g => g.id.toString() === goalId.toString());
-            if (goal) {
-                goal.status = 'skipped';
-                renderGoals();
-            }
+            if (!goal) return;
+            editingGoalId = goal.id;
+            openManualInputModal(goal);
         }
 
-        // Unskip a goal (bring it back to pending)
-        function unskipGoal(goalId) {
-            const goal = displayedGoals.find(g => g.id.toString() === goalId.toString());
-            if (goal) {
-                goal.status = 'pending';
-                renderGoals();
-            }
-        }
-
-        // Update the goal counter and finalize button
+        // Update the goal counter
         function updateGoalCount() {
             const acceptedGoals = displayedGoals.filter(g => g.status === 'accepted');
             document.getElementById('acceptedCount').textContent = acceptedGoals.length;
+            document.getElementById('totalCount').textContent = displayedGoals.length;
 
-            // Enable finalize button if at least one goal is accepted
             const finalizeBtn = document.getElementById('finalizeBtn');
             finalizeBtn.disabled = acceptedGoals.length === 0;
         }
 
-        // Modal state
-        let selectedEmoji = '✨';
-
-        // Open manual input modal
-        function manuallyInputGoals() {
+        // Modal functions
+        function openManualInputModal(goal = null) {
             const modal = document.getElementById('manualInputModal');
+            if (!modal) return;
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            const form = document.getElementById('manualGoalForm');
+            if (!form) return;
+
+            if (goal) {
+                editingGoalId = goal.id;
+                form.goalSpecific.value = goal.Specific || '';
+                form.goalMeasurable.value = goal.Measurable || '';
+                form.goalAttainable.value = goal.Attainable || '';
+                form.goalRelevant.value = goal.Relevant || '';
+                form.goalTimeBound.value = goal.Time_Bound || '';
+
+                const iconEl = document.querySelector(`.icon-option[data-icon="${goal.icon}"]`) || document.querySelector('.icon-option[data-icon="fa-bullseye"]');
+                selectIcon(iconEl);
+            } else {
+                editingGoalId = null;
+                form.reset();
+                selectIcon(document.querySelector('.icon-option[data-icon="fa-bullseye"]'));
+            }
         }
 
-        // Close manual input modal
         function closeManualInputModal() {
             const modal = document.getElementById('manualInputModal');
+            if (!modal) return;
             modal.classList.remove('active');
             document.body.style.overflow = '';
-            
-            // Reset form
-            document.getElementById('manualGoalForm').reset();
-            selectedEmoji = '✨';
-            
-            // Reset emoji selection
-            document.querySelectorAll('.emoji-option').forEach(option => {
-                option.classList.remove('selected');
-                if (option.dataset.emoji === '✨') {
-                    option.classList.add('selected');
-                }
-            });
+            editingGoalId = null;
+            const form = document.getElementById('manualGoalForm');
+            if (form) form.reset();
+            selectIcon(document.querySelector('.icon-option[data-icon="fa-bullseye"]'));
         }
 
-        // Select emoji
-        function selectEmoji(element) {
-            // Remove selected class from all emojis
-            document.querySelectorAll('.emoji-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            
-            // Add selected class to clicked emoji
+        function handleManualFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+
+            const goalPayload = {
+                icon: selectedIcon,
+                Specific: form.goalSpecific.value.trim(),
+                Measurable: form.goalMeasurable.value.trim(),
+                Attainable: form.goalAttainable.value.trim(),
+                Relevant: form.goalRelevant.value.trim(),
+                Time_Bound: form.goalTimeBound.value.trim(),
+                status: 'pending'
+            };
+
+            if (editingGoalId) {
+                const goal = displayedGoals.find(g => g.id === editingGoalId);
+                if (goal) {
+                    // Keep existing start_date when editing
+                    Object.assign(goal, goalPayload);
+                }
+            } else {
+                // Set start_date automatically for new goals
+                displayedGoals.push({
+                    ...goalPayload,
+                    id: Date.now() + Math.random(),
+                    start_date: new Date().toISOString()
+                });
+            }
+
+            renderGoals();
+            closeManualInputModal();
+        }
+
+        // Select icon
+        function selectIcon(element) {
+            if (!element) return;
+            document.querySelectorAll('.icon-option').forEach(option => option.classList.remove('selected'));
             element.classList.add('selected');
-            selectedEmoji = element.dataset.emoji;
+            selectedIcon = element.dataset.icon;
+        }
+
+        // Show/hide loading overlay
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                if (show) {
+                    overlay.classList.add('active');
+                } else {
+                    overlay.classList.remove('active');
+                }
+            }
         }
 
         // Finalize and save accepted goals
@@ -891,17 +1064,17 @@
             const validationMsg = document.getElementById('finalizeValidationMsg');
             validationMsg.classList.remove('visible');
             const acceptedGoals = displayedGoals.filter(g => g.status === 'accepted');
-            
+
             if (acceptedGoals.length === 0) {
                 validationMsg.classList.add('visible');
                 return;
             }
 
-            // Save to localStorage and to backend when logged in
+            // Save to localStorage and backend
             localStorage.setItem('benjiAcceptedGoals', JSON.stringify(acceptedGoals));
-            console.log('Accepted goals:', acceptedGoals);
+
             if (window.BenjiAPI) {
-                var session = BenjiAPI.getSession();
+                const session = BenjiAPI.getSession();
                 if (session && session.user_id) {
                     BenjiAPI.postGoalsAccepted(session.user_id, acceptedGoals).catch(function (err) {
                         console.warn('Backend save goals failed:', err);
@@ -909,31 +1082,11 @@
                 }
             }
 
-            // Smooth fade-out then navigate to main app (no popup)
+            // Smooth fade-out then navigate
             document.body.classList.add('page-transition-out');
             setTimeout(function() {
                 window.location.href = 'index.html';
             }, 450);
-        }
-
-        // Helper function to process input data (for future LLM integration)
-        function loadGoalsFromData(dataString) {
-            // This function would parse the LLM-generated goals string
-            // For now, it's using the synthetic pool
-            // Example format expected: JSON string with goals array
-            try {
-                const data = JSON.parse(dataString);
-                if (data.goals && Array.isArray(data.goals)) {
-                    displayedGoals = data.goals.map(goal => ({
-                        ...goal,
-                        id: Date.now() + Math.random(),
-                        status: 'pending'
-                    }));
-                    renderGoals();
-                }
-            } catch (e) {
-                console.error('Invalid goal data format:', e);
-            }
         }
 
         // Fade-in on load

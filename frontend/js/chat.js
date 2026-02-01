@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const voiceBtn = document.getElementById("voiceBtn");
   const inputWrapper = document.querySelector(".input-wrapper");
   const chatHistoryEl = document.getElementById("chatHistory");
-  const historyListEl = document.getElementById("chatHistorySaved");
+  const chatActionsEl = document.getElementById("chatActions");
   const clearHistoryBtn = document.getElementById("clearHistoryBtn");
   const newChatBtn = document.getElementById("newChatBtn");
   const confirmClearHistoryBtn = document.getElementById("confirmClearHistory");
@@ -12,18 +12,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearHistoryModal = document.getElementById("clearHistoryModal");
 
   let conversationHistory = [];
-  let sessions = [];
-  let currentSession = createSession();
+  let hasMessages = false;
 
-  let welcomeMarkup = "";
-  if (chatHistoryEl) {
-    const welcomeEl = chatHistoryEl.querySelector(".chat-welcome");
-    welcomeMarkup = welcomeEl ? welcomeEl.outerHTML : "";
-  }
+  const welcomeMarkup = chatHistoryEl ? chatHistoryEl.innerHTML : "";
 
-  // ─────────────────────────────────────────────────────────────
-  // Voice input
-  // ─────────────────────────────────────────────────────────────
+  // Voice input setup
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
@@ -75,8 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function stopListening() {
     isListening = false;
-      if (voiceBtn) voiceBtn.classList.remove("listening");
-      if (inputWrapper) inputWrapper.classList.remove("listening");
+    if (voiceBtn) voiceBtn.classList.remove("listening");
+    if (inputWrapper) inputWrapper.classList.remove("listening");
     if (recognition) {
       try {
         recognition.stop();
@@ -95,8 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  // ─────────────────────────────────────────────────────────────
 
+  // Session and storage
   const session = JSON.parse(
     sessionStorage.getItem("sanctuary_session") ||
       localStorage.getItem("sanctuary_session") ||
@@ -105,114 +98,56 @@ document.addEventListener("DOMContentLoaded", () => {
   const userId = session.user_id || null;
   const storageKey = `benji_chat_history_${userId || "guest"}`;
 
-  sessions = loadSavedHistory();
-  renderHistoryList();
+  // Load saved conversation if exists
+  loadSavedConversation();
 
-  function createSession() {
-    return {
-      id: `session-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      summary: "",
-      messages: [],
-      ts: new Date().toISOString(),
-      stored: false,
-    };
-  }
-
-  function loadSavedHistory() {
+  function loadSavedConversation() {
     try {
       const raw = localStorage.getItem(storageKey);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed) || !parsed.length) return [];
+      if (!raw) return;
 
-      if (parsed.every((entry) => entry && Array.isArray(entry.messages))) {
-        return parsed.map((entry) => ({
-          ...entry,
-          stored: true,
-          ts: entry.ts || new Date().toISOString(),
-        }));
+      const saved = JSON.parse(raw);
+      if (Array.isArray(saved) && saved.length > 0) {
+        conversationHistory = saved;
+        renderSavedMessages();
       }
-
-      return [
-        {
-          id: `legacy-${Date.now()}`,
-          summary: (() => {
-            const userMsg = parsed.find((msg) => msg.role === "user");
-            return userMsg ? userMsg.content : "Past chat";
-          })(),
-          messages: parsed.map((item) => ({
-            role: item.role,
-            content: item.content,
-            ts: item.ts || new Date().toISOString(),
-          })),
-          ts:
-            (() => {
-              const last = parsed[parsed.length - 1];
-              return last && last.ts ? last.ts : null;
-            })() ||
-            new Date().toISOString(),
-          stored: true,
-        },
-      ];
-    } catch (_) {
-      return [];
+    } catch (err) {
+      console.warn("Failed to load saved conversation:", err);
     }
   }
 
-  function renderHistoryList() {
-    if (!historyListEl) return;
-    historyListEl.innerHTML = "";
+  function renderSavedMessages() {
+    if (!chatHistoryEl || conversationHistory.length === 0) return;
 
-    if (!sessions.length) {
-      const emptyEl = document.createElement("div");
-      emptyEl.className = "history-empty";
-      emptyEl.textContent = "No saved chats yet.";
-      historyListEl.appendChild(emptyEl);
-      return;
-    }
-
-    const sorted = [...sessions].sort(
-      (a, b) => new Date(b.ts) - new Date(a.ts)
-    );
-
-    sorted.forEach((session) => {
-      const item = document.createElement("div");
-      item.className = "history-item";
-      item.dataset.sessionId = session.id;
-
-      const text = document.createElement("div");
-      text.className = "history-text";
-      let summary =
-        session.summary ||
-        (() => {
-          const firstUser = session.messages.find((msg) => msg.role === "user");
-          return firstUser ? firstUser.content : "";
-        })();
-      if (!summary) summary = "Quick summary";
-      text.textContent =
-        summary.length > 50 ? `${summary.slice(0, 47)}…` : summary;
-
-      const meta = document.createElement("div");
-      meta.className = "history-meta";
-      const timestamp = session.ts ? new Date(session.ts) : null;
-      meta.textContent = timestamp
-        ? timestamp.toLocaleString([], {
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          })
-        : "Unknown time";
-
-      item.appendChild(text);
-      item.appendChild(meta);
-      historyListEl.appendChild(item);
+    chatHistoryEl.innerHTML = "";
+    conversationHistory.forEach((msg) => {
+      const sender = msg.role === "user" ? "You" : "Benji";
+      const withAvatar = msg.role === "assistant";
+      appendMessage(sender, msg.content, { withAvatar });
     });
+
+    hasMessages = true;
+    showChatActions();
   }
 
-  function saveHistory() {
-    localStorage.setItem(storageKey, JSON.stringify(sessions));
-    renderHistoryList();
+  function saveConversation() {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(conversationHistory));
+    } catch (err) {
+      console.warn("Failed to save conversation:", err);
+    }
+  }
+
+  function showChatActions() {
+    if (chatActionsEl && hasMessages) {
+      chatActionsEl.style.display = "flex";
+    }
+  }
+
+  function hideChatActions() {
+    if (chatActionsEl) {
+      chatActionsEl.style.display = "none";
+    }
   }
 
   function appendMessage(sender, text, options = {}) {
@@ -225,15 +160,30 @@ document.addEventListener("DOMContentLoaded", () => {
       avatarWrapper.className = "message-avatar";
       const avatarImg = document.createElement("img");
       avatarImg.src = "../assets/img/benji_hippo.png";
-      avatarImg.alt = "Benji hippo";
+      avatarImg.alt = "Benji";
+      avatarImg.onerror = function() {
+        this.remove();
+        avatarWrapper.innerHTML = '<i class="fas fa-hippo"></i>';
+      };
       avatarWrapper.appendChild(avatarImg);
+
       const contentWrapper = document.createElement("div");
       contentWrapper.className = "message-body";
-      contentWrapper.innerHTML = `<b>${sender}:</b> ${marked.parse(text)}`;
+      contentWrapper.innerHTML = `<b>${sender}</b>${marked.parse(text)}`;
+
       messageEl.appendChild(avatarWrapper);
       messageEl.appendChild(contentWrapper);
     } else {
-      messageEl.innerHTML = `<b>${sender}:</b> ${marked.parse(text)}`;
+      const avatarWrapper = document.createElement("div");
+      avatarWrapper.className = "message-avatar";
+      avatarWrapper.innerHTML = '<i class="fas fa-user"></i>';
+
+      const contentWrapper = document.createElement("div");
+      contentWrapper.className = "message-body";
+      contentWrapper.innerHTML = `<b>${sender}</b>${marked.parse(text)}`;
+
+      messageEl.appendChild(avatarWrapper);
+      messageEl.appendChild(contentWrapper);
     }
 
     chatHistoryEl.appendChild(messageEl);
@@ -242,53 +192,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function recordMessage(role, content) {
     const normalized = role === "Benji" ? "assistant" : "user";
-    const entry = {
-      role: normalized,
-      content,
-      ts: new Date().toISOString(),
-    };
     conversationHistory.push({ role: normalized, content });
-    currentSession.messages.push(entry);
-    currentSession.ts = entry.ts;
-    if (!currentSession.summary && normalized === "user") {
-      currentSession.summary = content;
-    }
-    if (!currentSession.stored) {
-      currentSession.stored = true;
-      sessions.unshift(currentSession);
-    }
-    saveHistory();
+    saveConversation();
   }
 
   function restoreWelcome() {
     if (!chatHistoryEl || !welcomeMarkup) return;
     chatHistoryEl.innerHTML = welcomeMarkup;
+
+    // Re-attach event listeners for suggestion chips
+    document
+      .querySelectorAll(".suggestion-chip")
+      .forEach((chip) =>
+        chip.addEventListener("click", () => {
+          const suggestion = chip.getAttribute("data-suggestion");
+          if (suggestion) {
+            sendMessage(suggestion);
+          }
+        })
+      );
   }
 
   function startFreshChat() {
     conversationHistory = [];
-    currentSession = createSession();
+    hasMessages = false;
+    saveConversation();
     restoreWelcome();
-    const welcomeEl = chatHistoryEl.querySelector(".chat-welcome");
-    if (welcomeEl) welcomeEl.style.display = "";
-  }
-
-  function renderChatFromHistory(sessionId) {
-    if (!chatHistoryEl || !sessionId) return;
-    const session = sessions.find((entry) => entry.id === sessionId);
-    if (!session) return;
-
-    chatHistoryEl.innerHTML = "";
-    session.messages.forEach((msg) => {
-      const sender = msg.role === "user" ? "You" : "Benji";
-      appendMessage(sender, msg.content);
-    });
-
-    conversationHistory = session.messages.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    }));
-    currentSession = session;
+    hideChatActions();
+    if (inputEl) inputEl.focus();
   }
 
   function openClearHistoryModal() {
@@ -307,6 +238,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const text = customText || inputEl.value.trim();
     if (!text) return;
 
+    // Hide welcome message on first send
+    if (!hasMessages) {
+      chatHistoryEl.innerHTML = "";
+      hasMessages = true;
+      showChatActions();
+    }
+
     appendMessage("You", text, { withAvatar: false });
     recordMessage("You", text);
     inputEl.value = "";
@@ -315,7 +253,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const thinkingEl = document.createElement("div");
     thinkingEl.classList.add("message", "assistant", "thinking");
-    thinkingEl.innerHTML = "<b>Benji:</b> Thinking";
+
+    const thinkingAvatar = document.createElement("div");
+    thinkingAvatar.className = "message-avatar";
+    const thinkingImg = document.createElement("img");
+    thinkingImg.src = "../assets/img/benji_hippo.png";
+    thinkingImg.alt = "Benji";
+    thinkingImg.onerror = function() {
+      this.remove();
+      thinkingAvatar.innerHTML = '<i class="fas fa-hippo"></i>';
+    };
+    thinkingAvatar.appendChild(thinkingImg);
+
+    const thinkingBody = document.createElement("div");
+    thinkingBody.className = "message-body";
+    thinkingBody.innerHTML = "<b>Benji:</b> Thinking";
+
+    thinkingEl.appendChild(thinkingAvatar);
+    thinkingEl.appendChild(thinkingBody);
+
     chatHistoryEl.appendChild(thinkingEl);
     chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
 
@@ -333,7 +289,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       thinkingEl.remove();
 
-      if (!data.response) return;
+      if (!data.response) {
+        appendMessage(
+          "Benji",
+          "I'm sorry, I couldn't generate a response. Please try again."
+        );
+        return;
+      }
 
       appendMessage("Benji", data.response);
       recordMessage("Benji", data.response);
@@ -347,6 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Event listeners
   if (btn) {
     btn.addEventListener("click", () => sendMessage());
   }
@@ -365,6 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Suggestion chips
   document
     .querySelectorAll(".suggestion-chip")
     .forEach((chip) =>
@@ -376,27 +340,27 @@ document.addEventListener("DOMContentLoaded", () => {
       })
     );
 
+  // Auto-focus input
   setTimeout(() => {
     if (inputEl) {
       inputEl.focus();
     }
   }, 500);
 
+  // Clear history modal handlers
   if (clearHistoryBtn) {
     clearHistoryBtn.addEventListener("click", openClearHistoryModal);
   }
+
   if (confirmClearHistoryBtn) {
     confirmClearHistoryBtn.addEventListener("click", () => {
-    sessions = [];
-    conversationHistory = [];
-    localStorage.removeItem(storageKey);
-    currentSession = createSession();
-    renderHistoryList();
-    restoreWelcome();
-    const welcomeEl = chatHistoryEl.querySelector(".chat-welcome");
-    if (welcomeEl) welcomeEl.style.display = "";
-    closeClearHistoryModal();
-  });
+      conversationHistory = [];
+      hasMessages = false;
+      localStorage.removeItem(storageKey);
+      restoreWelcome();
+      hideChatActions();
+      closeClearHistoryModal();
+    });
   }
 
   if (cancelClearHistoryBtn) {
@@ -411,6 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ESC key to close modal
   window.addEventListener("keydown", (event) => {
     if (
       event.key === "Escape" &&
@@ -421,20 +386,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // New chat button
   if (newChatBtn) {
     newChatBtn.addEventListener("click", startFreshChat);
-  }
-
-  if (historyListEl) {
-    historyListEl.addEventListener("click", (event) => {
-      const item = event.target.closest(".history-item");
-      if (!item || !historyListEl.contains(item)) return;
-      const sessionId = item.dataset.sessionId;
-      if (!sessionId) return;
-      renderChatFromHistory(sessionId);
-      if (inputEl) {
-        inputEl.focus();
-      }
-    });
   }
 });

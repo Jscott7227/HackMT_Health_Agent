@@ -8,15 +8,501 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
   <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    .chat-page-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      padding-top: 80px;
+    }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 1.5rem 1.5rem;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 1.5rem 0;
+      text-align: center;
+      border-bottom: 2px solid rgba(140, 162, 145, 0.15);
+      margin-bottom: 1.5rem;
+    }
+
+    .chat-header h1 {
+      font-family: 'Crimson Pro', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--text-primary, #1a1a1a);
+      margin: 0 0 0.5rem;
+    }
+
+    .chat-header p {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      color: var(--text-secondary, #666);
+      margin: 0;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: rgba(140, 162, 145, 0.05);
+      border-radius: 4px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(140, 162, 145, 0.3);
+      border-radius: 4px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(140, 162, 145, 0.5);
+    }
+
+    .chat-welcome {
+      text-align: center;
+      padding: 3rem 2rem;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .chat-welcome h2 {
+      font-family: 'Crimson Pro', serif;
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: var(--text-primary, #1a1a1a);
+      margin: 0 0 1rem;
+    }
+
+    .chat-welcome p {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.125rem;
+      color: var(--text-secondary, #666);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+
+    .chat-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .suggestion-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      background: white;
+      border: 2px solid rgba(140, 162, 145, 0.25);
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.938rem;
+      font-weight: 500;
+      color: var(--text-primary, #1a1a1a);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .suggestion-chip i {
+      color: var(--sage, #8ca291);
+    }
+
+    .suggestion-chip:hover {
+      border-color: var(--sage, #8ca291);
+      background: rgba(140, 162, 145, 0.05);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(140, 162, 145, 0.15);
+    }
+
+    .message {
+      display: flex;
+      gap: 1rem;
+      animation: slideIn 0.3s ease;
+      max-width: 100%;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(140, 162, 145, 0.1), rgba(140, 162, 145, 0.15));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .message-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .message.user .message-avatar {
+      background: linear-gradient(135deg, rgba(79, 193, 147, 0.1), rgba(79, 193, 147, 0.15));
+    }
+
+    .message.user .message-avatar i {
+      color: var(--sage, #8ca291);
+      font-size: 1.25rem;
+    }
+
+    .message-body {
+      flex: 1;
+      background: white;
+      padding: 1rem 1.25rem;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(10, 24, 16, 0.06);
+      max-width: 75%;
+    }
+
+    .message.user .message-body {
+      background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
+      color: white;
+    }
+
+    .message-body b {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.5rem;
+      opacity: 0.9;
+    }
+
+    .message.user .message-body b {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .message-body p {
+      margin: 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--text-primary, #1a1a1a);
+    }
+
+    .message.user .message-body p,
+    .message.user .message-body * {
+      color: white;
+    }
+
+    .message.thinking .message-body {
+      background: rgba(140, 162, 145, 0.08);
+      font-style: italic;
+      color: var(--text-secondary, #666);
+    }
+
+    .message.thinking .message-body::after {
+      content: '...';
+      animation: ellipsis 1.5s infinite;
+    }
+
+    @keyframes ellipsis {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+
+    .chat-input-area {
+      border-top: 2px solid rgba(140, 162, 145, 0.15);
+      padding: 1.5rem 0 0;
+      background: var(--bg-primary);
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.75rem;
+      background: white;
+      border: 2px solid rgba(140, 162, 145, 0.25);
+      border-radius: 16px;
+      padding: 0.75rem 1rem;
+      transition: all 0.25s ease;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: var(--sage, #8ca291);
+      box-shadow: 0 0 0 4px rgba(140, 162, 145, 0.1);
+    }
+
+    .input-wrapper.listening {
+      border-color: #e74c3c;
+      box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.1);
+    }
+
+    .input-wrapper textarea {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+      resize: none;
+      max-height: 150px;
+      min-height: 24px;
+      overflow-y: auto;
+      color: var(--text-primary, #1a1a1a);
+      background: transparent;
+    }
+
+    .input-wrapper textarea::placeholder {
+      color: var(--text-secondary, #999);
+    }
+
+    .input-wrapper button {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary, #666);
+      cursor: pointer;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .input-wrapper button:hover {
+      background: rgba(140, 162, 145, 0.1);
+      color: var(--sage, #8ca291);
+    }
+
+    .input-wrapper button#sendBtn {
+      background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
+      color: white;
+    }
+
+    .input-wrapper button#sendBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(140, 162, 145, 0.3);
+    }
+
+    .input-wrapper button#voiceBtn.listening {
+      background: #e74c3c;
+      color: white;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .input-hint {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.813rem;
+      color: var(--text-secondary, #999);
+      text-align: center;
+      margin: 0.75rem 0 0;
+    }
+
+    .input-hint i {
+      color: var(--sage, #8ca291);
+    }
+
+    .chat-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .chat-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      background: white;
+      border: 2px solid rgba(140, 162, 145, 0.25);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary, #666);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .chat-action-btn:hover {
+      border-color: var(--sage, #8ca291);
+      color: var(--sage, #8ca291);
+      background: rgba(140, 162, 145, 0.05);
+    }
+
+    .chat-action-btn i {
+      font-size: 0.875rem;
+    }
+
+    /* Modal Styles */
+    .history-confirm-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .history-confirm-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .history-confirm-card {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3);
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+    }
+
+    .history-confirm-overlay.active .history-confirm-card {
+      transform: scale(1);
+    }
+
+    .history-confirm-card header {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .history-confirm-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(231, 76, 60, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .history-confirm-icon i {
+      font-size: 1.5rem;
+      color: #e74c3c;
+    }
+
+    .history-confirm-card h3 {
+      font-family: 'Crimson Pro', serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary, #1a1a1a);
+      margin: 0 0 0.5rem;
+    }
+
+    .history-confirm-card p {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      color: var(--text-secondary, #666);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .history-confirm-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .history-confirm-btn {
+      flex: 1;
+      padding: 0.875rem 1.5rem;
+      border: 2px solid rgba(140, 162, 145, 0.3);
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: white;
+      color: var(--text-secondary, #666);
+    }
+
+    .history-confirm-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .history-confirm-btn-primary {
+      background: #e74c3c;
+      color: white;
+      border-color: #e74c3c;
+    }
+
+    .history-confirm-btn-primary:hover {
+      background: #c0392b;
+      border-color: #c0392b;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    }
+  </style>
 </head>
 <body data-page="chat">
 
   <!-- Background layers for visual depth -->
   <div class="background-layers">
-    <div class="grain"></div> 
+    <div class="grain"></div>
     <div class="gradient-orb orb-1"></div>
     <div class="gradient-orb orb-2"></div>
     <div class="gradient-orb orb-3"></div>
@@ -25,66 +511,60 @@
   <div id="benji-root"></div>
 
   <div class="chat-page-wrapper">
-    <!-- Main Chat Container -->
     <div class="chat-container">
-      <div class="chat-layout">
-        <aside class="chat-sidebar">
-          <div class="history-header">
-            <h3>Chat History</h3>
-            <div class="history-actions">
-              <button id="newChatBtn" class="history-btn btn btn-primary" type="button">
-                <i class="fas fa-plus"></i>
-                <span>New Chat</span>
-              </button>
-              <button id="clearHistoryBtn" class="history-btn btn" type="button">
-                <i class="fas fa-sync-alt"></i>
-                <span>Refresh</span>
-              </button>
-            </div>
-          </div>
-          <div id="chatHistorySaved" class="history-list">
-            <div class="history-empty">No saved messages yet.</div>
-          </div>
-        </aside>
+      <!-- Header -->
+      <div class="chat-header">
+        <h1>Chat with Benji</h1>
+        <p>Your personal health and wellness companion</p>
+      </div>
 
-        <div class="chat-main">
-          <!-- Chat messages -->
-          <div id="chatHistory">
-            <!-- Welcome message -->
-            <div class="chat-welcome">
-              <h2>Ask Benji</h2>
-              <p>He is here to help with your health and wellness journey. Ask him anything about nutrition, fitness, sleep, mental wellness, or any health-related questions.</p>
-              <div class="chat-suggestions">
-                <button class="suggestion-chip" data-suggestion="How can I improve my sleep quality?">
-                  <i class="fas fa-moon"></i> Improve sleep
-                </button>
-                <button class="suggestion-chip" data-suggestion="What are some healthy meal ideas?">
-                  <i class="fas fa-utensils"></i> Meal ideas
-                </button>
-                <button class="suggestion-chip" data-suggestion="Can you suggest a quick workout routine?">
-                  <i class="fas fa-dumbbell"></i> Quick workout
-                </button>
-                <button class="suggestion-chip" data-suggestion="How can I manage stress better?">
-                  <i class="fas fa-spa"></i> Manage stress
-                </button>
-              </div>
-            </div>
-          </div>
+      <!-- Chat Actions -->
+      <div class="chat-actions" id="chatActions" style="display: none;">
+        <button class="chat-action-btn" id="newChatBtn" type="button">
+          <i class="fas fa-plus"></i>
+          <span>New Chat</span>
+        </button>
+        <button class="chat-action-btn" id="clearHistoryBtn" type="button">
+          <i class="fas fa-trash-alt"></i>
+          <span>Clear History</span>
+        </button>
+      </div>
 
-          <!-- Input area -->
-          <div id="inputSection">
-            <div class="input-wrapper">
-              <textarea id="llmInput" placeholder="Ask Benji anything about your health..." rows="1"></textarea>
-              <button type="button" id="voiceBtn" aria-label="Use voice input">
-                <i class="fas fa-microphone"></i>
-              </button>
-              <button id="sendBtn" aria-label="Send message">
-                <i class="fas fa-paper-plane"></i>
-              </button>
-            </div>
-            <p class="input-hint">Press Enter to send, Shift+Enter for new line. Click <i class="fas fa-microphone"></i> to speak.</p>
+      <!-- Chat Messages -->
+      <div class="chat-messages" id="chatHistory">
+        <!-- Welcome message -->
+        <div class="chat-welcome">
+          <h2>Ask Benji Anything</h2>
+          <p>I'm here to help with your health and wellness journey. Ask me about nutrition, fitness, sleep, mental wellness, or any health-related questions.</p>
+          <div class="chat-suggestions">
+            <button class="suggestion-chip" data-suggestion="How can I improve my sleep quality?">
+              <i class="fas fa-moon"></i> Improve sleep
+            </button>
+            <button class="suggestion-chip" data-suggestion="What are some healthy meal ideas?">
+              <i class="fas fa-utensils"></i> Meal ideas
+            </button>
+            <button class="suggestion-chip" data-suggestion="Can you suggest a quick workout routine?">
+              <i class="fas fa-dumbbell"></i> Quick workout
+            </button>
+            <button class="suggestion-chip" data-suggestion="How can I manage stress better?">
+              <i class="fas fa-spa"></i> Manage stress
+            </button>
           </div>
         </div>
+      </div>
+
+      <!-- Input area -->
+      <div class="chat-input-area">
+        <div class="input-wrapper">
+          <textarea id="llmInput" placeholder="Ask Benji anything about your health..." rows="1"></textarea>
+          <button type="button" id="voiceBtn" aria-label="Use voice input">
+            <i class="fas fa-microphone"></i>
+          </button>
+          <button id="sendBtn" aria-label="Send message">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+        <p class="input-hint">Press Enter to send, Shift+Enter for new line. Click <i class="fas fa-microphone"></i> to speak.</p>
       </div>
     </div>
   </div>
@@ -93,6 +573,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="../js/chat.js"></script>
 
+  <!-- Clear History Modal -->
   <div class="history-confirm-overlay" id="clearHistoryModal" aria-hidden="true">
     <div class="history-confirm-card" role="dialog" aria-modal="true" aria-labelledby="clearHistoryTitle">
       <header>
@@ -101,12 +582,12 @@
         </div>
         <div>
           <h3 id="clearHistoryTitle">Clear chat history?</h3>
-          <p>This will permanently remove every saved message. Are you sure?</p>
+          <p>This will permanently remove all saved messages. This action cannot be undone.</p>
         </div>
       </header>
       <div class="history-confirm-actions">
         <button type="button" class="history-confirm-btn" id="cancelClearHistory">Cancel</button>
-        <button type="button" class="history-confirm-btn history-confirm-btn-primary" id="confirmClearHistory">Clear</button>
+        <button type="button" class="history-confirm-btn history-confirm-btn-primary" id="confirmClearHistory">Clear All</button>
       </div>
     </div>
   </div>
