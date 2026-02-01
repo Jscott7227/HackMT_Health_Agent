@@ -15,6 +15,82 @@
   const progressFill = $("#progressFill");
   const loading    = $("#loadingOverlay");
 
+  /* ── Recommendations by Benji ─────────────────────── */
+  const recommendationsSection = $("#benjiRecommendationsSection");
+  const recommendationsResponse = $("#recommendationsResponse");
+  const recommendationsLoading = $("#recommendationsLoading");
+  const getRecommendationsBtn = $("#getRecommendationsBtn");
+  const getCustomRecommendationsBtn = $("#getCustomRecommendationsBtn");
+  const benjiContextInput = $("#benjiContextInput");
+
+  const showRecommendationsLoading = (show) => {
+    if (recommendationsLoading) {
+      recommendationsLoading.style.display = show ? "block" : "none";
+    }
+    if (recommendationsResponse) {
+      recommendationsResponse.style.display = show ? "none" : "block";
+    }
+  };
+
+  const displayRecommendations = (responseText) => {
+    if (!recommendationsResponse) return;
+    
+    // Convert markdown-style formatting to HTML
+    let html = responseText
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')  // Bold
+      .replace(/\n/g, '<br>');  // Line breaks
+    
+    recommendationsResponse.innerHTML = `<div class="recommendations-content">${html}</div>`;
+  };
+
+  const displayRecommendationsError = (errorMsg) => {
+    if (!recommendationsResponse) return;
+    recommendationsResponse.innerHTML = `<div class="recommendations-error">
+      <i class="fa-solid fa-circle-exclamation"></i> ${errorMsg}
+    </div>`;
+  };
+
+  const fetchRecommendations = async (userMessage = null) => {
+    // Get user session
+    const session = window.BenjiAPI?.getSession?.();
+    if (!session || !session.user_id) {
+      displayRecommendationsError("Please sign in to get personalized recommendations.");
+      return;
+    }
+
+    showRecommendationsLoading(true);
+
+    try {
+      const body = { user_id: session.user_id };
+      if (userMessage && userMessage.trim()) {
+        body.user_message = userMessage.trim();
+      }
+
+      const result = await window.BenjiAPI.postCheckinRecommendations(body);
+      
+      if (result && result.response) {
+        displayRecommendations(result.response);
+      } else {
+        displayRecommendationsError("No recommendations received. Please try again.");
+      }
+    } catch (err) {
+      console.error("Error fetching recommendations:", err);
+      displayRecommendationsError("Unable to get recommendations. Please check your connection and try again.");
+    } finally {
+      showRecommendationsLoading(false);
+    }
+  };
+
+  // Wire up recommendation buttons
+  getRecommendationsBtn?.addEventListener("click", () => {
+    fetchRecommendations();
+  });
+
+  getCustomRecommendationsBtn?.addEventListener("click", () => {
+    const userMessage = benjiContextInput?.value || "";
+    fetchRecommendations(userMessage);
+  });
+
   /* ── All slider ↔ readout pairs ───────────────────── */
   const sliderReadouts = [
     ["#dayScore",           "#dayScoreValue"],
@@ -233,6 +309,9 @@
       /* Meta */
       activeGoals: userGoals,
       timestamp:   new Date().toISOString(),
+      
+      /* Benji Context - what user wanted Benji to know */
+      benjiContext: str("#benjiContextInput"),
     };
 
     // Skip goal detail sections on recovery days

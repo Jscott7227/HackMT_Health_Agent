@@ -596,7 +596,55 @@ def create_checkin(payload: CheckinCreate):
     doc_ref.set(body)
     return {"message": "Check-in saved", "id": doc_ref.id}
 
-    return results
+
+# ---------- Check-in Recommendations ----------
+class CheckinRecommendationsRequest(BaseModel):
+    user_id: str
+    user_message: Optional[str] = None
+
+class CheckinRecommendationsResponse(BaseModel):
+    response: str
+
+@app.post("/checkin-recommendations", response_model=CheckinRecommendationsResponse)
+def get_checkin_recommendations(payload: CheckinRecommendationsRequest):
+    """
+    Generate personalized check-in focus areas based on user profile and goals.
+    Optionally considers a user message for customized suggestions.
+    """
+    # Validate user exists
+    user_snap = db.collection("User").document(payload.user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Load profile info
+    try:
+        profile = get_profileinfo(payload.user_id)
+        user_facts = {
+            "benji_facts": profile.benji_facts,
+            "height": profile.height,
+            "weight": profile.weight,
+        }
+    except HTTPException:
+        # Profile not found - use empty facts
+        user_facts = {}
+    
+    # Load goals
+    try:
+        goals_data = get_goals(payload.user_id)
+        accepted_goals = goals_data.get("accepted", [])
+        if accepted_goals:
+            user_facts["goals"] = accepted_goals
+    except Exception:
+        # Goals not found - continue without
+        pass
+    
+    # Call LLM helper
+    response_text = benji.checkin_recommendations(
+        user_facts=user_facts,
+        user_message=payload.user_message
+    )
+    
+    return CheckinRecommendationsResponse(response=response_text)
 
 
 @app.delete("/user/{user_id}", response_model=DeleteUserResponse)
