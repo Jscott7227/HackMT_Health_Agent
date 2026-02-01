@@ -3,7 +3,8 @@
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
   // ---- Configuration ----
-  const STORAGE_KEY = "Benji_medications";
+  const STORAGE_KEY_PREFIX = "Benji_medications"; // per-user: Benji_medications_{userId}
+  const STORAGE_KEY_LEGACY = "Benji_medications";  // used only when not logged in (single browser profile)
   const SCHEDULE_MODE_KEY = "Benji_medication_schedule_mode"; // 'standard' or 'ai'
   const BACKEND_URL = "http://127.0.0.1:8000";
 
@@ -60,6 +61,12 @@
       console.error("Error getting user_id:", e);
     }
     return null;
+  }
+
+  // Per-user key so one browser doesn't show another account's meds when API is empty
+  function getStorageKey() {
+    const uid = getUserId();
+    return uid ? `${STORAGE_KEY_PREFIX}_${uid}` : STORAGE_KEY_LEGACY;
   }
 
   function showLoading(show = true) {
@@ -197,10 +204,10 @@
         if (data.list && data.list.length > 0) {
           medications = data.list;
           // Update localStorage as backup
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
+          localStorage.setItem(getStorageKey(), JSON.stringify(medications));
         } else {
           // No data in API, check localStorage for migration
-          const stored = localStorage.getItem(STORAGE_KEY);
+          const stored = localStorage.getItem(getStorageKey());
           if (stored) {
             medications = JSON.parse(stored);
             if (medications.length > 0) {
@@ -231,7 +238,7 @@
 
   function loadMedicationsFromStorage() {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(getStorageKey());
       if (stored) {
         medications = JSON.parse(stored);
       } else {
@@ -247,7 +254,7 @@
     const userId = getUserId();
     if (!userId) {
       // Not logged in, save to localStorage only
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
+      localStorage.setItem(getStorageKey(), JSON.stringify(medications));
       return;
     }
 
@@ -263,7 +270,7 @@
       }
 
       // Also update localStorage as backup
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
+      localStorage.setItem(getStorageKey(), JSON.stringify(medications));
       // Invalidate AI schedule cache so next "Benji's suggested schedule" click runs the agent with new list
       if (window.BenjiAPI && window.BenjiAPI.clearCachedAiSchedule) {
         window.BenjiAPI.clearCachedAiSchedule(userId);
@@ -272,7 +279,7 @@
     } catch (e) {
       console.error("Error saving to API:", e);
       // Still save to localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
+      localStorage.setItem(getStorageKey(), JSON.stringify(medications));
     }
   }
 

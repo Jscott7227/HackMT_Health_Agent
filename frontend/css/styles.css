@@ -3320,6 +3320,8 @@ textarea:focus-visible {
 .goal-ring-card {
     display: flex;
     align-items: center;
+    justify-content: center;   /* add */
+    text-align: center;        /* add */
     gap: 14px;
     padding: 16px 20px;
     border-radius: 14px;
@@ -3330,10 +3332,7 @@ textarea:focus-visible {
 }
 
 .ring-wrap {
-    position: relative;
-    flex-shrink: 0;
-    width: 110px;
-    height: 110px;
+    display: none;
 }
 
 .ring-wrap svg {
@@ -3390,6 +3389,7 @@ textarea:focus-visible {
 .ring-meta {
     display: flex;
     flex-direction: column;
+    align-items: center; /* add */
     gap: 3px;
 }
 
@@ -6235,7 +6235,7 @@ body[data-page="chat"] #chatHistory:has(.message) .chat-welcome {
     }
 
     .btn-danger {
-        background: linear-gradient(135deg, var(--terracotta-light), var(--terracotta));
+           background: linear-gradient(135deg, var(--terracotta-light), var(--terracotta));
         color: white;
         border: none;
         transition: all var(--transition-base);
