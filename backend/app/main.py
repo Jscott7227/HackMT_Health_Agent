@@ -385,9 +385,19 @@ def chat_endpoint(req: ChatRequest):
         HumanMessage(content=msg.content) if msg.role == "user" else AIMessage(content=msg.content)
         for msg in (req.history or [])
     ]
+    
+    if req.user_id:
+        d =  get_profileinfo(req.user_id)
 
+        user_facts = {
+            "benji_facts": d.benji_facts,
+            "height": d.height,
+            "weight": d.weight,
+        }
+
+    print(user_facts)
     # Call chat function, passing LangChain message objects
-    reply = benji.chat(req.user_input, history=history_msgs)
+    reply = benji.chat(req.user_input, history=history_msgs, user_facts=user_facts)
     return ChatResponse(response=reply)
 
 @app.post("/profileinfo/{user_id}", response_model=ProfileInfoOut)

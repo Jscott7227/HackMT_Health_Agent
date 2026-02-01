@@ -284,10 +284,10 @@ Provide clear, actionable guidance while emphasizing the importance of professio
 
         return plan
     
-    def chat(self, user_input: str, history: list = None):
+    def chat(self, user_input: str, history: list = None, user_facts: dict = None):
         history = history or []
 
-        facts_context = format_user_facts(self.user_facts)
+        facts_context = format_user_facts(user_facts=user_facts)
 
         messages = [
             SystemMessage(content=SYSTEM_PROMPT),
