@@ -389,7 +389,7 @@ async function loadJournalEntries() {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">📖</div>
-                    <p>Your journal entries will appear here once you complete check-ins</p>
+                    <p>Your journal entries will appear here once you Completes</p>
                 </div>
             `;
             return;

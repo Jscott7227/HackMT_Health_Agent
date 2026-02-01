@@ -1,739 +1,570 @@
-(() => {
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-  /* ── Main domain tabs ─────────────────────────────── */
-  let domains = ["day", "fitness", "wellness"]; // menstrual added if enabled
-  let currentIndex = 0;
-
-  const tabs = $$("#checkinTabs .nav-tab");
-  const prevBtn = $("#prevDomain");
-  const nextBtn = $("#nextDomain");
-  const submitBtn = $("#submitCheckin");
-  const progressText = $("#progressText");
-  const progressFill = $("#progressFill");
-  const loading = $("#loadingOverlay");
-  const menstrualTab = $('#checkinTabs .nav-tab[data-domain="menstrual"]');
-  const menstrualSection = $("#domain-menstrual");
-
-  /* ── Recommendations by Benji ─────────────────────── */
-  const recommendationsSection = $("#benjiRecommendationsSection");
-  const recommendationsResponse = $("#recommendationsResponse");
-  const recommendationsLoading = $("#recommendationsLoading");
-  const getRecommendationsBtn = $("#getRecommendationsBtn");
-  const getCustomRecommendationsBtn = $("#getCustomRecommendationsBtn");
-  const benjiContextInput = $("#benjiContextInput");
-
-  const session = JSON.parse(
-    sessionStorage.getItem("sanctuary_session") ||
-    localStorage.getItem("sanctuary_session") ||
-    "{}"
-  );
-  const userId = session.user_id || null;
-
-  const showRecommendationsLoading = (show) => {
-    if (recommendationsLoading) {
-      recommendationsLoading.style.display = show ? "block" : "none";
-    }
-    if (recommendationsResponse) {
-      recommendationsResponse.style.display = show ? "none" : "block";
-    }
-  };
-
-  const displayRecommendations = (responseText) => {
-    if (!recommendationsResponse) return;
-
-    // Convert markdown-style formatting to HTML
-    let html = responseText
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')  // Bold
-      .replace(/\n/g, '<br>');  // Line breaks
-
-    recommendationsResponse.innerHTML = `<div class="recommendations-content">${html}</div>`;
-  };
-
-  const displayRecommendationsError = (errorMsg) => {
-    if (!recommendationsResponse) return;
-    recommendationsResponse.innerHTML = `<div class="recommendations-error">
-      <i class="fa-solid fa-circle-exclamation"></i> ${errorMsg}
-    </div>`;
-  };
-
-  const fetchRecommendations = async (userMessage = null) => {
-    // Get user session
-    const session = window.BenjiAPI?.getSession?.();
-    if (!session || !session.user_id) {
-      displayRecommendationsError("Please sign in to get personalized recommendations.");
-      return;
-    }
-
-    showRecommendationsLoading(true);
-
-    try {
-      const body = { user_id: session.user_id };
-      if (userMessage && userMessage.trim()) {
-        body.user_message = userMessage.trim();
-      }
-
-      const result = await window.BenjiAPI.postCheckinRecommendations(body);
-
-      if (result && result.response) {
-        displayRecommendations(result.response);
-      } else {
-        displayRecommendationsError("No recommendations received. Please try again.");
-      }
-    } catch (err) {
-      console.error("Error fetching recommendations:", err);
-      displayRecommendationsError("Unable to get recommendations. Please check your connection and try again.");
-    } finally {
-      showRecommendationsLoading(false);
-    }
-  };
-
-  // Wire up recommendation buttons
-  getRecommendationsBtn?.addEventListener("click", () => {
-    fetchRecommendations();
-  });
-
-  getCustomRecommendationsBtn?.addEventListener("click", () => {
-    const userMessage = benjiContextInput?.value || "";
-    fetchRecommendations(userMessage);
-  });
-
-  /* ── All slider ↔ readout pairs ───────────────────── */
-  const sliderReadouts = [
-    ["#dayScore", "#dayScoreValue"],
-    ["#eatScore", "#eatScoreValue"],
-    ["#drinkScore", "#drinkScoreValue"],
-    ["#sleepScore", "#sleepScoreValue"],
-    ["#fitnessScore", "#fitnessScoreValue"],
-    ["#fitnessGoalScore", "#fitnessGoalScoreValue"],
-    ["#wellnessScore", "#wellnessScoreValue"],
-    ["#stressScore", "#stressScoreValue"],
-    ["#cardioIntensity", "#cardioIntensityValue"],
-    ["#mobTightness", "#mobTightnessValue"],
-    ["#mobStiffness", "#mobStiffnessValue"],
-    ["#mobSoreness", "#mobSorenessValue"],
-    ["#mobLooseness", "#mobLoosenessValue"],
-    ["#mobPainLevel", "#mobPainLevelValue"],
-    ["#injPainIntensity", "#injPainIntensityValue"],
-    ["#injStiffness", "#injStiffnessValue"],
-    ["#injFunctionScore", "#injFunctionScoreValue"],
-    ["#rehabAfterEffects", "#rehabAfterEffectsValue"],
-    ["#perfIntensity", "#perfIntensityValue"],
-    ["#perfDifficulty", "#perfDifficultyValue"],
-    ["#perfSoreness", "#perfSorenessValue"],
-    ["#perfFatigue", "#perfFatigueValue"],
-    ["#crampPain", "#crampPainValue"],
-
-  ];
-
-  const setReadout = (sliderSel, readoutSel) => {
-    const slider = $(sliderSel);
-    const readout = $(readoutSel);
-    if (!slider || !readout) return;
-    readout.textContent = slider.value;
-  };
-
-  const initReadouts = () => {
-    sliderReadouts.forEach(([s, r]) => {
-      setReadout(s, r);
-      const slider = $(s);
-      if (slider) slider.addEventListener("input", () => setReadout(s, r));
-    });
-  };
-
-  /* ── Button groups (single-select) ────────────────── */
-  const setExclusiveActive = (group, value) => {
-    $$(`button[data-group="${group}"]`).forEach(b =>
-      b.classList.toggle("active", b.dataset.value === value)
-    );
-  };
-
-  const getExclusiveValue = (group) => {
-    const active = $(`button[data-group="${group}"].active`);
-    return active ? active.dataset.value : null;
-  };
-
-  /* ── Domain switching ─────────────────────────────── */
-  const setDomain = (index) => {
-    if (!domains.length) return;
-    currentIndex = Math.max(0, Math.min(domains.length - 1, index));
-
-    domains.forEach((d, i) => {
-      const sec = $(`#domain-${d}`);
-      if (sec) sec.classList.toggle("active", i === currentIndex);
-    });
-
-    tabs.forEach(t =>
-      t.classList.toggle("active", t.dataset.domain === domains[currentIndex])
-    );
-
-    const label = domains[currentIndex] === "day" ? "Overall Day"
-      : domains[currentIndex] === "fitness" ? "Fitness"
-        : domains[currentIndex] === "wellness" ? "Wellness"
-          : "Menstrual";
-
-    if (progressText) progressText.textContent = label;
-    if (progressFill) progressFill.style.width =
-      `${((currentIndex + 1) / domains.length) * 100}%`;
-
-    if (prevBtn) prevBtn.disabled = currentIndex === 0;
-    const isLast = currentIndex === domains.length - 1;
-    if (nextBtn) nextBtn.style.display = isLast ? "none" : "inline-flex";
-    if (submitBtn) submitBtn.style.display = isLast ? "inline-flex" : "none";
-  };
-
-  /* ── Recovery Day toggle ──────────────────────────── */
-  const fitnessGoalSection = $("#fitnessGoalSection");
-  const recoveryHint = $("#recoveryHint");
-
-  const updateRecoveryDay = () => {
-    const isRecovery = getExclusiveValue("recoveryDay") === "yes";
-    if (fitnessGoalSection) fitnessGoalSection.style.display = isRecovery ? "none" : "";
-    if (recoveryHint) recoveryHint.style.display = isRecovery ? "block" : "none";
-  };
-
-  /* ── Menstrual visibility (cycle tracking) ────────── */
-  const setMenstrualVisibility = (enabled) => {
-    const has = domains.includes("menstrual");
-    if (enabled && !has) {
-      domains.push("menstrual");
-      if (menstrualTab) menstrualTab.style.display = "inline-flex";
-      if (menstrualSection) menstrualSection.style.display = "";
-      setDomain(currentIndex);
-    } else if (!enabled && has) {
-      domains = domains.filter(d => d !== "menstrual");
-      if (menstrualTab) menstrualTab.style.display = "none";
-      if (menstrualSection) menstrualSection.style.display = "none";
-      if (currentIndex >= domains.length) setDomain(domains.length - 1);
-      setDomain(currentIndex); // refresh progress widths
-    }
-  };
-
-  const detectCycleTracking = async () => {
-    let enabled = false;
-    let foundInBackend = false;
-    const session = window.BenjiAPI?.getSession?.();
-
-    if (session && session.user_id) {
-      console.log("Detecting cycle tracking for user:", session.user_id);
-
-      // 1) Check backend profileinfo first (source of truth)
-      if (window.BenjiAPI?.getProfileInfo) {
-        try {
-          const profile = await window.BenjiAPI.getProfileInfo(session.user_id);
-          console.log("Profile data for cycle tracking:", profile);
-
-          if (profile.benji_facts) {
-            try {
-              const facts = typeof profile.benji_facts === "string"
-                ? JSON.parse(profile.benji_facts) : profile.benji_facts;
-
-              // Check summary for cycle tracking setting (comma-delimited format)
-              if (facts?.summary) {
-                const summaryLower = facts.summary.toLowerCase();
-                console.log("=== CYCLE TRACKING DEBUG ===");
-                console.log("Raw summary string:", facts.summary);
-                console.log("Lowercase summary:", summaryLower);
-
-                // Only enable if explicitly set to "yes"
-                if (summaryLower.includes("cycle tracking: yes")) {
-                  enabled = true;
-                  foundInBackend = true;
-                  console.log("✓ Menstrual tracking ENABLED (found 'Cycle tracking: Yes')");
-                } else if (summaryLower.includes("cycle tracking: no")) {
-                  // Explicitly "No"
-                  enabled = false;
-                  foundInBackend = true;
-                  console.log("✗ Menstrual tracking DISABLED (found 'Cycle tracking: No')");
-                } else if (summaryLower.includes("cycle tracking: not applicable")) {
-                  // Explicitly "Not applicable"
-                  enabled = false;
-                  foundInBackend = true;
-                  console.log("✗ Menstrual tracking DISABLED (found 'Cycle tracking: Not applicable')");
-                } else if (summaryLower.includes("cycle tracking:")) {
-                  // Found cycle tracking but didn't match any specific case
-                  enabled = false;
-                  foundInBackend = true;
-                  console.log("✗ Menstrual tracking DISABLED (found 'Cycle tracking:' but value unknown)");
-                  console.warn("Unexpected cycle tracking value in summary:", facts.summary);
-                }
-                console.log("=== END DEBUG ===");
-              }
-            } catch (e) {
-              console.warn("Failed to parse benji_facts:", e);
-            }
-          }
-        } catch (e) {
-          console.warn("Profile info load failed; using default menstrual visibility", e);
-        }
-      }
-
-      // 2) Only use localStorage if backend didn't have any cycle tracking data
-      if (!foundInBackend) {
-        console.log("No cycle tracking data in backend, checking localStorage");
-        try {
-          const cached = localStorage.getItem(`userProfile_${session.user_id}`);
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            // Only enable if explicitly "yes"
-            if (parsed.cycleTracking === "yes") {
-              enabled = true;
-              console.log("Menstrual tracking enabled from localStorage");
-            } else {
-              console.log("Menstrual tracking not enabled in localStorage");
-            }
-          }
-        } catch { /* ignore */ }
-      } else {
-        // Backend had data, ignore localStorage to prevent conflicts
-        console.log("Backend has cycle tracking data, ignoring localStorage");
-      }
-    }
-
-    console.log("Final menstrual tracking state:", enabled);
-    setMenstrualVisibility(enabled);
-  };
-
-  /* ── Fitness goal tabs — predefined from profile ──── */
-  // All possible goal keys (must match data-goal attrs in HTML)
-  const ALL_GOALS = [
-    "weight-loss", "weight-gain", "body-recomp", "strength",
-    "cardio", "general", "mobility", "injury", "rehab", "performance",
-  ];
-
-  /**
-   * Read the user's configured fitness goals from localStorage.
-   * Expected format: an array of goal-key strings, e.g.
-   *   ["weight-loss","cardio","mobility"]
-   * If nothing is stored yet, show ALL tabs so the user can still check in.
-   */
-  const getUserGoals = () => {
-    try {
-      const raw = localStorage.getItem("Benji_fitnessGoals");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch { /* ignore parse errors */ }
-    return ALL_GOALS; // fallback: show everything
-  };
-
-  const userGoals = getUserGoals();
-
-  const initGoalTabs = () => {
-    // Hide tabs + panels that aren't in the user's goal list
-    $$(".goal-tab").forEach(btn => {
-      const goal = btn.dataset.goal;
-      if (!userGoals.includes(goal)) {
-        btn.style.display = "none";
-      }
-    });
-    $$(".goal-panel").forEach(panel => {
-      const goal = panel.id.replace("goal-", "");
-      // Only show panels that are in the user's goals
-      panel.style.display = userGoals.includes(goal) ? "block" : "none";
-    });
-  };
-
-  /* ── Menstrual toggles ────────────────────────────── */
-  const dischargeNotesWrap = $("#dischargeNotesWrap");
-  const ocpDetails = $("#ocpDetails");
-
-  const updateDischargeNotes = () => {
-    const v = getExclusiveValue("discharge");
-    if (!dischargeNotesWrap) return;
-    dischargeNotesWrap.style.display =
-      (v === "unusual" || v === "gray" || v === "clumpy-white") ? "block" : "none";
-  };
-
-  const updateOCPDetails = () => {
-    const yes = getExclusiveValue("ocp") === "yes";
-    if (!ocpDetails) return;
-    ocpDetails.style.display = yes ? "block" : "none";
-  };
-
-
-  /* ── Flare-up toggle ──────────────────────────────── */
-  const flareupDetails = $("#flareupDetails");
-
-  const updateFlareup = () => {
-    const has = getExclusiveValue("rehab-flareup") === "yes";
-    if (flareupDetails) flareupDetails.style.display = has ? "block" : "none";
-  };
-
-  /* ── Build payload ────────────────────────────────── */
-  const getTags = () =>
-    $$('input[name="tags"]:checked').map(i => i.value);
-
-  const getFlareupTriggers = () =>
-    $$('input[name="flareup-trigger"]:checked').map(i => i.value);
-
-  const num = (id) => Number($(id)?.value) || 0;
-  const str = (id) => ($(id)?.value ?? "").trim();
-  const daysSince = (dateStr) => {
-    if (!dateStr) return 0;
-    const start = new Date(`${dateStr}T00:00:00`);
-    if (Number.isNaN(start.getTime())) return 0;
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const diffMs = today - start;
-    const diffDays = Math.floor(diffMs / 86400000) + 1;
-    return diffDays > 0 ? diffDays : 0;
-  };
-
-  const payload = () => {
-    const data = {
-      /* Overall Day */
-      dayScore: num("#dayScore"),
-      dayNotes: str("#dayNotes"),
-      tags: getTags(),
-      eatScore: num("#eatScore"),
-      drinkScore: num("#drinkScore"),
-      sleepScore: num("#sleepScore"),
-
-      /* Fitness core */
-      fitnessScore: num("#fitnessScore"),
-      fitnessNotes: str("#fitnessNotes"),
-      fitnessGoalScore: num("#fitnessGoalScore"),
-      recoveryDay: getExclusiveValue("recoveryDay") === "yes",
-
-      /* Wellness */
-      wellnessScore: num("#wellnessScore"),
-      wellnessNotes: str("#wellnessNotes"),
-      stress: num("#stressScore"),
-      mood: Number(getExclusiveValue("mood") ?? 0),
-
-      /* Menstrual */
-      menstrual: {
-        lastPeriodStart: str("#lastPeriodStart"),
-        cycleDay: daysSince(str("#lastPeriodStart")),
-        flow: getExclusiveValue("flow"), // light | medium | heavy | blood-clots
-        symptoms: $$('input[name="symptoms"]:checked').map(i => i.value),
-        crampPain: num("#crampPain"), // 0–10
-        discharge: getExclusiveValue("discharge"), // none | creamy | watery | sticky | egg-white | spotting | unusual | clumpy-white | gray
-        dischargeNotes: str("#dischargeNotes"),
-        oralContraceptives: getExclusiveValue("ocp") === "yes",
-        ocpType: str("#ocpType"),
-      },
-
-
-      /* Meta */
-      activeGoals: userGoals,
-      timestamp: new Date().toISOString(),
-
-      /* Benji Context - what user wanted Benji to know */
-      benjiContext: str("#benjiContextInput"),
-    };
-
-    // Skip goal detail sections on recovery days
-    if (!data.recoveryDay) {
-      if (userGoals.includes("weight-loss")) {
-        data.weightLoss = {
-          calories: num("#wl-calories"),
-          trainingType: getExclusiveValue("wl-training"),
-          weight: num("#wl-weight"),
-        };
-      }
-      if (userGoals.includes("weight-gain")) {
-        data.weightGain = {
-          calories: num("#wg-calories"),
-          weight: num("#wg-weight"),
-        };
-      }
-      if (userGoals.includes("body-recomp")) {
-        data.bodyRecomp = {
-          calories: num("#br-calories"),
-          protein: num("#br-protein"),
-          hydration: num("#br-hydration"),
-          carbs: num("#br-carbs"),
-          fats: num("#br-fats"),
-          fiber: num("#br-fiber"),
-          weight: num("#br-weight"),
-        };
-      }
-      if (userGoals.includes("strength")) {
-        data.strength = {
-          calories: num("#st-calories"),
-          protein: num("#st-protein"),
-          carbs: num("#st-carbs"),
-          fat: num("#st-fat"),
-          hydration: num("#st-hydration"),
-          weight: num("#st-weight"),
-        };
-      }
-      if (userGoals.includes("cardio")) {
-        data.cardio = {
-          activityType: getExclusiveValue("cardio-type"),
-          volume: num("#cardio-volume"),
-          distance: num("#cardio-distance"),
-          pace: str("#cardio-pace"),
-          intensity: num("#cardioIntensity"),
-        };
-      }
-      if (userGoals.includes("general")) {
-        data.general = {
-          activity: str("#general-activity"),
-          method: getExclusiveValue("general-method"),
-          weight: num("#general-weight"),
-        };
-      }
-      if (userGoals.includes("mobility")) {
-        data.mobility = {
-          sessions: num("#mob-sessions"),
-          tightness: num("#mobTightness"),
-          stiffness: num("#mobStiffness"),
-          soreness: num("#mobSoreness"),
-          looseness: num("#mobLooseness"),
-          painLevel: num("#mobPainLevel"),
-          painLocation: str("#mob-pain-location"),
-          romNotes: str("#mob-rom-notes"),
-        };
-      }
-      if (userGoals.includes("injury")) {
-        data.injury = {
-          painIntensity: num("#injPainIntensity"),
-          painLocation: str("#inj-pain-location"),
-          painType: getExclusiveValue("inj-pain-type"),
-          painFrequency: getExclusiveValue("inj-pain-freq"),
-          stiffness: num("#injStiffness"),
-          functionScore: num("#injFunctionScore"),
-          activityTolerance: num("#inj-tolerance"),
-        };
-      }
-      if (userGoals.includes("rehab")) {
-        data.rehab = {
-          trainingMinutes: num("#rehab-minutes"),
-          sessions: num("#rehab-sessions"),
-          afterEffects: num("#rehabAfterEffects"),
-          flareup: getExclusiveValue("rehab-flareup") === "yes",
-          flareupTriggers: getFlareupTriggers(),
-          flareupDescription: str("#flareupDesc"),
-        };
-      }
-      if (userGoals.includes("performance")) {
-        data.performance = {
-          minutesTrained: num("#perf-minutes"),
-          intensity: num("#perfIntensity"),
-          difficulty: num("#perfDifficulty"),
-          soreness: num("#perfSoreness"),
-          fatigue: num("#perfFatigue"),
-        };
-      }
-    }
-
-    return data;
-  };
-
-  /* ── Event delegation ─────────────────────────────── */
-  document.addEventListener("click", (e) => {
-    // Main domain tab
-    const tab = e.target.closest(".nav-tab");
-    if (tab && tab.dataset.domain) {
-      const idx = domains.indexOf(tab.dataset.domain);
-      if (idx !== -1) setDomain(idx);
-      return;
-    }
-
-    // Option-btn + emoji-btn groups
-    const groupBtn = e.target.closest("button.option-btn, button.emoji-btn");
-    if (groupBtn && groupBtn.dataset.group && groupBtn.dataset.value) {
-      setExclusiveActive(groupBtn.dataset.group, groupBtn.dataset.value);
-      if (groupBtn.dataset.group === "recoveryDay") updateRecoveryDay();
-      if (groupBtn.dataset.group === "rehab-flareup") updateFlareup();
-      if (groupBtn.dataset.group === "discharge") updateDischargeNotes();
-      if (groupBtn.dataset.group === "ocp") updateOCPDetails();
-      return;
-    }
-  });
-
-  prevBtn?.addEventListener("click", () => setDomain(currentIndex - 1));
-  nextBtn?.addEventListener("click", () => setDomain(currentIndex + 1));
-
-  /* ── Submit ───────────────────────────────────────── */
-  submitBtn?.addEventListener("click", async () => {
-    const data = payload();
-
-    if (data.dayScore < 1 || data.dayScore > 10) {
-      alert("Day score must be between 1 and 10.");
-      setDomain(0);
-      return;
-    }
-
-    try {
-      if (loading) loading.style.display = "flex";
-
-      if (window.StorageAPI?.saveCheckin) {
-        await window.StorageAPI.saveCheckin(data);
-      } else {
-        const key = "Benji_checkins";
-        const arr = JSON.parse(localStorage.getItem(key) || "[]");
-        arr.push(data);
-        localStorage.setItem(key, JSON.stringify(arr));
-      }
-
-      let checkinId = null;
-      let benjiNotes = null;
+// ==========================================
+// BENJI CHECK-IN SYSTEM - FINAL VERSION
+// Linear flow: Day → Goal 1 → Goal 2 → ... → Submit
+// No tabs, just progress through screens
+// ==========================================
+
+// Global state
+let currentScreen = 0;
+let totalScreens = 1; // Day + number of goals
+let userProfile = null;
+let userGoals = []; // Full goal objects with descriptions
+
+// ==========================================
+// INITIALIZATION
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initializeCheckIn();
+  attachEventListeners();
+});
+
+async function initializeCheckIn() {
+  try {
+    // Load user profile and goals
+    userProfile = await fetchUserProfile();
+    userGoals = await fetchUserGoals();
+    
+    totalScreens = 1 + userGoals.length; // Day screen + one per goal
+    
+    console.log('Initialized with goals:', userGoals);
+    
+    // Build goal screens dynamically
+    buildGoalScreens();
+    hideTabs();
+    
+    // Initialize visibility
+    updateScreenVisibility();
+  } catch (error) {
+    console.error('Error initializing check-in:', error);
+  }
+}
+
+// ==========================================
+// BUILD GOAL SCREENS
+// ==========================================
+
+function buildGoalScreens() {
+  const formContainer = document.querySelector('.checkin-form');
+  if (!formContainer) return;
+  
+  // Clear existing goal sections (keep day section)
+  const existingGoalSections = formContainer.querySelectorAll('.domain-section:not(#domain-day)');
+  existingGoalSections.forEach(section => section.remove());
+  
+  // Create a screen for each goal
+  userGoals.forEach((goal, index) => {
+    const section = document.createElement('div');
+    section.className = 'domain-section';
+    section.id = `domain-goal-${index}`;
+    
+    const goalType = goal.type || goal.goalType || 'general';
+    const goalIcon = getGoalIcon(goalType);
+    const combinedLine = [
+      goal.description,
+      goal.target,
+      goal.timeline,
+      goal.remaining
+    ].filter(Boolean).join(' ');
+    
+    section.innerHTML = `
+      <div class="section-intro">
+        <div class="goal-header">
+          <i class="${goalIcon}" style="font-size: 2rem; color: var(--forest-500); margin-bottom: 1rem;"></i>
+          <h2 class="section-title">${goal.title || goal.name || 'Goal'}</h2>
+        </div>
+        <div class="goal-details">
+          ${combinedLine ? `<p class="goal-description">${combinedLine}</p>` : ''}
+          ${goal.measurable ? `<p class="goal-target"><strong>Target:</strong> ${goal.measurable}</p>` : ''}
+          ${goal.timeline && !combinedLine.includes(goal.timeline) ? `<p class="goal-timeline"><strong>Timeline:</strong> ${goal.timeline}</p>` : ''}
+          ${goal.remaining ? `<p class="goal-overall-progress"><strong>Remaining:</strong> ${goal.remaining}</p>` : ''}
+        </div>
+      </div>
       
-      if (window.BenjiAPI && window.BenjiAPI.getSession && window.BenjiAPI.postCheckin) {
-        const session = window.BenjiAPI.getSession();
-        if (session && session.user_id) {
-          const body = Object.assign({ user_id: session.user_id, date: new Date().toISOString().slice(0, 10) }, data);
-          
-          // Save check-in and get the check-in ID
-          try {
-            const checkinResult = await window.BenjiAPI.postCheckin(body);
-            checkinId = checkinResult?.id || null;
-          } catch (err) {
-            console.warn("Backend check-in save failed:", err);
-          }
-          
-          // Call checkin-sense to get Benji's Notes (post check-in insights)
-          if (window.BenjiAPI.postCheckinSense) {
-            try {
-              const senseResult = await window.BenjiAPI.postCheckinSense({
-                user_id: session.user_id,
-                checkin_data: data,
-                checkin_id: checkinId
-              });
-              benjiNotes = senseResult?.notes || null;
-              console.log("Benji's Notes:", benjiNotes);
-            } catch (err) {
-              console.warn("Failed to get Benji's Notes:", err);
-            }
-          }
-        }
+      <div class="form-domain">
+      <div class="form-group">
+        <label class="form-label">How much progress did you make on this goal today? (1-5)</label>
+        <div class="scale-input">
+          <input type="range" min="0" max="5" value="2" id="goal-${index}-progress" class="range-slider" data-goal-index="${index}">
+          <div class="scale-labels">
+            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+          </div>
+        </div>
+        <div class="value-readout">
+          <span id="goal-${index}-progress-value">2</span>/5
+        </div>
+      </div>
+        
+        <div class="form-group">
+          <label class="form-label">Notes about today's progress</label>
+          <textarea 
+            id="goal-${index}-notes" 
+            class="text-area" 
+            placeholder="What did you do today? Any challenges or wins?"
+            rows="4"
+            data-goal-index="${index}"
+          ></textarea>
+        </div>
+      </div>
+    `;
+    
+    formContainer.appendChild(section);
+    
+    // Attach range slider listener
+    setTimeout(() => {
+      const slider = document.getElementById(`goal-${index}-progress`);
+      const display = document.getElementById(`goal-${index}-progress-value`);
+      if (slider && display) {
+        slider.addEventListener('input', (e) => {
+          display.textContent = e.target.value;
+        });
       }
+    }, 0);
+  });
+}
 
-      // Close the modal and update banner/glance if we're inside one (home page)
-      // Pass both the check-in data and Benji's Notes to onComplete
-      if (window.BenjiCheckinModal) {
-        if (window.BenjiCheckinModal.onComplete) {
-          window.BenjiCheckinModal.onComplete(data, benjiNotes);
-        } else {
-          window.BenjiCheckinModal.close();
-        }
-      }
+// Hide the tab bar (we use linear flow only)
+function hideTabs() {
+  const nav = document.getElementById('checkinTabs');
+  if (nav) {
+    nav.style.display = 'none';
+    nav.style.margin = '0';
+    nav.style.padding = '0';
+    nav.style.border = 'none';
+    nav.style.boxShadow = 'none';
+  }
+}
 
-      const agentMsg = $("#agentMessage");
-      if (agentMsg) {
-        agentMsg.innerHTML = `<p>Saved! Want to review your data?</p>`;
+function getGoalIcon(goalType) {
+  const iconMap = {
+    'weight-loss': 'fa-solid fa-weight-scale',
+    'weight-gain': 'fa-solid fa-chart-line',
+    'body-recomp': 'fa-solid fa-dumbbell',
+    'strength': 'fa-solid fa-dumbbell',
+    'cardio': 'fa-solid fa-heart-pulse',
+    'general': 'fa-solid fa-person-walking',
+    'mobility': 'fa-solid fa-spa',
+    'flexibility': 'fa-solid fa-spa',
+    'injury': 'fa-solid fa-heart-circle-plus',
+    'rehab': 'fa-solid fa-notes-medical',
+    'performance': 'fa-solid fa-medal',
+    'sleep': 'fa-solid fa-bed',
+    'nutrition': 'fa-solid fa-utensils',
+    'wellness': 'fa-solid fa-heart',
+    'mental-health': 'fa-solid fa-brain',
+    'mindfulness': 'fa-solid fa-om',
+    'default': 'fa-solid fa-bullseye'
+  };
+  
+  return iconMap[goalType] || iconMap['default'];
+}
+
+// ==========================================
+// EVENT LISTENERS
+// ==========================================
+
+function attachEventListeners() {
+  // Open/close modal
+  const openBtn = document.getElementById('openCheckinBtn');
+  const closeBtn = document.getElementById('closeCheckinBtn');
+  const modal = document.getElementById('checkinModal');
+  
+  if (openBtn) openBtn.addEventListener('click', openCheckInModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeCheckInModal);
+  
+  // Close modal when clicking outside
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeCheckInModal();
       }
-    } catch (err) {
-      console.error(err);
-      alert("Couldn't save check-in. Check console for details.");
-    } finally {
-      if (loading) loading.style.display = "none";
+    });
+  }
+  
+  // Navigation
+  const prevBtn = document.getElementById('prevDomain');
+  const nextBtn = document.getElementById('nextDomain');
+  const submitBtn = document.getElementById('submitCheckin');
+  const clearBtn = document.getElementById('clearTodayBtn');
+  
+  if (prevBtn) prevBtn.addEventListener('click', navigatePrevious);
+  if (nextBtn) nextBtn.addEventListener('click', navigateNext);
+  if (submitBtn) submitBtn.addEventListener('click', submitCheckIn);
+  if (clearBtn) clearBtn.addEventListener('click', clearTodayCheckin);
+  
+  // Range sliders with live updates for Overall Day
+  attachRangeSliderListeners();
+}
+
+function attachRangeSliderListeners() {
+  const sliders = [
+    { id: 'dayScore', displayId: 'dayScoreValue' },
+    { id: 'eatScore', displayId: 'eatScoreValue' },
+    { id: 'drinkScore', displayId: 'drinkScoreValue' },
+    { id: 'sleepScore', displayId: 'sleepScoreValue' }
+  ];
+  
+  sliders.forEach(({ id, displayId }) => {
+    const slider = document.getElementById(id);
+    const display = document.getElementById(displayId);
+    
+    if (slider && display) {
+      slider.addEventListener('input', (e) => {
+        display.textContent = e.target.value;
+      });
     }
   });
+}
 
-  /* ── Fetch relevant questions for the user ────────── */
-  /* ── Fetch relevant questions for the user ────────── */
-  const fetchRelevantQuestions = async () => {
-    try {
-      const session = window.BenjiAPI?.getSession?.();
-      if (!session || !session.user_id) return [];
-
-      const resp = await fetch("http://localhost:8000/relevant-questions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: session.user_id,
-          active_goals: JSON.parse(localStorage.getItem("Benji_fitnessGoals") || "[]")
-        })
-      });
-
-      if (!resp.ok) throw new Error("Failed to fetch questions");
-
-      const data = await resp.json();
-
-      // Expecting either an array or an object whose values are arrays
-      if (Array.isArray(data.questions)) return data.questions;
-
-      if (data.questions && typeof data.questions === "object") {
-        return Object.values(data.questions).flat();
+// Clear today's (latest) check-in for demo/reset
+async function clearTodayCheckin() {
+  const btn = document.getElementById('clearTodayBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const session = window.BenjiAPI?.getSession?.();
+    if (session && session.user_id) {
+      if (window.BenjiAPI?.deleteLatestCheckin) {
+        await window.BenjiAPI.deleteLatestCheckin(session.user_id);
+      } else {
+        // Try a generic endpoint if available
+        await fetch('/api/checkin/delete-latest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: session.user_id })
+        });
       }
-
-      return [];
-    } catch (err) {
-      console.error("Error fetching relevant questions:", err);
-      return [];
     }
+    alert("Today's check-in cleared for demo. Reloading...");
+    window.location.reload();
+  } catch (err) {
+    console.error('Clear check-in failed', err);
+    alert('Could not clear the latest check-in. Please try again.');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ==========================================
+// MODAL CONTROL
+// ==========================================
+
+function openCheckInModal() {
+  const modal = document.getElementById('checkinModal');
+  if (!modal) return;
+  
+  // Reset to first screen
+  currentScreen = 0;
+  updateScreenVisibility();
+  
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCheckInModal() {
+  const modal = document.getElementById('checkinModal');
+  if (!modal) return;
+  
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+
+function navigatePrevious() {
+  if (currentScreen > 0) {
+    currentScreen--;
+    updateScreenVisibility();
+  }
+}
+
+function navigateNext() {
+  if (currentScreen < totalScreens - 1) {
+    currentScreen++;
+    updateScreenVisibility();
+  }
+}
+
+function updateScreenVisibility() {
+  const prevBtn = document.getElementById('prevDomain');
+  const nextBtn = document.getElementById('nextDomain');
+  const submitBtn = document.getElementById('submitCheckin');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  
+  // Hide all sections
+  document.querySelectorAll('.domain-section').forEach(section => {
+    section.classList.remove('active');
+  });
+  
+  // Show current section
+  let currentSection;
+  if (currentScreen === 0) {
+    // Day screen
+    currentSection = document.getElementById('domain-day');
+  } else {
+    // Goal screen
+    currentSection = document.getElementById(`domain-goal-${currentScreen - 1}`);
+  }
+  
+  if (currentSection) {
+    currentSection.classList.add('active');
+  }
+  
+  // Update navigation buttons
+  if (prevBtn) prevBtn.disabled = currentScreen === 0;
+  
+  if (currentScreen === totalScreens - 1) {
+    // Last screen - show submit button
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (submitBtn) submitBtn.style.display = 'flex';
+  } else {
+    if (nextBtn) nextBtn.style.display = 'flex';
+    if (submitBtn) submitBtn.style.display = 'none';
+  }
+  
+  // Update progress bar
+  const progress = ((currentScreen + 1) / totalScreens) * 100;
+  if (progressFill) progressFill.style.width = `${progress}%`;
+  
+  // Update progress text
+  if (progressText) {
+    if (currentScreen === 0) {
+      progressText.textContent = 'Overall Day';
+    } else {
+      const goalIndex = currentScreen - 1;
+      const goalTitle = userGoals[goalIndex]?.title || userGoals[goalIndex]?.name || `Goal ${goalIndex + 1}`;
+      progressText.textContent = goalTitle;
+    }
+  }
+}
+
+// ==========================================
+// FORM SUBMISSION
+// ==========================================
+
+async function submitCheckIn() {
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  
+  // Show loading overlay
+  if (loadingOverlay) loadingOverlay.style.display = 'flex';
+  
+  try {
+    // Collect all check-in data
+    const checkInData = collectCheckInData();
+    
+    console.log('Submitting check-in data:', checkInData);
+    
+    // Submit to backend
+    await submitCheckInData(checkInData);
+    
+    // Close modal
+    closeCheckInModal();
+    
+    // Show success message
+    showSuccessMessage();
+    
+    // Reload the page to show updated dashboard
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+  } catch (error) {
+    console.error('Error submitting check-in:', error);
+    alert('Error submitting check-in. Please try again.');
+  } finally {
+    if (loadingOverlay) loadingOverlay.style.display = 'none';
+  }
+}
+
+function showSuccessMessage() {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    background: linear-gradient(135deg, var(--forest-500) 0%, var(--forest-600) 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-body);
+    animation: slideIn 0.3s ease-out;
+  `;
+  
+  notification.innerHTML = `
+    <i class="fa-solid fa-check-circle" style="font-size: 1.5rem;"></i>
+    <div>
+      <strong style="display: block; margin-bottom: 0.25rem;">Check-in completed!</strong>
+      <span style="font-size: 0.875rem; opacity: 0.9;">Benji is analyzing your progress...</span>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideIn 0.3s ease-out reverse';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
+function collectCheckInData() {
+  const data = {
+    UserID: userProfile?.userId || 'unknown',
+    timestamp: new Date().toISOString(),
+    date: new Date().toISOString().split('T')[0],
+    createdAt: new Date().toISOString(),
+    
+    // Overall Day data
+    dayScore: parseInt(document.getElementById('dayScore')?.value || 7),
+    dayNotes: document.getElementById('dayNotes')?.value || '',
+    tags: Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(cb => cb.value),
+    eatScore: parseInt(document.getElementById('eatScore')?.value || 3),
+    drinkScore: parseInt(document.getElementById('drinkScore')?.value || 3),
+    sleepScore: parseInt(document.getElementById('sleepScore')?.value || 3),
+    
+    // Goals progress
+    goals: []
   };
-
-  /* ── Hide questions that are not relevant ─────────── */
-  const filterPageByQuestions = (questions) => {
-    if (!questions) return;
-
-    console.log("Filtering page using relevant questions:", questions);
-
-    const questionMap = {
-      "How would you rate your day from 1-10?": "#dayScore",
-      "Any notes about your day?": "#dayNotes",
-      "What tags describe your day?": "#tagsSection",
-      "Rate your eating, drinking, and sleep today.": "#eatScore, #drinkScore, #sleepScore",
-      "Rate your overall fitness today.": "#fitnessScore",
-      "Any notes on your fitness?": "#fitnessNotes",
-      "Rate your fitness goal performance.": "#fitnessGoalScore",
-      "Rate your wellness today.": "#wellnessScore",
-      "Any notes on wellness?": "#wellnessNotes",
-      "Rate your stress level.": "#stressScore",
-      "How is your mood today?": "#moodSection",
-      "When did your last period start?": "#lastPeriodStart",
-      "What is your current flow?": "[name='flow']",
-      "Which symptoms are present?": "[name='symptoms']",
-      "Rate your cramp pain.": "#crampPain",
-      "Do you have any unusual discharge?": "#dischargeNotesWrap",
-      "Are you taking oral contraceptives?": "#ocpDetails",
-      "Which type of OCP?": "#ocpType"
-    };
-
-    let flat = [];
-    if (Array.isArray(questions)) flat = questions;
-    else flat = Object.values(questions).flat();
-
-    Object.values(questionMap).forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => {
-        const wrapper = el.closest(".form-group");
-        if (wrapper) wrapper.classList.add("force-hidden");
+  
+    // Collect data for each goal
+    userGoals.forEach((goal, index) => {
+      const progressSlider = document.getElementById(`goal-${index}-progress`);
+      const notesField = document.getElementById(`goal-${index}-notes`);
+      
+      data.goals.push({
+        goalId: goal.id || goal.goalId || `goal-${index}`,
+        goalTitle: goal.title || goal.name || '',
+        goalType: goal.type || goal.goalType || '',
+        progress: parseInt(progressSlider?.value || 0, 10),
+        notes: notesField?.value || '',
+        timestamp: new Date().toISOString()
       });
     });
+  
+  return data;
+}
 
-    // questionsArray.forEach(q => {
-    //   const sel = questionMap[q];
-    //   if (!sel) return;
+// ==========================================
+// API CALLS
+// ==========================================
 
-    //   document.querySelectorAll(sel).forEach(el => {
-    //     const wrapper = el.closest(".form-group");
-    //     if (wrapper) wrapper.classList.remove("force-hidden");
-    //   });
-    // });
+async function fetchUserProfile() {
+  try {
+    if (window.mockAPI) {
+      console.log('Using mock API for user profile');
+      return await window.mockAPI.getUserProfile();
+    }
+    
+    const response = await fetch('/api/user/profile', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+  }
+  
+  return {
+    userId: '0JAbns4VXVE6GsEDluTM'
   };
+}
 
-  filterPageByQuestions("")
+async function fetchUserGoals() {
+  // Preferred: BenjiAPI
+  if (window.BenjiAPI && window.BenjiAPI.getSession && window.BenjiAPI.getGoals) {
+    const session = window.BenjiAPI.getSession();
+    if (session && session.user_id) {
+      try {
+        const data = await window.BenjiAPI.getGoals(session.user_id);
+        const raw = Array.isArray(data) ? data : (data?.goals || data?.accepted || []);
+        return normalizeGoals(raw);
+      } catch (err) {
+        console.error('BenjiAPI goals fetch failed', err);
+      }
+    }
+  }
 
+  // Fallback: local API
+  try {
+    const response = await fetch('/api/user/goals', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const raw = Array.isArray(data) ? data : (data?.goals || data?.accepted || []);
+      return normalizeGoals(raw);
+    }
+  } catch (error) {
+    console.error('Error fetching user goals:', error);
+  }
+  
+  return normalizeGoals([]);
+}
 
-  /* ── Run on page load ─────────────────────────────── */
+function normalizeGoals(rawGoals) {
+  if (!Array.isArray(rawGoals)) return [];
+  return rawGoals.map((g, idx) => {
+    // Support both string and object
+    if (typeof g === 'string') {
+      return {
+        id: g,
+        title: g,
+        description: '',
+        target: '',
+        timeline: '',
+        remaining: ''
+      };
+    }
+    return {
+      id: g.id || g.ID || g._id || g.goalId || `goal-${idx}`,
+      title: g.title || g.name || g.Description || g.Specific || 'Goal',
+      description: g.description || g.Description || '',
+      target: g.target || g.Measurable || g.measurable || '',
+      measurable: g.Measurable || g.measurable || '',
+      timeline: g.timeline || g.Time_Bound || g.timebound || g.goalLength || g.length || '',
+      remaining: g.remaining || g.Progress || g.progress || '',
+      type: g.type || g.goalType || g.Category || g.category || 'general'
+    };
+  });
+}
 
+async function submitCheckInData(checkInData) {
+  // Preferred: BenjiAPI
+  if (window.BenjiAPI && window.BenjiAPI.postCheckin && window.BenjiAPI.getSession) {
+    const session = window.BenjiAPI.getSession();
+    if (session && session.user_id) {
+      return window.BenjiAPI.postCheckin(Object.assign({ user_id: session.user_id }, checkInData));
+    }
+  }
 
-  // At the end of your ini
-
-
-  /* ── Init ─────────────────────────────────────────── */
-  initReadouts();
-  initGoalTabs();
-  setMenstrualVisibility(false); // hide until we confirm preference
-  setDomain(0);
-  updateRecoveryDay();
-  updateFlareup();
-  updateDischargeNotes();
-  updateOCPDetails();
-  detectCycleTracking();
-
-  (async () => {
-    const questions = await fetchRelevantQuestions();
-    filterPageByQuestions(questions);
-    setDomain(0);
-  })();
-
-})();
+  // Fallback: local endpoint
+  const response = await fetch('/api/checkin/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(checkInData)
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to submit check-in');
+  }
+  
+  return await response.json();
+}
