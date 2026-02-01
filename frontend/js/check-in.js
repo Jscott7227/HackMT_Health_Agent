@@ -328,16 +328,8 @@ function updateScreenVisibility() {
   const progress = ((currentScreen + 1) / totalScreens) * 100;
   if (progressFill) progressFill.style.width = `${progress}%`;
   
-  // Update progress text
-  if (progressText) {
-    if (currentScreen === 0) {
-      progressText.textContent = 'Overall Day';
-    } else {
-      const goalIndex = currentScreen - 1;
-      const goalTitle = userGoals[goalIndex]?.title || userGoals[goalIndex]?.name || `Goal ${goalIndex + 1}`;
-      progressText.textContent = goalTitle;
-    }
-  }
+  // Hide progress text display
+  if (progressText) progressText.style.display = 'none';
 }
 
 // ==========================================

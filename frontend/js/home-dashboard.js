@@ -123,6 +123,17 @@
     if (header) header.textContent = "Week at a Glance";
     if (!section || !grid) return;
 
+    // Safety: if history got cleared (e.g., new account edge cases), restore zeros
+    var zeroHistory = {
+      feeling:   [0,0,0,0,0,0,0],
+      nutrition: [0,0,0,0,0,0,0],
+      drink:     [0,0,0,0,0,0,0],
+      sleep:     [0,0,0,0,0,0,0]
+    };
+    if (!fauxHistory || !Array.isArray(fauxHistory.nutrition) || fauxHistory.nutrition.length === 0) {
+      fauxHistory = zeroHistory;
+    }
+
     // Use today's data if present, else rely on fauxHistory for demo
     function toFive(val, max) {
       if (val == null) return null;
