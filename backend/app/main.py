@@ -606,16 +606,45 @@ class GoalsAcceptedRequest(BaseModel):
 
 
 @app.get("/goals/{user_id}")
-def get_goals(user_id: str):
-    """Return stored goals for user (accepted and optionally generated) from Firestore."""
-    doc_ref = db.collection("Goals").document(user_id)
-    snap = doc_ref.get()
-    if not snap.exists:
-        return {"accepted": [], "generated": []}
-    d = snap.to_dict() or {}
+def get_goals(user_id: str, goal_type: Optional[str] = None):
+    """Return stored goals for user from Firestore.
+    
+    Args:
+        user_id: The user ID to fetch goals for
+        goal_type: Optional filter by type ('wellness' or 'fitness')
+    
+    Returns:
+        List of goal documents for the user
+    """
+    # Query Goals collection by UserID
+    query = db.collection("Goals").where("UserID", "==", user_id)
+    
+    # Optionally filter by type
+    if goal_type:
+        query = query.where("type", "==", goal_type)
+    
+    docs = list(query.limit(100).stream())
+    
+    goals = []
+    for doc in docs:
+        d = doc.to_dict()
+        d["goal_id"] = doc.id
+        goals.append(d)
+    
+    # Also check legacy format (Goals/{user_id} document with accepted/generated arrays)
+    legacy_doc_ref = db.collection("Goals").document(user_id)
+    legacy_snap = legacy_doc_ref.get()
+    legacy_accepted = []
+    legacy_generated = []
+    if legacy_snap.exists:
+        legacy_data = legacy_snap.to_dict() or {}
+        legacy_accepted = legacy_data.get("accepted", [])
+        legacy_generated = legacy_data.get("generated", [])
+    
     return {
-        "accepted": d.get("accepted", []),
-        "generated": d.get("generated", []),
+        "goals": goals,
+        "accepted": legacy_accepted,
+        "generated": legacy_generated,
     }
 
 
@@ -641,6 +670,9 @@ def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
             "Attainable": goal.get("Attainable"),
             "Relevant": goal.get("Relevant"),
             "Time_Bound": goal.get("Time_Bound"),  # keep as string
+
+            # Goal type: wellness or fitness (default to wellness for backward compat)
+            "type": goal.get("type", "wellness"),
 
             # duplicate for UI convenience
             "Description": goal.get("Specific"),
