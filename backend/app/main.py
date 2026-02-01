@@ -644,6 +644,7 @@ def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
 
             # duplicate for UI convenience
             "Description": goal.get("Specific"),
+            "EndDate": goal.get("EndDate"),
 
             # empty structured check-ins
             "CheckIns": {

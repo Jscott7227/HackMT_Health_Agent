@@ -219,16 +219,15 @@ async function fetchGoalsAndContinue() {
         if (!res.ok) throw new Error('Failed to fetch goals');
 
         var data = await res.json();
+        await data
         var smartGoals = data.smart_goals || [];
 
         localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
 
-        // slight delay so animation feels intentional
         await completeSetup()
 
     } catch (err) {
-        console.error("Goal fetch error:", err);
-        completeSetup(); // fail forward instead of trapping user
+        console.error("Goal fetch error:", err); // fail forward instead of trapping user
     }
 }
 
