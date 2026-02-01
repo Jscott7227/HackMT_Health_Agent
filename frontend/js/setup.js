@@ -629,16 +629,16 @@ async function completeSetup() {
 
             if (Object.keys(profileFields).length) {
                 var payload = { profile: profileFields };
+                // Try POST first (create) – new users don't have a profile yet, so this avoids 404
                 var res = await fetch(API_BASE + "/profileinfo/" + session.user_id, {
-                    method: "PATCH",
+                    method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-
-                if (res.status === 404) {
-                    // Profile doesn't exist yet, create it with POST
+                // If profile already exists (e.g. user re-did setup), update with PATCH
+                if (res.status === 409) {
                     await fetch(API_BASE + "/profileinfo/" + session.user_id, {
-                        method: "POST",
+                        method: "PATCH",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload)
                     });
