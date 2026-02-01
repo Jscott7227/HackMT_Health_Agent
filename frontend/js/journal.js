@@ -35,6 +35,27 @@
     }
   };
 
+  var goalGenerated = false;
+
+  function setGoalLoading(isLoading) {
+    var loading = document.getElementById("goalLoadingState");
+    var btn = document.getElementById("goalPrimaryBtn");
+    var cancel = document.getElementById("cancelGoalBtn");
+
+    if (loading) loading.style.display = isLoading ? "block" : "none";
+    if (btn) btn.disabled = !!isLoading;
+    if (cancel) cancel.disabled = !!isLoading;
+  }
+
+  function showSmartPhase(show) {
+    var phaseGeneral = document.getElementById("goalPhaseGeneral");
+    var phaseSmart = document.getElementById("goalPhaseSmart");
+
+    if (phaseGeneral) phaseGeneral.style.display = show ? "none" : "block";
+    if (phaseSmart) phaseSmart.style.display = show ? "block" : "none";
+  }
+
+
   // DOM Elements - Tabs
   const journalTabs = document.getElementById("journalTabs");
   const wellnessTab = document.getElementById("wellnessTab");
@@ -342,6 +363,13 @@
     card.className = `goal-card ${goalType}`;
     card.dataset.type = goalType;
 
+     card.style.cursor = "pointer";
+    card.addEventListener("click", () => {
+      // Store the goal in sessionStorage and navigate to targeted goal page
+      sessionStorage.setItem("selected_goal", JSON.stringify(goal));
+      window.location.href = "../html/targetedgoal.html";
+    });
+
     const title = goal.Specific || goal.Description || "Untitled Goal";
     const icon = getIconForGoal(title);
 
@@ -461,6 +489,24 @@
     } catch (error) {
       console.error("Error loading fitness goals:", error);
       showFitnessState("empty");
+    }
+  }
+
+  async function loadGoalsData() {
+    const session = getSession();
+    if (!session || !session.user_id) {
+      return;
+    }
+
+    // Determine which tab is active and reload its data
+    if (currentTab === "wellness") {
+      // Reset the loaded flag to force a refresh
+      wellnessGoalsLoaded = false;
+      await loadWellnessGoals();
+    } else if (currentTab === "fitness") {
+      // Reset the loaded flag to force a refresh
+      fitnessGoalsLoaded = false;
+      await loadFitnessGoals();
     }
   }
 
@@ -701,7 +747,21 @@
    * Open the create goal modal
    */
   function openCreateGoalModal(goalType) {
-    currentGoalType = goalType;
+    goalGenerated = false;
+    showSmartPhase(false);
+    setGoalLoading(false);
+
+    var generalInput = document.getElementById("goalGeneral");
+    if (generalInput) generalInput.value = "";
+
+    ["goalSpecific","goalMeasurable","goalAttainable","goalRelevant","goalTimeBound"].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+
+    var btn = document.getElementById("goalPrimaryBtn");
+    if (btn) btn.textContent = "Generate Goal";
+        currentGoalType = goalType;
 
     // Get the appropriate copy for this goal type
     const copy = goalType === "fitness" ? FITNESS_MODAL_COPY : WELLNESS_MODAL_COPY;
@@ -759,65 +819,126 @@
   /**
    * Close the create goal modal
    */
-  function closeCreateGoalModal() {
-    if (createGoalModal) {
-      createGoalModal.classList.remove("active");
-      document.body.style.overflow = "";
-    }
+  /**
+ * Close the create goal modal
+ */
+function closeCreateGoalModal() {
+  if (createGoalModal) {
+    createGoalModal.classList.remove("active");
+    document.body.style.overflow = "";
   }
+  
+  // Reset the goal generation state
+  goalGenerated = false;
+  showSmartPhase(false);
+  
+  // Reset button text
+  const btn = document.getElementById("goalPrimaryBtn");
+  if (btn) btn.textContent = "Generate Smart Goal";
+  
+  // Clear form
+  if (createGoalForm) {
+    createGoalForm.reset();
+  }
+}
 
   /**
    * Handle form submission for creating a goal
    */
   async function handleCreateGoal(e) {
-    e.preventDefault();
+  e.preventDefault();
+  const session = getSession();
 
-    const session = getSession();
-    if (!session || !session.user_id) {
-      alert("Please sign in to create goals.");
+  if (!session || !session.user_id) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  // Phase 1: Generate SMART goal from backend
+  if (!goalGenerated) {
+    var general = (document.getElementById("goalGeneral") || {}).value;
+    general = (general || "").trim();
+
+    if (!general) {
+      alert("Please enter a general goal first.");
       return;
     }
-
-    // Get form values
-    const specific = document.getElementById("goalSpecific").value.trim();
-    const measurable = document.getElementById("goalMeasurable").value.trim();
-    const attainable = document.getElementById("goalAttainable").value.trim();
-    const relevant = document.getElementById("goalRelevant").value.trim();
-    const timeBound = document.getElementById("goalTimeBound").value.trim();
-
-    if (!specific || !measurable || !attainable || !relevant || !timeBound) {
-      alert("Please fill in all SMART goal fields.");
-      return;
-    }
-
-    const goalData = {
-      Specific: specific,
-      Measurable: measurable,
-      Attainable: attainable,
-      Relevant: relevant,
-      Time_Bound: timeBound,
-      type: currentGoalType
-    };
 
     try {
-      await saveGoal(session.user_id, goalData);
+      setGoalLoading(true);
 
-      // Close modal
-      closeCreateGoalModal();
+      // Calls FastAPI: POST /goals  (run_goals_endpoint) :contentReference[oaicite:2]{index=2}
+      var resp = await BenjiAPI.postGoalsGenerate({
+        user_goal: general,
+        user_id: session.user_id
+      });
 
-      // Refresh the appropriate goals list
-      if (currentGoalType === "wellness") {
-        wellnessGoalsLoaded = false;
-        loadWellnessGoals();
-      } else {
-        fitnessGoalsLoaded = false;
-        loadFitnessGoals();
-      }
-    } catch (error) {
-      console.error("Error saving goal:", error);
-      alert("Failed to save goal. Please try again.");
+      var smartGoals = (resp && resp.smart_goals) ? resp.smart_goals : [];
+      if (!smartGoals.length) throw new Error("No SMART goal returned.");
+
+      // Pick the first generated goal
+      var g = smartGoals[0];
+
+      // Fill form (keys should match what save endpoint expects)
+      document.getElementById("goalSpecific").value = (g.Specific || "").trim();
+      document.getElementById("goalMeasurable").value = (g.Measurable || "").trim();
+      document.getElementById("goalAttainable").value = (g.Attainable || "").trim();
+      document.getElementById("goalRelevant").value = (g.Relevant || "").trim();
+      document.getElementById("goalTimeBound").value = (g.Time_Bound || "").trim();
+
+      goalGenerated = true;
+      showSmartPhase(true);
+
+      var btn = document.getElementById("goalPrimaryBtn");
+      if (btn) btn.textContent = "Save Goal";
+    } catch (err) {
+      console.error(err);
+      alert("Goal generation failed: " + (err.message || err));
+    } finally {
+      setGoalLoading(false);
     }
+
+    // IMPORTANT: stop here (don’t save yet)
+    return;
   }
+
+  // Phase 2: Save the (editable) SMART goal
+  var specific = document.getElementById("goalSpecific").value.trim();
+  var measurable = document.getElementById("goalMeasurable").value.trim();
+  var attainable = document.getElementById("goalAttainable").value.trim();
+  var relevant = document.getElementById("goalRelevant").value.trim();
+  var timeBound = document.getElementById("goalTimeBound").value.trim();
+
+  if (!specific || !measurable || !attainable || !relevant || !timeBound) {
+    alert("Please fill out all SMART fields.");
+    return;
+  }
+
+  var goalData = {
+    Specific: specific,
+    Measurable: measurable,
+    Attainable: attainable,
+    Relevant: relevant,
+    Time_Bound: timeBound,
+    type: currentGoalType
+  };
+
+  try {
+    setGoalLoading(true);
+
+    // Your backend save endpoint stores these fields :contentReference[oaicite:3]{index=3}
+    await BenjiAPI.postGoalsAccepted(session.user_id, [goalData]);
+
+    closeCreateGoalModal();
+    await loadGoalsData();
+  } catch (err) {
+    console.error(err);
+    alert("Error saving goal: " + (err.message || err));
+  } finally {
+    setGoalLoading(false);
+  }
+}
+
 
   /**
    * Initialize journal page

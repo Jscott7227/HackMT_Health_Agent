@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Goal Overview • Benji</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body { opacity: 0; transition: opacity 0.4s ease; }
+    body.page-visible { opacity: 1; }
+
+    /* Targeted Goal Specific Styles */
+    .goal-overview-header {
+      background: linear-gradient(135deg, rgba(140, 162, 145, 0.08), rgba(140, 162, 145, 0.12));
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 2px solid rgba(140, 162, 145, 0.2);
+    }
+
+    .goal-overview-title {
+      font-family: 'Crimson Pro', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .goal-type-indicator {
+      display: inline-block;
+      padding: 0.375rem 1rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .goal-type-indicator.wellness {
+      background: rgba(140, 162, 145, 0.15);
+      color: var(--sage);
+    }
+
+    .goal-type-indicator.fitness {
+      background: rgba(99, 102, 241, 0.15);
+      color: #6366f1;
+    }
+
+    .smart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .smart-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 2px solid rgba(140, 162, 145, 0.15);
+      transition: all 0.3s ease;
+    }
+
+    .smart-card:hover {
+      border-color: rgba(140, 162, 145, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(10, 24, 16, 0.1);
+    }
+
+    .smart-card-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--sage);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .smart-card-content {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .insights-section {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      border: 2px solid rgba(140, 162, 145, 0.15);
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-family: 'Crimson Pro', serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-title i {
+      color: var(--sage);
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+
+    .loading-state i {
+      font-size: 2.5rem;
+      color: var(--sage);
+      margin-bottom: 1rem;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: rgba(140, 162, 145, 0.1);
+      color: var(--sage);
+      border: 2px solid rgba(140, 162, 145, 0.2);
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      margin-bottom: 1.5rem;
+    }
+
+    .back-button:hover {
+      background: rgba(140, 162, 145, 0.15);
+      border-color: rgba(140, 162, 145, 0.3);
+      transform: translateX(-3px);
+    }
+
+    .ai-content {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--text-primary);
+    }
+
+    .ai-content h3 {
+      font-family: 'Crimson Pro', serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: var(--sage);
+    }
+
+    .ai-content p {
+      margin-bottom: 1rem;
+    }
+
+    .ai-content ul {
+      margin: 1rem 0;
+      padding-left: 1.5rem;
+    }
+
+    .ai-content li {
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+
+<body data-page="targetedgoal">
+
+  <div id="benji-root"></div>
+
+  <!-- Animated Background -->
+  <div class="background-layers">
+    <div class="grain"></div>
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <div class="container">
+    <section class="home-section">
+      
+      <a href="journal.html" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+        Back to Journal
+      </a>
+
+      <!-- Goal Overview Header -->
+      <div id="goalOverviewHeader" class="goal-overview-header">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- SMART Goal Details -->
+      <div id="smartGrid" class="smart-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- AI Insights Section -->
+      <div id="insightsSection" class="insights-section">
+        <h2 class="section-title">
+          <i class="fas fa-lightbulb"></i>
+          AI Insights & Recommendations
+        </h2>
+        <div id="aiInsightsContent" class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Generating personalized insights...</p>
+        </div>
+      </div>
+
+      <!-- Upcoming Plan Section -->
+      <div id="upcomingSection" class="insights-section">
+        <h2 class="section-title">
+          <i class="fas fa-calendar-alt"></i>
+          Your 2-Day Action Plan
+        </h2>
+        <div id="upcomingPlanContent" class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Creating your personalized plan...</p>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../components/topbar.js"></script>
+  <script src="../js/targetedgoal.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.classList.add('page-visible');
+    });
+  </script>
+
+</body>
+</html>
