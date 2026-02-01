@@ -241,13 +241,35 @@ async function startAnalysis() {
         btn.disabled = true;
     }
 
-    // Call /goals and stash results
+    // Call /goals to generate SMART goals
     try {
         var smartGoals = await fetchGoalsAndContinue();
-        localStorage.setItem('smartGoals', JSON.stringify(smartGoals || []));
+
+        // Save generated goals to database (not just localStorage)
+        if (smartGoals && smartGoals.length > 0 && session && session.user_id) {
+            try {
+                // Use BenjiAPI if available (preferred), otherwise direct fetch
+                if (window.BenjiAPI && window.BenjiAPI.postGoalsAccepted) {
+                    await window.BenjiAPI.postGoalsAccepted(session.user_id, smartGoals);
+                    console.log("Goals saved to database via BenjiAPI");
+                } else {
+                    // Fallback: direct API call
+                    var saveRes = await fetch('http://localhost:8000/goals/' + session.user_id + '/accepted', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ goals: smartGoals })
+                    });
+                    if (!saveRes.ok) throw new Error('Failed to save goals to database');
+                    console.log("Goals saved to database via direct fetch");
+                }
+            } catch (saveErr) {
+                console.error("Failed to save goals to database:", saveErr);
+                // Continue anyway - don't block onboarding completion
+            }
+        }
     } catch (err) {
         console.error("Goal fetch error:", err);
-        localStorage.setItem('smartGoals', JSON.stringify([]));
+        // Continue anyway - don't block onboarding completion
     }
 
     // Finish onboarding + redirect

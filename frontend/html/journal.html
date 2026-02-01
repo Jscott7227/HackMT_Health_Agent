@@ -140,8 +140,8 @@
     }
 
     .goal-type-badge.fitness {
-      background: rgba(99, 102, 241, 0.15);
-      color: #6366f1;
+      background: rgba(1, 104, 68, 0.15);
+      color: var(--sage, #016844);
     }
 
     /* Create Task Button */
@@ -391,31 +391,39 @@
     }
 
     .fitness-intro {
-      background: rgba(99, 102, 241, 0.08);
-      border: 1px solid rgba(99, 102, 241, 0.15);
+      background: rgba(1, 104, 68, 0.08);
+      border: 1px solid rgba(1, 104, 68, 0.15);
     }
 
-    /* Fitness Accent Styles */
+    /* Fitness Accent Styles - align with wellness green */
     .fitness-btn {
-      background: linear-gradient(135deg, #818cf8, #6366f1) !important;
-      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3) !important;
+      background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291)) !important;
+      box-shadow: 0 4px 16px rgba(1, 104, 68, 0.3) !important;
     }
 
     .fitness-btn:hover {
-      box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4) !important;
+      box-shadow: 0 6px 24px rgba(1, 104, 68, 0.4) !important;
     }
 
     /* Fitness Goal Card Styles */
     .goal-card.fitness {
-      border-color: rgba(99, 102, 241, 0.2);
+      border-color: rgba(1, 104, 68, 0.2);
     }
 
     .goal-card.fitness::before {
-      background: linear-gradient(90deg, #818cf8, #6366f1);
+      background: linear-gradient(90deg, #4fc193, #016844);
     }
 
     .goal-card.fitness .goal-icon {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.15));
+      background: linear-gradient(135deg, rgba(1, 104, 68, 0.1), rgba(1, 104, 68, 0.15));
+    }
+
+    .goal-card.fitness .goal-icon i {
+      color: #6366f1;
+    }
+
+    .goals-empty-state.fitness-empty .empty-icon {
+      color: #6366f1;
     }
 
     .goal-card.fitness .goal-icon i {

@@ -4,59 +4,14 @@
 (function () {
   "use strict";
 
-  /* ---------- FAUX DATA (fallback when no API or no goals) ---------- */
+  /* ---------- GOALS DATA (loaded from backend API) ---------- */
 
   /*
    * Each goal maps 1-to-1 with a DB row.
    * When window.BenjiAPI and session exist, we fetch GET /goals/:id and use accepted goals for rings.
+   * Starts empty - populated from backend in runInit()
    */
-  var fauxGoals = [
-    {
-      id: "goal_001",
-      label: "Lose 10 lbs",
-      specific: "Reduce body fat through caloric deficit + cardio",
-      measurable: "10 lbs lost",
-      currentValue: 3.8,          // lbs lost so far
-      targetValue: 10,            // lbs to lose
-      unit: "lbs",
-      progressPct: 38,            // server-computed or derived
-      weekCurrent: 3,
-      weekTotal: 10,
-      startDate: "2025-01-13",
-      endDate: "2025-03-24",
-      color: "#3a7d44"
-    },
-    {
-      id: "goal_002",
-      label: "Build Upper Body Strength",
-      specific: "Increase bench press from 135 to 185 lbs",
-      measurable: "+50 lbs bench",
-      currentValue: 25,
-      targetValue: 50,
-      unit: "lbs",
-      progressPct: 50,
-      weekCurrent: 5,
-      weekTotal: 12,
-      startDate: "2024-12-30",
-      endDate: "2025-03-24",
-      color: "#5a9a64"
-    },
-    {
-      id: "goal_003",
-      label: "Run a 5K",
-      specific: "Train from couch to 5K race-ready",
-      measurable: "5K in under 30 min",
-      currentValue: 2.1,
-      targetValue: 5,
-      unit: "km",
-      progressPct: 42,
-      weekCurrent: 2,
-      weekTotal: 8,
-      startDate: "2025-01-20",
-      endDate: "2025-03-17",
-      color: "#7ab884"
-    }
-  ];
+  var fauxGoals = [];
 
 
 
@@ -260,12 +215,36 @@
     if (!grid) return;
 
     if (fauxGoals.length === 0) {
-      grid.innerHTML = '<div class="no-goals-message" style="text-align: center; padding: 2rem; color: var(--text-muted);">' +
-        '<p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No goals yet!</p>' +
-        '<p>Visit the Goals page to set up your wellness and fitness goals.</p>' +
+      grid.style.display = "flex";
+      grid.style.flexDirection = "column";
+      grid.style.alignItems = "center";
+      grid.style.justifyContent = "center";
+      grid.style.minHeight = "220px";
+      grid.innerHTML = '<div class="no-goals-message" style="' +
+        'display: flex; ' +
+        'flex-direction: column; ' +
+        'align-items: center; ' +
+        'justify-content: center; ' +
+        'padding: 4rem 2rem; ' +
+        'text-align: center; ' +
+        'background: linear-gradient(135deg, rgba(255, 249, 240, 0.5), rgba(230, 245, 239, 0.5)); ' +
+        'border-radius: 16px; ' +
+        'border: 2px dashed rgba(1, 104, 68, 0.2); ' +
+        'margin: 2rem 0; ' +
+      '">' +
+        '<div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.6;"></div>' +
+        '<h3 style="font-size: 1.5rem; font-weight: 600; color: var(--clay-800); margin-bottom: 0.75rem; font-family: var(--font-display);">No goals yet</h3>' +
+        '<p style="font-size: 1rem; color: var(--text-secondary); max-width: 400px; line-height: 1.5;">Visit the <a href="journal.html" style="color: var(--sage); font-weight: 600; text-decoration: underline;">Journal page</a> to set up your wellness and fitness goals.</p>' +
       '</div>';
       return;
     }
+
+    // restore default flex layout for cards
+    grid.style.display = "";
+    grid.style.flexDirection = "";
+    grid.style.alignItems = "";
+    grid.style.justifyContent = "";
+    grid.style.minHeight = "";
 
     var html = "";
     for (var i = 0; i < fauxGoals.length; i++) {
@@ -279,7 +258,7 @@
       '</span>';
 
       html +=
-        '<div class="goal-ring-card" data-goal-id="' + g.id + '" data-goal-type="' + (g.type || 'wellness') + '">' +
+        '<div class="goal-ring-card" data-goal-index="' + i + '" data-goal-id="' + g.id + '" data-goal-type="' + (g.type || 'wellness') + '" style="cursor: pointer;">' +
           '<div class="ring-wrap">' +
             buildSVGRing(pct, g.color, 110) +
             '<div class="ring-inner-label">' +
@@ -298,6 +277,19 @@
         '</div>';
     }
     grid.innerHTML = html;
+
+    // Add click handlers to goal cards - navigate to targetedgoal.html
+    var cards = grid.querySelectorAll('.goal-ring-card');
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].addEventListener('click', function() {
+        var goalIndex = parseInt(this.getAttribute('data-goal-index'));
+        if (goalIndex >= 0 && goalIndex < fauxGoals.length) {
+          // Store goal in sessionStorage and navigate to targeted goal page
+          sessionStorage.setItem("selected_goal", JSON.stringify(fauxGoals[goalIndex]));
+          window.location.href = "targetedgoal.html";
+        }
+      });
+    }
   }
 
   /* ---------- CHECK-IN MODAL ---------- */
@@ -346,6 +338,7 @@
       }
     };
   }
+
 
   /* ---------- RENDER: MEDICATION SCHEDULE (generalized plan) ---------- */
   var medicationScheduleData = null;
@@ -616,7 +609,14 @@
         startDate: startDate.toISOString().slice(0, 10),
         endDate: endDate.toISOString().slice(0, 10),
         color: colors[i % colors.length],
-        type: g.type || "wellness"
+        type: g.type || "wellness",
+        // SMART goal fields for targetedgoal.html
+        Specific: g.Specific || "",
+        Measurable: g.Measurable || "",
+        Attainable: g.Attainable || "",
+        Relevant: g.Relevant || "",
+        Time_Bound: g.Time_Bound || "",
+        Description: g.Description || g.Specific || ""
       };
     });
   }
