@@ -742,17 +742,7 @@
     transform: none;
 }
 
-.ob-cta.is-skip {
-    background: var(--clay-100);
-    color: var(--clay-700);
-    box-shadow: none;
-}
-
-.ob-cta.is-skip:hover {
-    background: var(--clay-200);
-    color: var(--clay-800);
-    transform: translateY(-1px);
-}
+/* Skip buttons now use the same green styling as primary CTAs */
 
 .ob-cta-secondary {
     width: 100%;

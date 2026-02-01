@@ -702,6 +702,7 @@
         </div>
     </div>
 
+    <script src="../js/api.js"></script>
     <script>
 
         // Current state
@@ -1014,7 +1015,7 @@
         }
 
         // Finalize and save accepted goals
-        function finalizeGoals() {
+        async function finalizeGoals() {
             const validationMsg = document.getElementById('finalizeValidationMsg');
             validationMsg.classList.remove('visible');
             const acceptedGoals = displayedGoals.filter(g => g.status === 'accepted');
@@ -1024,27 +1025,66 @@
                 return;
             }
 
-            // Save accepted goals to localStorage
-            const goalsToSave = acceptedGoals.map(g => ({
-                icon: g.icon,
-                title: g.title,
-                description: g.description,
-                fullSMART: g.fullSMART || {
-                    Specific: g.title,
-                    Measurable: '',
-                    Attainable: '',
-                    Relevant: '',
-                    Time_Bound: ''
-                }
-            }));
+            // Get user ID from session
+            const userId = session.user_id || null;
+            if (!userId) {
+                alert('User session not found. Please log in again.');
+                return;
+            }
 
-            localStorage.setItem('benjiAcceptedGoals', JSON.stringify(goalsToSave));
+            // Disable button while saving
+            const finalizeBtn = document.getElementById('finalizeBtn');
+            finalizeBtn.disabled = true;
+            finalizeBtn.textContent = 'Saving Goals...';
 
-            // Smooth fade-out then navigate to main app
-            document.body.classList.add('page-transition-out');
-            setTimeout(function () {
-                window.location.href = 'index.html';
-            }, 450);
+            try {
+                // Format goals for database with all required fields
+                const currentDate = new Date();
+                const endDate = new Date();
+                endDate.setMonth(endDate.getMonth() + 1); // Default to 1 month from now
+
+                const goalsToSave = acceptedGoals.map(g => {
+                    const smartData = g.fullSMART || {
+                        Specific: g.title,
+                        Measurable: '',
+                        Attainable: '',
+                        Relevant: '',
+                        Time_Bound: ''
+                    };
+
+                    return {
+                        Specific: smartData.Specific,
+                        Measurable: smartData.Measurable,
+                        Attainable: smartData.Attainable,
+                        Relevant: smartData.Relevant,
+                        Time_Bound: smartData.Time_Bound,
+                        Description: smartData.Specific,
+                        DateCreated: currentDate.toISOString(),
+                        EndDate: endDate.toISOString(),
+                        UserID: userId,
+                        CheckIns: JSON.stringify({ checkins: [] }),
+                        icon: g.icon // Keep icon for frontend display
+                    };
+                });
+
+                // Save to backend
+                await BenjiAPI.postGoalsAccepted(userId, goalsToSave);
+
+                // Also save to localStorage for quick access in frontend
+                localStorage.setItem('benjiAcceptedGoals', JSON.stringify(goalsToSave));
+
+                // Smooth fade-out then navigate to main app
+                document.body.classList.add('page-transition-out');
+                setTimeout(function () {
+                    window.location.href = 'index.html';
+                }, 450);
+
+            } catch (error) {
+                console.error('Failed to save goals:', error);
+                alert('Failed to save goals. Please try again.');
+                finalizeBtn.disabled = false;
+                finalizeBtn.textContent = 'Continue with Selected Goals';
+            }
         }
 
         // Fade-in on load
