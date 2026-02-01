@@ -78,7 +78,8 @@
   function renderBanner() {
     var banner = el("checkinBanner");
     if (!banner) return;
-    banner.style.display = checkinDone ? "none" : "flex";
+    // Always show the banner so users can reopen / edit check-ins anytime
+    banner.style.display = "flex";
   }
 
   /* ---------- RENDER: RECOVERY CARD ---------- */

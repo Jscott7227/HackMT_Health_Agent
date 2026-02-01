@@ -6322,3 +6322,5 @@ body[data-page="chat"] #chatHistory:has(.message) .chat-welcome {
         font-size: 0.9rem;
     }
 }
+
+.goal-section-stack { display: flex; flex-direction: column; gap: 16px; }

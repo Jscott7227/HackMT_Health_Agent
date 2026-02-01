@@ -1,12 +1,14 @@
 // ==========================================
-// AI-DRIVEN CHECK-IN SYSTEM FOR BENJI
+// BENJI CHECK-IN SYSTEM - FINAL VERSION
+// Linear flow: Day → Goal 1 → Goal 2 → ... → Submit
+// No tabs, just progress through screens
 // ==========================================
 
 // Global state
-let currentDomain = 0;
-let domains = ['day', 'goals'];
+let currentScreen = 0;
+let totalScreens = 1; // Day + number of goals
 let userProfile = null;
-let activeGoals = [];
+let userGoals = []; // Full goal objects with descriptions
 
 // ==========================================
 // INITIALIZATION
@@ -19,27 +21,129 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function initializeCheckIn() {
   try {
-    // Load active goals from backend
-    const goals = await fetchUserGoals();
-        
-    // Update domain list based on active goals
-    if (activeGoals.length > 0) {
-      domains = ['day', 'goals'];
-      // Show goals tab
-      const goalsTab = document.querySelector('[data-domain="goals"]');
-      if (goalsTab) goalsTab.style.display = 'flex';
-    } else {
-      domains = ['day'];
-      // Hide goals tab
-      const goalsTab = document.querySelector('[data-domain="goals"]');
-      if (goalsTab) goalsTab.style.display = 'none';
-    }
+    // Load user profile and goals
+    userProfile = await fetchUserProfile();
+    userGoals = await fetchUserGoals();
     
-    // Initialize the check-in modal structure
-    updateDomainVisibility();
+    totalScreens = 1 + userGoals.length; // Day screen + one per goal
+    
+    console.log('Initialized with goals:', userGoals);
+    
+    // Build goal screens dynamically
+    buildGoalScreens();
+    
+    // Initialize visibility
+    updateScreenVisibility();
   } catch (error) {
     console.error('Error initializing check-in:', error);
   }
+}
+
+// ==========================================
+// BUILD GOAL SCREENS
+// ==========================================
+
+function buildGoalScreens() {
+  const formContainer = document.querySelector('.checkin-form');
+  if (!formContainer) return;
+  
+  // Clear existing goal sections (keep day section)
+  const existingGoalSections = formContainer.querySelectorAll('.domain-section:not(#domain-day)');
+  existingGoalSections.forEach(section => section.remove());
+  
+  // Create a screen for each goal
+  userGoals.forEach((goal, index) => {
+    const section = document.createElement('div');
+    section.className = 'domain-section';
+    section.id = `domain-goal-${index}`;
+    
+    const goalType = goal.type || goal.goalType || 'general';
+    const goalIcon = getGoalIcon(goalType);
+    const combinedLine = [
+      goal.description,
+      goal.target,
+      goal.timeline,
+      goal.remaining
+    ].filter(Boolean).join(' ');
+    
+    section.innerHTML = `
+      <div class="section-intro">
+        <div class="goal-header">
+          <i class="${goalIcon}" style="font-size: 2rem; color: var(--forest-500); margin-bottom: 1rem;"></i>
+          <h2 class="section-title">${goal.title || goal.name || 'Goal'}</h2>
+        </div>
+        <div class="goal-details">
+          ${combinedLine ? `<p class="goal-description">${combinedLine}</p>` : ''}
+          ${goal.measurable ? `<p class="goal-target"><strong>Target:</strong> ${goal.measurable}</p>` : ''}
+          ${goal.timeline && !combinedLine.includes(goal.timeline) ? `<p class="goal-timeline"><strong>Timeline:</strong> ${goal.timeline}</p>` : ''}
+          ${goal.remaining ? `<p class="goal-overall-progress"><strong>Remaining:</strong> ${goal.remaining}</p>` : ''}
+        </div>
+      </div>
+      
+      <div class="form-domain">
+        <div class="form-group">
+          <label class="form-label">How much progress did you make on this goal today? (1-5)</label>
+          <div class="scale-input">
+            <input type="range" min="1" max="5" value="3" id="goal-${index}-progress" class="range-slider" data-goal-index="${index}">
+            <div class="scale-labels">
+              <span>0</span><span>2</span><span>5</span>
+            </div>
+          </div>
+          <div class="value-readout">
+            <span id="goal-${index}-progress-value">3</span>/5
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Notes about today's progress</label>
+          <textarea 
+            id="goal-${index}-notes" 
+            class="text-area" 
+            placeholder="What did you do today? Any challenges or wins?"
+            rows="4"
+            data-goal-index="${index}"
+          ></textarea>
+        </div>
+      </div>
+    `;
+    
+    formContainer.appendChild(section);
+    
+    // Attach range slider listener
+    setTimeout(() => {
+      const slider = document.getElementById(`goal-${index}-progress`);
+      const display = document.getElementById(`goal-${index}-progress-value`);
+      if (slider && display) {
+        slider.addEventListener('input', (e) => {
+          display.textContent = e.target.value;
+        });
+      }
+    }, 0);
+  });
+}
+
+function getGoalIcon(goalType) {
+  const iconMap = {
+    'weight-loss': 'fa-solid fa-weight-scale',
+    'weight-gain': 'fa-solid fa-chart-line',
+    'body-recomp': 'fa-solid fa-dumbbell',
+    'strength': 'fa-solid fa-dumbbell',
+    'cardio': 'fa-solid fa-heart-pulse',
+    'general': 'fa-solid fa-person-walking',
+    'mobility': 'fa-solid fa-spa',
+    'flexibility': 'fa-solid fa-spa',
+    'injury': 'fa-solid fa-heart-circle-plus',
+    'rehab': 'fa-solid fa-notes-medical',
+    'performance': 'fa-solid fa-medal',
+    'sleep': 'fa-solid fa-bed',
+    'nutrition': 'fa-solid fa-utensils',
+    'wellness': 'fa-solid fa-heart',
+    'mental-health': 'fa-solid fa-brain',
+    'mindfulness': 'fa-solid fa-om',
+    'default': 'fa-solid fa-bullseye'
+  };
+  
+  return iconMap[goalType] || iconMap['default'];
 }
 
 // ==========================================
@@ -73,34 +177,13 @@ function attachEventListeners() {
   if (nextBtn) nextBtn.addEventListener('click', navigateNext);
   if (submitBtn) submitBtn.addEventListener('click', submitCheckIn);
   
-  // Tab navigation
-  const tabs = document.querySelectorAll('.nav-tab');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const domain = tab.getAttribute('data-domain');
-      const domainIndex = domains.indexOf(domain);
-      if (domainIndex !== -1) {
-        currentDomain = domainIndex;
-        updateDomainVisibility();
-      }
-    });
-  });
-  
-  // Range sliders with live updates
+  // Range sliders with live updates for Overall Day
   attachRangeSliderListeners();
-
-  // Goal toggle buttons (yes/no)
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-goal-toggle] .option-btn');
-    if (!btn) return;
-    const group = btn.closest('[data-goal-toggle]');
-    group.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  });
 }
 
 function attachRangeSliderListeners() {
   const sliders = [
+    { id: 'dayScore', displayId: 'dayScoreValue' },
     { id: 'eatScore', displayId: 'eatScoreValue' },
     { id: 'drinkScore', displayId: 'drinkScoreValue' },
     { id: 'sleepScore', displayId: 'sleepScoreValue' }
@@ -122,16 +205,13 @@ function attachRangeSliderListeners() {
 // MODAL CONTROL
 // ==========================================
 
-async function openCheckInModal() {
+function openCheckInModal() {
   const modal = document.getElementById('checkinModal');
   if (!modal) return;
   
-  // Reset to first domain
-  currentDomain = 0;
-  updateDomainVisibility();
-  
-  // Load AI-generated questions for goals if user has active goals
-  await loadGoalsIntoForm();
+  // Reset to first screen
+  currentScreen = 0;
+  updateScreenVisibility();
   
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -150,42 +230,50 @@ function closeCheckInModal() {
 // ==========================================
 
 function navigatePrevious() {
-  if (currentDomain > 0) {
-    currentDomain--;
-    updateDomainVisibility();
+  if (currentScreen > 0) {
+    currentScreen--;
+    updateScreenVisibility();
   }
 }
 
 function navigateNext() {
-  if (currentDomain < domains.length - 1) {
-    currentDomain++;
-    updateDomainVisibility();
+  if (currentScreen < totalScreens - 1) {
+    currentScreen++;
+    updateScreenVisibility();
   }
 }
 
-function updateDomainVisibility() {
+function updateScreenVisibility() {
   const prevBtn = document.getElementById('prevDomain');
   const nextBtn = document.getElementById('nextDomain');
   const submitBtn = document.getElementById('submitCheckin');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
   
-  // Hide all domain sections
+  // Hide all sections
   document.querySelectorAll('.domain-section').forEach(section => {
     section.classList.remove('active');
   });
   
-  // Show current domain
-  const currentDomainName = domains[currentDomain];
-  const currentSection = document.getElementById(`domain-${currentDomainName}`);
+  // Show current section
+  let currentSection;
+  if (currentScreen === 0) {
+    // Day screen
+    currentSection = document.getElementById('domain-day');
+  } else {
+    // Goal screen
+    currentSection = document.getElementById(`domain-goal-${currentScreen - 1}`);
+  }
+  
   if (currentSection) {
     currentSection.classList.add('active');
   }
   
   // Update navigation buttons
-  if (prevBtn) prevBtn.disabled = currentDomain === 0;
+  if (prevBtn) prevBtn.disabled = currentScreen === 0;
   
-  if (currentDomain === domains.length - 1) {
+  if (currentScreen === totalScreens - 1) {
+    // Last screen - show submit button
     if (nextBtn) nextBtn.style.display = 'none';
     if (submitBtn) submitBtn.style.display = 'flex';
   } else {
@@ -194,50 +282,19 @@ function updateDomainVisibility() {
   }
   
   // Update progress bar
-  const progress = ((currentDomain + 1) / domains.length) * 100;
+  const progress = ((currentScreen + 1) / totalScreens) * 100;
   if (progressFill) progressFill.style.width = `${progress}%`;
   
   // Update progress text
-  const domainLabels = {
-    'day': 'Daily Check-in',
-    'goals': 'Goals'
-  };
   if (progressText) {
-    progressText.textContent = domainLabels[currentDomainName] || currentDomainName;
-  }
-  
-  // Update tab navigation highlighting
-  updateTabHighlighting(currentDomainName);
-}
-
-function updateTabHighlighting(domainName) {
-  document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.classList.remove('active');
-    if (tab.getAttribute('data-domain') === domainName) {
-      tab.classList.add('active');
+    if (currentScreen === 0) {
+      progressText.textContent = 'Overall Day';
+    } else {
+      const goalIndex = currentScreen - 1;
+      const goalTitle = userGoals[goalIndex]?.title || userGoals[goalIndex]?.name || `Goal ${goalIndex + 1}`;
+      progressText.textContent = goalTitle;
     }
-  });
-}
-
-// ==========================================
-// AI RECOMMENDATIONS
-// ==========================================
-
-// ==========================================
-// Goals UI will be populated directly from API without AI questions.
-
-// ==========================================
-
-function generateScaleLabels(min, max) {
-  const count = 5;
-  const step = (max - min) / (count - 1);
-  const labels = [];
-  
-  for (let i = 0; i < count; i++) {
-    labels.push(`<span>${Math.round(min + step * i)}</span>`);
   }
-  
-  return labels.join('');
 }
 
 // ==========================================
@@ -253,6 +310,8 @@ async function submitCheckIn() {
   try {
     // Collect all check-in data
     const checkInData = collectCheckInData();
+    
+    console.log('Submitting check-in data:', checkInData);
     
     // Submit to backend
     await submitCheckInData(checkInData);
@@ -276,7 +335,6 @@ async function submitCheckIn() {
 }
 
 function showSuccessMessage() {
-  // Create success notification
   const notification = document.createElement('div');
   notification.style.cssText = `
     position: fixed;
@@ -305,23 +363,15 @@ function showSuccessMessage() {
   
   document.body.appendChild(notification);
   
-  // Add animation
   const style = document.createElement('style');
   style.textContent = `
     @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
   `;
   document.head.appendChild(style);
   
-  // Remove after 3 seconds
   setTimeout(() => {
     notification.style.animation = 'slideIn 0.3s ease-out reverse';
     setTimeout(() => notification.remove(), 300);
@@ -333,189 +383,145 @@ function collectCheckInData() {
     UserID: userProfile?.userId || 'unknown',
     timestamp: new Date().toISOString(),
     date: new Date().toISOString().split('T')[0],
+    createdAt: new Date().toISOString(),
+    
+    // Overall Day data
+    dayScore: parseInt(document.getElementById('dayScore')?.value || 7),
     dayNotes: document.getElementById('dayNotes')?.value || '',
     tags: Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(cb => cb.value),
     eatScore: parseInt(document.getElementById('eatScore')?.value || 3),
     drinkScore: parseInt(document.getElementById('drinkScore')?.value || 3),
     sleepScore: parseInt(document.getElementById('sleepScore')?.value || 3),
-    benjiContext: document.getElementById('benjiContextInput')?.value || '',
-    goalResponses: collectGoalResponses(),
+    
+    // Goals progress
+    goals: []
   };
-  return data;
-}
-
-function collectGoalData() {
-  const goalData = {};
   
-  // Initialize all goal structures
-  goalData.weightLoss = { calories: 0, trainingType: null, weight: 0 };
-  goalData.weightGain = { calories: 0, weight: 0 };
-  goalData.bodyRecomp = { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0, hydration: 0, weight: 0 };
-  goalData.strength = { calories: 0, protein: 0, carbs: 0, fat: 0, hydration: 0, weight: 0 };
-  goalData.cardio = { activityType: null, distance: 0, intensity: 3, pace: '', volume: 0 };
-  goalData.general = { activity: '', method: null, weight: 0 };
-  goalData.mobility = { sessions: 0, tightness: 3, stiffness: 3, soreness: 3, looseness: 3, painLevel: 1, painLocation: '', romNotes: '' };
-  goalData.injury = { painIntensity: 3, painLocation: '', painType: null, painFrequency: null, stiffness: 3, functionScore: 3, activityTolerance: 0 };
-  goalData.rehab = { trainingMinutes: 0, sessions: 0, afterEffects: 3, flareup: false, flareupDescription: '', flareupTriggers: [] };
-  goalData.performance = { minutesTrained: 0, intensity: 3, difficulty: 3, soreness: 3, fatigue: 3 };
-  goalData.menstrual = { cycleDay: 0, flow: null, crampPain: 0, symptoms: [], discharge: null, dischargeNotes: '', oralContraceptives: false, ocpType: '', lastPeriodStart: '' };
-  
-  activeGoals.forEach(goal => {
-    const questions = aiGeneratedQuestions[goal];
-    if (!questions) return;
+  // Collect data for each goal
+  userGoals.forEach((goal, index) => {
+    const progressSlider = document.getElementById(`goal-${index}-progress`);
+    const notesField = document.getElementById(`goal-${index}-notes`);
     
-    // Map goal names to data structure keys
-    const goalKeyMap = {
-      'weight-loss': 'weightLoss',
-      'weight-gain': 'weightGain',
-      'body-recomp': 'bodyRecomp',
-      'strength': 'strength',
-      'cardio': 'cardio',
-      'general': 'general',
-      'mobility': 'mobility',
-      'injury': 'injury',
-      'rehab': 'rehab',
-      'performance': 'performance'
-    };
-    
-    const goalKey = goalKeyMap[goal];
-    if (!goalKey) return;
-    
-    // Find all inputs for this goal
-    const inputs = document.querySelectorAll(`[data-goal="${goal}"]`);
-    inputs.forEach(input => {
-      const field = input.getAttribute('data-field');
-      if (!field) return;
-      
-      let value;
-      if (input.type === 'checkbox') {
-        value = input.checked;
-      } else if (input.type === 'number' || input.type === 'range') {
-        value = parseFloat(input.value) || 0;
-      } else {
-        value = input.value || '';
-      }
-      
-      // Handle nested fields (e.g., "nutrition.calories")
-      const fieldParts = field.split('.');
-      if (fieldParts.length > 1) {
-        // For multi-field inputs, we need to ensure the parent object exists
-        const parentField = fieldParts[0];
-        const childField = fieldParts[1];
-        
-        if (!goalData[goalKey][parentField]) {
-          goalData[goalKey][parentField] = {};
-        }
-        goalData[goalKey][parentField][childField] = value;
-      } else {
-        goalData[goalKey][field] = value;
-      }
+    data.goals.push({
+      goalId: goal.id || goal.goalId || `goal-${index}`,
+      goalTitle: goal.title || goal.name || '',
+      goalType: goal.type || goal.goalType || '',
+      progress: parseInt(progressSlider?.value || 3),
+      notes: notesField?.value || '',
+      timestamp: new Date().toISOString()
     });
   });
   
-  return goalData;
+  return data;
 }
 
 // ==========================================
 // API CALLS
 // ==========================================
 
-async function submitCheckInData(checkInData) {
-  const session = window.BenjiAPI?.getSession?.();
-  if (session && session.user_id && window.BenjiAPI?.postCheckin) {
-    const payload = Object.assign({ user_id: session.user_id }, checkInData);
-    return window.BenjiAPI.postCheckin(payload);
-  }
-  // Fallback: save locally so UI doesn't break if signed-out
-  const key = 'Benji_checkins_local';
-  const arr = JSON.parse(localStorage.getItem(key) || '[]');
-  arr.push(checkInData);
-  localStorage.setItem(key, JSON.stringify(arr));
-  return { saved: true, local: true };
-}
-
-
-// Goals rendering (simple)
-async function loadGoalsIntoForm() {
-  const container = document.getElementById('goalQuestionContainer');
-  if (!container) return;
-  if (!window.BenjiAPI || !window.BenjiAPI.getSession) {
-    container.innerHTML = '<p class="form-note">Connect to Benji to load goals.</p>';
-    return;
-  }
-  const session = window.BenjiAPI.getSession();
-  if (!session || !session.user_id) {
-    container.innerHTML = '<p class="form-note">Sign in to update goals.</p>';
-    return;
-  }
-  container.innerHTML = '<div class="loading-spinner" style="margin: 1.5rem auto;"></div>';
+async function fetchUserProfile() {
   try {
-    const data = await window.BenjiAPI.getGoals(session.user_id);
-    const accepted = data && data.accepted != null ? data.accepted : (data?.goals || data || []);
-    const goals = Array.isArray(accepted) ? accepted : []
-    activeGoals = goals;
-    activeGoals = goals;
-    if (!goals.length) {
-      container.innerHTML = '<p class="form-note" style="text-align:center;">No goals yet. Visit the <a href="goals.html">Goals page</a> to add some.</p>';
-      return;
+    if (window.mockAPI) {
+      console.log('Using mock API for user profile');
+      return await window.mockAPI.getUserProfile();
     }
-    container.innerHTML = goals.map((g, idx) => {
-      const label = g.Description || g.Specific || g.Specifics || `Goal ${idx+1}`;
-      const id = g.id || g.ID || g._id || `goal_${idx}`;
-      const measurable = g.Measurable || '';
-      return `
-        <div class="goal-card" data-goal-id="${id}">
-          <div class="domain-header" style="margin-bottom:8px;">
-            <h3 class="domain-title" style="margin:0;">${label}</h3>
-            ${g.Time_Bound ? `<p class="checkin-hint" style="margin:4px 0 0 0;">${g.Time_Bound}</p>` : ''}
-            ${measurable ? `<p class="checkin-hint" style="margin:2px 0 0 0;">${measurable}</p>` : ''}
-          </div>
-          <div class="form-group">
-            <label class="form-label">Did you work on this today?</label>
-            <div class="button-group" data-goal-toggle="${id}">
-              <button type="button" class="option-btn" data-value="yes">Yes</button>
-              <button type="button" class="option-btn active" data-value="no">No</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">What did you do / measure?</label>
-            <input type="text" class="text-input" data-goal-progress="${id}" placeholder="e.g. 7.0 hrs sleep, 3x10 squats, 2,000 kcal" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Notes (optional)</label>
-            <textarea class="text-area" data-goal-notes="${id}" rows="2" placeholder="Any details or obstacles"></textarea>
-          </div>
-        </div>`;
-    }).join('');
-  } catch (err) {
-    console.error('goal load error', err);
-    container.innerHTML = '<p class="form-note">Unable to load goals right now.</p>';
+    
+    const response = await fetch('/api/user/profile', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
   }
+  
+  return {
+    userId: '0JAbns4VXVE6GsEDluTM'
+  };
 }
 
-function collectGoalResponses() {
-  const cards = Array.from(document.querySelectorAll('.goal-card'));
-  return cards.map(card => {
-    const id = card.getAttribute('data-goal-id');
-    const toggle = card.querySelector('[data-goal-toggle] .option-btn.active');
-    const completed = toggle ? toggle.dataset.value === 'yes' : false;
-    const progress = card.querySelector('[data-goal-progress]')?.value?.trim() || '';
-    const notes = card.querySelector('[data-goal-notes]')?.value?.trim() || '';
-    return { goalId: id, completed, progress, notes };
+async function fetchUserGoals() {
+  // Preferred: BenjiAPI
+  if (window.BenjiAPI && window.BenjiAPI.getSession && window.BenjiAPI.getGoals) {
+    const session = window.BenjiAPI.getSession();
+    if (session && session.user_id) {
+      try {
+        const data = await window.BenjiAPI.getGoals(session.user_id);
+        const raw = Array.isArray(data) ? data : (data?.goals || data?.accepted || []);
+        return normalizeGoals(raw);
+      } catch (err) {
+        console.error('BenjiAPI goals fetch failed', err);
+      }
+    }
+  }
+
+  // Fallback: local API
+  try {
+    const response = await fetch('/api/user/goals', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const raw = Array.isArray(data) ? data : (data?.goals || data?.accepted || []);
+      return normalizeGoals(raw);
+    }
+  } catch (error) {
+    console.error('Error fetching user goals:', error);
+  }
+  
+  return normalizeGoals([]);
+}
+
+function normalizeGoals(rawGoals) {
+  if (!Array.isArray(rawGoals)) return [];
+  return rawGoals.map((g, idx) => {
+    // Support both string and object
+    if (typeof g === 'string') {
+      return {
+        id: g,
+        title: g,
+        description: '',
+        target: '',
+        timeline: '',
+        remaining: ''
+      };
+    }
+    return {
+      id: g.id || g.ID || g._id || g.goalId || `goal-${idx}`,
+      title: g.title || g.name || g.Description || g.Specific || 'Goal',
+      description: g.description || g.Description || '',
+      target: g.target || g.Measurable || g.measurable || '',
+      measurable: g.Measurable || g.measurable || '',
+      timeline: g.timeline || g.Time_Bound || g.timebound || g.goalLength || g.length || '',
+      remaining: g.remaining || g.Progress || g.progress || '',
+      type: g.type || g.goalType || g.Category || g.category || 'general'
+    };
   });
 }
 
-// Fetch goals from backend
-async function fetchUserGoals() {
-  const session = window.BenjiAPI?.getSession?.();
-  if (!session || !session.user_id) return [];
-  try {
-    const data = await window.BenjiAPI.getGoals(session.user_id);
-    const accepted = data && data.accepted != null ? data.accepted : (data?.goals || data || []);
-    const goals = Array.isArray(accepted) ? accepted : [];
-    return goals.map((g, idx) => g.id || g.ID || g._id || g.Description || `goal_${idx}`);
-  } catch (err) {
-    console.error('Failed to fetch goals', err);
-    return [];
+async function submitCheckInData(checkInData) {
+  // Preferred: BenjiAPI
+  if (window.BenjiAPI && window.BenjiAPI.postCheckin && window.BenjiAPI.getSession) {
+    const session = window.BenjiAPI.getSession();
+    if (session && session.user_id) {
+      return window.BenjiAPI.postCheckin(Object.assign({ user_id: session.user_id }, checkInData));
+    }
   }
+
+  // Fallback: local endpoint
+  const response = await fetch('/api/checkin/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(checkInData)
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to submit check-in');
+  }
+  
+  return await response.json();
 }

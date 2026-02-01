@@ -104,14 +104,6 @@
 
       <!-- Domain Navigation Tabs -->
       <nav class="Benji-nav" id="checkinTabs">
-        <button class="nav-tab active" data-domain="day">
-          <span class="tab-icon"><i class="fa-solid fa-sun" aria-hidden="true"></i></span>
-          <span class="tab-label">Overall Day</span>
-        </button>
-        <button class="nav-tab" data-domain="goals">
-          <span class="tab-icon"><i class="fa-solid fa-bullseye" aria-hidden="true"></i></span>
-          <span class="tab-label">Goals</span>
-        </button>
       </nav>
 
       <!-- Progress Indicator -->
@@ -187,10 +179,13 @@
           <div class="domain-section" id="domain-goals">
             <div class="section-intro">
               <h2 class="section-title">Goals</h2>
-              <p class="section-description">Update each active goal with today's progress.</p>
+              <p class="section-description">Update each active goal with today’s progress.</p>
             </div>
-            <div class="form-domain" id="goalQuestionContainer">
+            <div class="goal-section-stack" id="goalQuestionContainer">
               <p class="form-note">Loading your goals...</p>
+            </div>
+            <div class="form-domain" id="goalAnswerContainer" style="margin-top: var(--space-md);">
+              <!-- Filled after submission to show answers beneath goals -->
             </div>
           </div>
 
@@ -202,7 +197,6 @@
         <button class="nav-arrow-btn" id="prevDomain" disabled><span>&larr; Previous</span></button>
         <button class="nav-arrow-btn primary" id="nextDomain"><span>Next &rarr;</span></button>
         <button class="submit-btn" id="submitCheckin" style="display: none;">
-          <span class="btn-icon">&#10024;</span>
           <span class="btn-text">Complete Check-in</span>
         </button>
       </div>
