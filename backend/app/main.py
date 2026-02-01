@@ -277,6 +277,14 @@ def authenticate(username: str, password: str) -> Optional[str]:
             return uid
     return None
 
+class AddCheckInRequest(BaseModel):
+    check_in_data: Dict[str, Any]  # Raw JSON object - no validation
+
+class AddCheckInResponse(BaseModel):
+    goal_id: str
+    check_in_id: str
+    message: str
+
 def get_user_by_id(user_id: str) -> Optional[dict]:
     users = load_users()
     return users.get(user_id)
@@ -1612,6 +1620,51 @@ def get_health_history(user_id: str, limit: int = 30):
     
     return HealthHistoryResponse(days=days)
 
+# Add this endpoint after the delete_goal_entry endpoint (around line 1075)
+@app.post("/goals/{goal_id}/checkins", response_model=AddCheckInResponse)
+def add_check_in_to_goal(goal_id: str, payload: AddCheckInRequest):
+    """
+    Add a check-in to a specific goal. Stores check-ins as a JSON string array
+    in the CheckIn field.
+    """
+    # Verify goal exists
+    goal_ref = db.collection("Goals").document(goal_id)
+    goal_snap = goal_ref.get()
+    
+    if not goal_snap.exists:
+        raise HTTPException(status_code=404, detail=f"Goal with ID '{goal_id}' not found")
+    
+    goal_data = goal_snap.to_dict()
+    
+    # Generate check-in ID
+    check_in_id = f"checkin_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:8]}"
+    
+    # Add check_in_id to the data
+    payload.check_in_data["check_in_id"] = check_in_id
+    
+    # Get existing check-ins
+    existing_checkins = []
+    if "CheckIn" in goal_data and goal_data["CheckIn"]:
+        try:
+            existing_checkins = json.loads(goal_data["CheckIn"])
+            if not isinstance(existing_checkins, list):
+                existing_checkins = []
+        except json.JSONDecodeError:
+            existing_checkins = []
+    
+    # Append new check-in
+    existing_checkins.append(payload.check_in_data)
+    
+    # Update goal with JSON string
+    goal_ref.update({
+        "CheckIn": json.dumps(existing_checkins)
+    })
+    
+    return AddCheckInResponse(
+        goal_id=goal_id,
+        check_in_id=check_in_id,
+        message=f"Check-in added to goal"
+    )
 
 # Favicon: avoid 404 when browser requests /favicon.ico
 @app.get("/favicon.ico", include_in_schema=False)
