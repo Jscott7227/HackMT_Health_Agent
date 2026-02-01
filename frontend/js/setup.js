@@ -614,16 +614,21 @@ async function completeSetup() {
     btn.disabled = true;
 
     // Persist profile info to backend if available
+    // Backend expects: { profile: { BenjiFacts?, Height?, Weight? } } (nested, PascalCase)
     try {
         var session = getSession();
         if (session && session.user_id) {
-            var payload = {};
-            if (state.height) payload.height = state.height;
-            if (state.weight) payload.weight = state.weight;
+            var profileFields = {};
+            if (state.height) profileFields.Height = state.height;
+            if (state.weight) profileFields.Weight = state.weight;
             var facts = buildBenjiFacts();
-            if (facts) payload.benji_facts = facts;
+            if (facts) {
+                // Backend requires BenjiFacts to be a valid JSON string
+                profileFields.BenjiFacts = JSON.stringify({ summary: facts });
+            }
 
-            if (Object.keys(payload).length) {
+            if (Object.keys(profileFields).length) {
+                var payload = { profile: profileFields };
                 var res = await fetch(API_BASE + "/profileinfo/" + session.user_id, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
@@ -631,6 +636,7 @@ async function completeSetup() {
                 });
 
                 if (res.status === 404) {
+                    // Profile doesn't exist yet, create it with POST
                     await fetch(API_BASE + "/profileinfo/" + session.user_id, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
