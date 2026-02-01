@@ -163,7 +163,7 @@ class BenjiLLM:
         for name, out in tool_outputs.items():
             combined += f"{name}: {out}\n"
             
-        # Same MCP-style instructions (scope + constraints) so agent run stays on-topic and safe
+        # Same Agent Protocol Instructions (scope + constraints) so agent run stays on-topic and safe
         agent_instructions = format_agent_instructions()
         medication_notes = (
             "When generating medication schedules: check contraindications, "
@@ -271,7 +271,7 @@ class BenjiLLM:
     def chat(self, user_input: str, history: list = None, user_facts: dict = None):
         history = history or []
 
-        # MCP-style: personality, scope, and constraints from instructions.py
+        # Structured Agent Protocols: personality, scope, and constraints from instructions.py
         agent_instructions = format_agent_instructions()
         facts_context = format_user_facts(user_facts=user_facts)
 
