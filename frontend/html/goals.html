@@ -516,7 +516,7 @@
         </div>
 
         <p class="goals-count"><span id="acceptedCount">0</span> of 3 goals accepted</p>
-        
+
         <div class="goals-list" id="goalsList"></div>
 
         <div class="finalize-section">
@@ -595,8 +595,8 @@
         let displayedGoals = [];
         let usedGoalIndices = new Set();
         const session = JSON.parse(
-            sessionStorage.getItem("sanctuary_session") ||
             localStorage.getItem("sanctuary_session") ||
+            sessionStorage.getItem("sanctuary_session") ||
             "{}"
         );
 
@@ -806,15 +806,42 @@
         }
 
         // Finalize and save accepted goals
-        function finalizeGoals() {
+        async function finalizeGoals() {
             const validationMsg = document.getElementById('finalizeValidationMsg');
             validationMsg.classList.remove('visible');
-            const acceptedGoals = displayedGoals.filter(g => g.status === 'accepted');
+
+            const acceptedGoals = displayedGoals
+                .filter(g => g.status === 'accepted')
+                .map(g => g.fullSMART);
 
             if (acceptedGoals.length === 0) {
                 validationMsg.classList.add('visible');
                 return;
             }
+
+            const userId = session.user_id || null;
+
+            try {
+                const res = await fetch(`http://localhost:8000/goals/${userId}/accepted`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        goals: acceptedGoals
+                    })
+                });
+
+                if (!res.ok) throw new Error('Failed to save goals');
+
+                const data = await res.json();
+
+            } catch (err) {
+                console.error(err);
+                validationMsg.textContent = "Error saving goals. Please try again.";
+                validationMsg.classList.add('visible');
+            }
+
 
             // Smooth fade-out then navigate to main app (no popup)
             document.body.classList.add('page-transition-out');
