@@ -771,9 +771,9 @@
             let buttonAction = `acceptGoal('${goal.id}')`;
 
             if (goal.status === 'accepted') {
-                statusContent = '<div class="goal-status accepted" onclick="unacceptGoal(\'' + goal.id + '\')" style="cursor: pointer;">✓ Accepted (click to undo)</div>';
+                statusContent = '<div class="goal-status accepted" onclick="unacceptGoal(\'' + goal.id + '\')" style="cursor: pointer;">Undo</div>';
             } else if (goal.status === 'skipped') {
-                statusContent = '<div class="goal-status skipped" onclick="unskipGoal(\'' + goal.id + '\')" style="cursor: pointer;">Skipped (click to undo)</div>';
+                statusContent = '<div class="goal-status skipped" onclick="unskipGoal(\'' + goal.id + '\')" style="cursor: pointer;">Undo</div>';
             } else {
                 statusContent = `<div class="goal-actions">
                     <button class="goal-btn goal-btn-accept" onclick="acceptGoal('${goal.id}')">
