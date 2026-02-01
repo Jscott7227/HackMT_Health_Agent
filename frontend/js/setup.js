@@ -92,25 +92,25 @@ function getSession() {
 
 function buildBenjiFacts() {
     var factsObj = {};
-if (state.goal) factsObj.goal = GOAL_LABELS[state.goal] || state.goal;
-if (state.experience) factsObj.experience = EXP_LABELS[state.experience] || state.experience;
-if (state.constraints && state.constraints.length) factsObj.constraints = state.constraints;
-if (state.health && state.health.length) {
-    factsObj.health = state.health;
-    if (state.healthDetail) factsObj.healthDetail = state.healthDetail;
-}
-if (state.gender) factsObj.gender = state.gender;
-if (state.cycleTracking) factsObj.cycleTracking = state.cycleTracking;
-if (state.medTracking === 'yes') factsObj.medications = state.medList || 'Yes';
-if (state.mentalReflection) factsObj.notes = state.mentalReflection;
-if (state.mentalConsentNote) factsObj.mentalConsentNote = state.mentalConsentNote;
-if (state.mood) factsObj.mood = GENERIC_SCALE[state.mood];
-if (state.stress) factsObj.stress = GENERIC_SCALE[state.stress];
-if (state.energy) factsObj.energy = GENERIC_SCALE[state.energy];
-if (state.sleep) factsObj.sleep = SLEEP_LABELS[state.sleep];
-if (state.activity !== undefined && state.activity !== null) factsObj.activity = ACTIVITY_LABELS[state.activity];
-if (state.confidence) factsObj.confidence = state.confidence;
-return factsObj;
+    if (state.goal) factsObj.goal = GOAL_LABELS[state.goal] || state.goal;
+    if (state.experience) factsObj.experience = EXP_LABELS[state.experience] || state.experience;
+    if (state.constraints && state.constraints.length) factsObj.constraints = state.constraints;
+    if (state.health && state.health.length) {
+        factsObj.health = state.health;
+        if (state.healthDetail) factsObj.healthDetail = state.healthDetail;
+    }
+    if (state.gender) factsObj.gender = state.gender;
+    if (state.cycleTracking) factsObj.cycleTracking = state.cycleTracking;
+    if (state.medTracking === 'yes') factsObj.medications = state.medList || 'Yes';
+    if (state.mentalReflection) factsObj.notes = state.mentalReflection;
+    if (state.mentalConsentNote) factsObj.mentalConsentNote = state.mentalConsentNote;
+    if (state.mood) factsObj.mood = GENERIC_SCALE[state.mood];
+    if (state.stress) factsObj.stress = GENERIC_SCALE[state.stress];
+    if (state.energy) factsObj.energy = GENERIC_SCALE[state.energy];
+    if (state.sleep) factsObj.sleep = SLEEP_LABELS[state.sleep];
+    if (state.activity !== undefined && state.activity !== null) factsObj.activity = ACTIVITY_LABELS[state.activity];
+    if (state.confidence) factsObj.confidence = state.confidence;
+    return factsObj;
 }
 
 /* --------------------------------------------------------
@@ -192,11 +192,17 @@ async function goTo(n) {
             void ring.offsetWidth;
             ring.style.animation = '';
         }
-        const smartGoals = await fetchGoalsAndContinue();
-        localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
+        fetchGoalsAndContinue()
+            .then(function (smartGoals) {
+                // Save the fetched goals to localStorage
+                localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
 
-        // Optional: slight delay so animation feels natural
-        await completeSetup();
+                // Do any follow-up work here, e.g., run completeSetup
+                completeSetup();
+            })
+            .catch(function (err) {
+                console.error("Goal fetch error:", err);
+            });
     }
 
     updateCtaForScreen(n);
@@ -211,7 +217,7 @@ async function startAnalysis() {
 async function fetchGoalsAndContinue() {
     var finalGoal = FINALGOAL
     const userId = session.user_id || null;
-    
+
     try {
         var res = await fetch('http://localhost:8000/goals', {
             method: 'POST',
@@ -231,7 +237,7 @@ async function fetchGoalsAndContinue() {
         var smartGoals = data.smart_goals || [];
 
         return smartGoals
-        
+
 
 
     } catch (err) {
@@ -718,7 +724,7 @@ if (finalGoalInput) {
 }
 
 function digitsOnly(el) {
-  el.value = (el.value || "").replace(/[^\d]/g, "");
+    el.value = (el.value || "").replace(/[^\d]/g, "");
 }
 
 /* --------------------------------------------------------
@@ -781,7 +787,7 @@ async function completeSetup() {
                     body: JSON.stringify(payload)
                 });
             }
-            
+
             if (!res.ok && res.status !== 409) {
                 console.error("ProfileInfo creation failed:", res.status, await res.text());
             }
