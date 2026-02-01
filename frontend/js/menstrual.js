@@ -7,6 +7,7 @@
   /* ── Constants ──────────────────────────────────────── */
   const FLOWLOG_KEY  = "Benji_flowLog";
   const CYCLE_LENGTH = 28;
+  const BACKEND_URL = "http://127.0.0.1:8000";
 
   const PHASES = [
     { name: "Menstrual",   start: 1,  end: 5,  color: "#c77e5d" },
@@ -50,16 +51,119 @@
   let viewYear, viewMonth;
   let editingDate = null;
 
+  /* ── Auth Helper ────────────────────────────────────── */
+  function getUserId() {
+    try {
+      const session = localStorage.getItem("sanctuary_session");
+      if (session) {
+        const parsed = JSON.parse(session);
+        return parsed.user_id || null;
+      }
+      // Also check sessionStorage
+      const sessionAlt = sessionStorage.getItem("sanctuary_session");
+      if (sessionAlt) {
+        const parsed = JSON.parse(sessionAlt);
+        return parsed.user_id || null;
+      }
+    } catch (e) {
+      console.error("Error getting user_id:", e);
+    }
+    return null;
+  }
+
   /* ── Persistence ────────────────────────────────────── */
-  function loadFlowLog() {
+  function loadFlowLogFromStorage() {
     try {
       const raw = localStorage.getItem(FLOWLOG_KEY);
       if (raw) flowLog = JSON.parse(raw);
     } catch { /* ignore */ }
   }
 
-  function saveFlowLog() {
+  function saveFlowLogToStorage() {
     localStorage.setItem(FLOWLOG_KEY, JSON.stringify(flowLog));
+  }
+
+  async function loadFlowLogFromAPI() {
+    const userId = getUserId();
+    if (!userId) {
+      // Not logged in, load from localStorage only
+      loadFlowLogFromStorage();
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/menstrual/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.entries && Object.keys(data.entries).length > 0) {
+          flowLog = data.entries;
+          // Update localStorage as backup
+          saveFlowLogToStorage();
+        } else {
+          // No data in API, check localStorage for migration
+          const stored = localStorage.getItem(FLOWLOG_KEY);
+          if (stored) {
+            flowLog = JSON.parse(stored);
+            if (Object.keys(flowLog).length > 0) {
+              // Migrate to API
+              await saveFlowLogToAPI();
+            }
+          } else {
+            flowLog = {};
+          }
+        }
+      } else if (response.status === 404) {
+        // User exists but no menstrual doc - load from localStorage for migration
+        loadFlowLogFromStorage();
+        if (Object.keys(flowLog).length > 0) {
+          await saveFlowLogToAPI();
+        }
+      } else {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+    } catch (e) {
+      console.error("Error loading from API, falling back to localStorage:", e);
+      loadFlowLogFromStorage();
+    }
+  }
+
+  async function saveFlowLogToAPI() {
+    const userId = getUserId();
+    if (!userId) {
+      // Not logged in, save to localStorage only
+      saveFlowLogToStorage();
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/menstrual/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries: flowLog })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      // Also update localStorage as backup
+      saveFlowLogToStorage();
+      console.log("Flow log saved to API");
+    } catch (e) {
+      console.error("Error saving to API:", e);
+      // Still save to localStorage
+      saveFlowLogToStorage();
+    }
+  }
+
+  // Unified load function (async)
+  async function loadFlowLog() {
+    await loadFlowLogFromAPI();
+  }
+
+  // Unified save function (async)
+  async function saveFlowLog() {
+    await saveFlowLogToAPI();
   }
 
   /* ── Date helpers ───────────────────────────────────── */
@@ -279,7 +383,7 @@
     editingDate = null;
   }
 
-  function saveFlowEntry() {
+  async function saveFlowEntry() {
     if (!editingDate) return;
 
     const flowBtn = $("#flowBtnGroup .flow-btn.active");
@@ -305,15 +409,15 @@
       if (discharge) flowLog[editingDate].discharge = discharge;
     }
 
-    saveFlowLog();
+    await saveFlowLog();
     closeFlowEditor();
     renderAll();
   }
 
-  function deleteFlowEntry() {
+  async function deleteFlowEntry() {
     if (!editingDate) return;
     delete flowLog[editingDate];
-    saveFlowLog();
+    await saveFlowLog();
     closeFlowEditor();
     renderAll();
   }
@@ -399,12 +503,12 @@
   }
 
   /* ── Event listeners ────────────────────────────────── */
-  function init() {
+  async function init() {
     const now = new Date();
     viewYear = now.getFullYear();
     viewMonth = now.getMonth();
 
-    loadFlowLog();
+    await loadFlowLog();
 
     // Calendar nav
     $("#calPrev").addEventListener("click", () => {
