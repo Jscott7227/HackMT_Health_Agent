@@ -365,16 +365,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  document
-    .querySelectorAll(".suggestion-chip")
-    .forEach((chip) =>
-      chip.addEventListener("click", () => {
+  // Use event delegation for suggestion chips so they work even after DOM updates
+  if (chatHistoryEl) {
+    chatHistoryEl.addEventListener("click", (e) => {
+      const chip = e.target.closest(".suggestion-chip");
+      if (chip) {
         const suggestion = chip.getAttribute("data-suggestion");
         if (suggestion) {
           sendMessage(suggestion);
         }
-      })
-    );
+      }
+    });
+  }
 
   setTimeout(() => {
     if (inputEl) {
