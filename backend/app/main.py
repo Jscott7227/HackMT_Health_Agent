@@ -293,6 +293,10 @@ class AddCheckInResponse(BaseModel):
     check_in_id: str
     message: str
 
+class GetCheckInsResponse(BaseModel):
+    goal_id: str
+    check_ins: List[Dict[str, Any]]
+
 def get_user_by_id(user_id: str) -> Optional[dict]:
     users = load_users()
     return users.get(user_id)
@@ -1787,6 +1791,43 @@ def add_check_in_to_goal(goal_id: str, payload: AddCheckInRequest):
         goal_id=goal_id,
         check_in_id=check_in_id,
         message=f"Check-in added to goal"
+    )
+
+@app.get("/goals/{goal_id}/checkins", response_model=GetCheckInsResponse)
+def get_check_ins_for_goal(goal_id: str):
+    """
+    Retrieve all check-ins for a specific goal.
+    
+    Args:
+        goal_id: The ID of the goal to retrieve check-ins from
+    
+    Returns:
+        GetCheckInsResponse with the goal_id and list of check-ins
+    """
+    # Verify goal exists
+    goal_ref = db.collection("Goals").document(goal_id)
+    goal_snap = goal_ref.get()
+    
+    if not goal_snap.exists:
+        raise HTTPException(status_code=404, detail=f"Goal with ID '{goal_id}' not found")
+    
+    goal_data = goal_snap.to_dict()
+    
+    # Get CheckIn field and parse it
+    check_ins = []
+    if "CheckIn" in goal_data and goal_data["CheckIn"]:
+        try:
+            check_ins = json.loads(goal_data["CheckIn"])
+            # Ensure it's a list
+            if not isinstance(check_ins, list):
+                check_ins = [check_ins]
+        except json.JSONDecodeError:
+            # If CheckIn is not valid JSON, return empty list
+            check_ins = []
+    
+    return GetCheckInsResponse(
+        goal_id=goal_id,
+        check_ins=check_ins
     )
 
 # Favicon: avoid 404 when browser requests /favicon.ico
