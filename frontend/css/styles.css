@@ -1436,15 +1436,7 @@ body {
 }
 
 .benji-status-dot {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #016844;
-    border: 2px solid var(--bg-primary);
-    box-shadow: 0 0 0 2px rgba(1, 104, 68, 0.3);
+    display: none;
 }
 
 .benji-brand h1 {
