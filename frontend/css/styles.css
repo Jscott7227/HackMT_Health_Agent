@@ -1895,7 +1895,7 @@ body {
     width: 100%;
     padding: 12px 16px;
     font-size: 15px;
-    min-height: 100px; /* Change this */
+    min-height: 75px; /* Change this */
     box-sizing: border-box;
 }
 
