@@ -171,6 +171,10 @@
 
       // Also update localStorage as backup
       localStorage.setItem(STORAGE_KEY, JSON.stringify(medications));
+      // Invalidate AI schedule cache so next "Benji's suggested schedule" click runs the agent with new list
+      if (window.BenjiAPI && window.BenjiAPI.clearCachedAiSchedule) {
+        window.BenjiAPI.clearCachedAiSchedule(userId);
+      }
       console.log("Medications saved to API");
     } catch (e) {
       console.error("Error saving to API:", e);
@@ -387,6 +391,10 @@
       }
 
       const data = await response.json();
+      // Cache AI schedule so we don't call the agent again until user clicks the button or meds change
+      if (useAi && window.BenjiAPI && window.BenjiAPI.setCachedAiSchedule) {
+        window.BenjiAPI.setCachedAiSchedule(userId, data);
+      }
       displayStructuredSchedule(data, useAi);
       if (showLoadingIndicator) {
         showMessage(useAi ? "Benji's schedule loaded" : "Standard schedule loaded", "success");
@@ -687,10 +695,10 @@
     fetchSchedule(true, false); // useAi = false
   });
 
-  // Benji's Suggested Schedule button (AI-powered)
+  // Benji's Suggested Schedule button (AI-powered) – only place that calls the agent
   benjiScheduleBtn?.addEventListener("click", () => {
     localStorage.setItem(SCHEDULE_MODE_KEY, 'ai');
-    fetchSchedule(true, true); // useAi = true
+    fetchSchedule(true, true); // useAi = true; on success fetchSchedule caches the result
   });
 
   // Compliance date picker
@@ -705,19 +713,68 @@
   // ---- Initialization ----
   async function init() {
     await loadMedicationsFromAPI();
-    
-    // Auto-load schedule on page load with persisted mode
+
+    const userId = getUserId();
     const savedMode = localStorage.getItem(SCHEDULE_MODE_KEY);
     const useAi = savedMode === 'ai';
-    
-    // Set initial button states based on saved mode
+
     currentScheduleMode = useAi ? 'ai' : 'standard';
     updateScheduleButtonStates();
-    
-    // Load the schedule with the saved mode (no loading indicator on init)
-    await fetchSchedule(false, useAi);
+
+    if (useAi && window.BenjiAPI && window.BenjiAPI.getCachedAiSchedule) {
+      const cached = window.BenjiAPI.getCachedAiSchedule(userId);
+      if (cached && cached.timeSlotsDetailed && cached.timeSlotsDetailed.length > 0) {
+        displayStructuredSchedule(cached, true);
+        await loadCompliance(currentComplianceDate);
+        return;
+      }
+      // No cache: show standard schedule and hint to click Benji's button to generate
+      await fetchSchedule(false, false);
+      currentScheduleMode = 'ai';
+      updateScheduleButtonStates();
+      if (scheduleDisplay) {
+        const hint = document.createElement('p');
+        hint.style.cssText = 'text-align: center; color: var(--text-secondary); margin-top: var(--space-md); font-size: 0.9em;';
+        hint.textContent = "Click \"Benji's Suggested Schedule\" to generate a personalized schedule.";
+        scheduleDisplay.appendChild(hint);
+      }
+    } else {
+      await fetchSchedule(false, false);
+    }
     await loadCompliance(currentComplianceDate);
   }
 
-  init();
+  // ---- Visibility change listener: use cache only for AI mode (no API call) ----
+  let isInitialized = false;
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState !== 'visible' || !isInitialized) return;
+
+    const userId = getUserId();
+    const savedMode = localStorage.getItem(SCHEDULE_MODE_KEY);
+    const useAi = savedMode === 'ai';
+
+    if (useAi && window.BenjiAPI && window.BenjiAPI.getCachedAiSchedule) {
+      const cached = window.BenjiAPI.getCachedAiSchedule(userId);
+      if (cached) {
+        currentScheduleMode = 'ai';
+        updateScheduleButtonStates();
+        displayStructuredSchedule(cached, true);
+        return;
+      }
+    }
+
+    if (currentScheduleMode !== (useAi ? 'ai' : 'standard')) {
+      currentScheduleMode = useAi ? 'ai' : 'standard';
+      updateScheduleButtonStates();
+      if (!useAi) await fetchSchedule(false, false);
+      else if (window.BenjiAPI && window.BenjiAPI.getCachedAiSchedule) {
+        const cached = window.BenjiAPI.getCachedAiSchedule(userId);
+        if (cached) displayStructuredSchedule(cached, true);
+      }
+    }
+  });
+
+  init().then(() => {
+    isInitialized = true;
+  });
 })();

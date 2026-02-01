@@ -12,6 +12,7 @@ This app uses **Firestore** with database id **`benji`** (not the default `(defa
 | `Goals`                 | user id            | User goals                       |
 | `ChatHistory`           | user id            | Chat messages                    |
 | `Medications`           | user id            | Medication list                 |
+| `MenstrualFlowLog`      | user id            | Cycle/flow log entries           |
 | `MedicationCompliance`  | `{user_id}_{date}` | Daily compliance (field: user_id)|
 | `debug`                 | e.g. api_health    | Internal / health checks        |
 
@@ -52,7 +53,7 @@ This app uses **Firestore** with database id **`benji`** (not the default `(defa
 
 ## Security rules
 
-- **User**, **ProfileInfo**, **Goals**, **ChatHistory**, **Medications**: read/write only when `request.auth.uid` equals the document id (one doc per user).
+- **User**, **ProfileInfo**, **Goals**, **ChatHistory**, **Medications**, **MenstrualFlowLog**: read/write only when `request.auth.uid` equals the document id (one doc per user).
 - **CheckIns**: read/write only when `UserID` equals `request.auth.uid`.
 - **MedicationCompliance**: read/write only when the document’s `user_id` equals `request.auth.uid`.
 - **debug**: no client access (`allow read, write: if false`).

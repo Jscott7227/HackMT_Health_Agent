@@ -2,8 +2,10 @@
 ROUTE MAP
 Screen 5 (mental health detail) is spliced in or out
 at runtime based on the consent answer on screen 3.
+Screen 14 (menstrual cycle) is added only for non-male genders.
+12 screens by default, 13 if menstrual cycle is included.
 -------------------------------------------------------- */
-var ROUTE = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 14, 15, 11, 12, 13];
+var ROUTE = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 15, 11, 12, 13];
 var returnToReview = false;
 var currentRouteIndex = 0;
 const session = JSON.parse(
@@ -280,7 +282,16 @@ CTA LABELS – allow skipping any question
 -------------------------------------------------------- */
 function setCtaLabel(cta, hasData) {
     if (!cta) return;
-    cta.textContent = hasData ? 'Continue' : 'Skip for now';
+
+    // Check if this is the last step before review (screen 11)
+    var isLastStep = cta.id === 'cta-11';
+
+    if (isLastStep) {
+        cta.textContent = hasData ? 'Continue to Review' : 'Skip to Review';
+    } else {
+        cta.textContent = hasData ? 'Continue' : 'Continue';
+    }
+
     cta.classList.toggle('is-skip', !hasData);
     cta.removeAttribute('disabled');
 }
@@ -328,7 +339,7 @@ function updateCtaForScreen(screenId) {
 CONSENT GATING
 -------------------------------------------------------- */
 function applyConsentRoute() {
-    var base = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 14, 15, 11, 12, 13];
+    var base = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 15, 11, 12, 13];
     if (state.mentalConsent === 'yes') {
         // insert screen 5 right after screen 4
         for (var i = 0; i < base.length; i++) {
@@ -336,6 +347,13 @@ function applyConsentRoute() {
         }
     }
     ROUTE = base;
+    // Re-apply gender route to ensure menstrual cycle screen is added if needed
+    if (state.gender && state.gender !== 'male') {
+        var insertAt = ROUTE.indexOf(10) + 1;
+        if (insertAt > 0 && ROUTE.indexOf(14) === -1) {
+            ROUTE.splice(insertAt, 0, 14);
+        }
+    }
     updateStepLabels();
 }
 

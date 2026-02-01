@@ -10,6 +10,9 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,500&family=DM+Sans:wght@400;500;600&display=swap"
         rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../css/styles.css">
     <style>
         body {
@@ -53,13 +56,15 @@
         }
 
         .goal-card {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border: 2px solid rgba(140, 162, 145, 0.2);
-            border-radius: 16px;
+            border-radius: 18px;
             padding: 2rem;
-            transition: all 0.3s ease;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(10, 24, 16, 0.08);
         }
 
         .goal-card::before {
@@ -71,7 +76,12 @@
             height: 4px;
             background: linear-gradient(90deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.35s ease;
+        }
+
+        .goal-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(10, 24, 16, 0.12);
         }
 
         .goal-card:hover::before {
@@ -80,39 +90,35 @@
 
         .goal-card.accepted {
             border-color: var(--sage, #8ca291);
-            background: rgba(140, 162, 145, 0.05);
+            background: rgba(140, 162, 145, 0.08);
         }
 
         .goal-card.accepted::before {
             opacity: 1;
         }
 
-        .goal-card.skipped {
-            background: rgba(0, 0, 0, 0.03);
-            border-color: rgba(0, 0, 0, 0.1);
-            opacity: 0.6;
-        }
-
-        .goal-card.skipped .goal-title,
-        .goal-card.skipped .goal-description {
-            color: var(--text-secondary, #999);
-        }
-
-        .goal-card.replacing {
-            opacity: 0.5;
-            pointer-events: none;
-        }
 
         .goal-header {
             display: flex;
             align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
         }
 
         .goal-icon {
-            font-size: 2rem;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(140, 162, 145, 0.1), rgba(140, 162, 145, 0.15));
+            border-radius: 14px;
             flex-shrink: 0;
+        }
+
+        .goal-icon i {
+            font-size: 1.75rem;
+            color: var(--sage, #8ca291);
         }
 
         .goal-content {
@@ -121,10 +127,11 @@
 
         .goal-title {
             font-family: 'Crimson Pro', serif;
-            font-size: 1.5rem;
+            font-size: 1.625rem;
             font-weight: 600;
             color: var(--text-primary, #1a1a1a);
             margin-bottom: 0.5rem;
+            line-height: 1.3;
         }
 
         .goal-description {
@@ -135,6 +142,31 @@
             margin-bottom: 1rem;
         }
 
+        .goal-smart-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding: 1rem;
+            background: rgba(140, 162, 145, 0.05);
+            border-radius: 10px;
+            border-left: 3px solid var(--sage, #8ca291);
+        }
+
+        .smart-detail {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text-secondary, #555);
+            line-height: 1.5;
+        }
+
+        .smart-detail strong {
+            color: var(--sage, #8ca291);
+            font-weight: 600;
+            display: inline-block;
+            min-width: 100px;
+        }
+
         .goal-actions {
             display: flex;
             gap: 1rem;
@@ -143,14 +175,23 @@
 
         .goal-btn {
             flex: 1;
-            padding: 0.75rem 1.5rem;
+            padding: 0.875rem 1.5rem;
             border: none;
             border-radius: 12px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 1rem;
-            font-weight: 500;
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .goal-btn i {
+            font-size: 0.95rem;
         }
 
         .goal-btn-accept {
@@ -164,12 +205,15 @@
         }
 
         .goal-btn-reject {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--text-secondary, #666);
+            background: white;
+            border: 2px solid rgba(140, 162, 145, 0.3);
+            color: var(--sage, #8ca291);
         }
 
         .goal-btn-reject:hover {
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(140, 162, 145, 0.05);
+            border-color: var(--sage, #8ca291);
+            transform: translateY(-2px);
         }
 
         .goal-btn:disabled {
@@ -180,13 +224,14 @@
         .goal-status {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
+            gap: 0.625rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-top: 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            transition: all 0.3s ease;
         }
 
         .goal-status.accepted {
@@ -194,10 +239,11 @@
             color: var(--sage, #8ca291);
         }
 
-        .goal-status.skipped {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--text-secondary, #999);
+        .goal-status.accepted:hover {
+            background: rgba(140, 162, 145, 0.22);
+            transform: translateY(-1px);
         }
+
 
         .goals-count {
             font-family: 'DM Sans', sans-serif;
@@ -243,12 +289,13 @@
         .finalize-btn {
             background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
             color: white;
-            border: 2px solid transparent;
+            border: none;
+            box-shadow: 0 4px 16px rgba(140, 162, 145, 0.3);
         }
 
         .finalize-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(140, 162, 145, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(140, 162, 145, 0.45);
         }
 
         .finalize-btn:disabled {
@@ -260,38 +307,22 @@
             background: white;
             color: var(--sage, #8ca291);
             border: 2px solid var(--sage, #8ca291);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .secondary-btn i {
+            font-size: 0.95rem;
         }
 
         .secondary-btn:hover {
-            background: rgba(140, 162, 145, 0.05);
+            background: rgba(140, 162, 145, 0.08);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(140, 162, 145, 0.2);
+            box-shadow: 0 4px 12px rgba(140, 162, 145, 0.25);
         }
 
-        .replacing-indicator {
-            display: inline-block;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.875rem;
-            color: var(--text-secondary, #666);
-            margin-top: 1rem;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(140, 162, 145, 0.3);
-            border-top-color: var(--sage, #8ca291);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 0.5rem;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
 
         /* Modal Styles */
         .modal-overlay {
@@ -318,15 +349,15 @@
 
         .modal-content {
             background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 600px;
+            width: 92%;
+            max-height: 85vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
+            box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .modal-overlay.active .modal-content {
@@ -334,33 +365,35 @@
         }
 
         .modal-header {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
         }
 
         .modal-title {
             font-family: 'Crimson Pro', serif;
-            font-size: 1.75rem;
+            font-size: 2rem;
             font-weight: 600;
             color: var(--text-primary, #1a1a1a);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .modal-subtitle {
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: var(--text-secondary, #666);
+            line-height: 1.5;
         }
 
         .modal-form {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.625rem;
         }
 
         .form-label {
@@ -373,18 +406,51 @@
         .form-input,
         .form-textarea {
             font-family: 'DM Sans', sans-serif;
-            font-size: 1rem;
-            padding: 0.75rem;
-            border: 2px solid rgba(140, 162, 145, 0.3);
-            border-radius: 8px;
-            transition: border-color 0.3s ease;
+            font-size: 0.95rem;
+            padding: 1rem 1.25rem;
+            border: 2px solid rgba(140, 162, 145, 0.25);
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary, #1a1a1a);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        .form-input:hover {
+            border-color: rgba(140, 162, 145, 0.4);
+            box-shadow: 0 3px 12px rgba(140, 162, 145, 0.1);
         }
 
         .form-input:focus,
         .form-textarea:focus {
             outline: none;
             border-color: var(--sage, #8ca291);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(140, 162, 145, 0.12), 0 3px 16px rgba(140, 162, 145, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .form-hint {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-secondary, #999);
+            margin-top: 0.35rem;
+            font-style: italic;
+        }
+
+        .smart-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
+            color: white;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
         }
 
         .form-textarea {
@@ -392,34 +458,54 @@
             min-height: 100px;
         }
 
-        .emoji-picker {
+        .icon-picker {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 0.5rem;
-            padding: 0.5rem;
-            background: rgba(140, 162, 145, 0.05);
-            border-radius: 8px;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 0.75rem;
+            padding: 1rem;
+            background: rgba(140, 162, 145, 0.06);
+            border-radius: 12px;
+            max-height: 160px;
         }
 
-        .emoji-option {
-            font-size: 1.5rem;
-            padding: 0.5rem;
+        .icon-option {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border: 2px solid transparent;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.5);
         }
 
-        .emoji-option:hover {
+        .icon-option i {
+            font-size: 1.75rem;
+            color: var(--sage, #8ca291);
+            transition: all 0.25s ease;
+        }
+
+        .icon-option:hover {
             background: white;
             border-color: var(--sage, #8ca291);
             transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(140, 162, 145, 0.2);
         }
 
-        .emoji-option.selected {
-            background: white;
+        .icon-option:hover i {
+            transform: scale(1.1);
+        }
+
+        .icon-option.selected {
+            background: var(--sage, #8ca291);
             border-color: var(--sage, #8ca291);
+            box-shadow: 0 3px 10px rgba(140, 162, 145, 0.25);
+        }
+
+        .icon-option.selected i {
+            color: white;
         }
 
         .modal-actions {
@@ -430,33 +516,44 @@
 
         .modal-btn {
             flex: 1;
-            padding: 0.75rem 1.5rem;
+            padding: 1rem 1.75rem;
             border-radius: 12px;
             font-family: 'DM Sans', sans-serif;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .modal-btn i {
+            font-size: 1rem;
         }
 
         .modal-btn-primary {
             background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
             color: white;
+            box-shadow: 0 4px 16px rgba(140, 162, 145, 0.25);
         }
 
         .modal-btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(140, 162, 145, 0.3);
+            box-shadow: 0 6px 20px rgba(140, 162, 145, 0.35);
         }
 
         .modal-btn-secondary {
-            background: rgba(0, 0, 0, 0.05);
+            background: white;
             color: var(--text-secondary, #666);
+            border: 2px solid rgba(0, 0, 0, 0.1);
         }
 
         .modal-btn-secondary:hover {
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.15);
         }
 
         /* Page transition: fade-in on load, fade-out before leaving */
@@ -526,8 +623,13 @@
                 <button class="finalize-btn" id="finalizeBtn" disabled onclick="finalizeGoals()">
                     Continue with Selected Goals
                 </button>
+                <button class="secondary-btn" onclick="regenerateGoals()">
+                    <i class="fas fa-sync-alt"></i>
+                    Regenerate Goals
+                </button>
                 <button class="secondary-btn" onclick="manuallyInputGoals()">
-                    Manually Input Goals
+                    <i class="fas fa-plus-circle"></i>
+                    Add Custom Goal
                 </button>
             </div>
         </div>
@@ -537,44 +639,55 @@
     <div class="modal-overlay" id="manualInputModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Create Your Own Goal</h2>
-                <p class="modal-subtitle">Add a custom goal that's meaningful to you</p>
+                <h2 class="modal-title">Create SMART Goal</h2>
+                <p class="modal-subtitle">Design a goal that's Specific, Measurable, Attainable, Relevant, and Time-bound</p>
             </div>
 
             <form class="modal-form" id="manualGoalForm">
                 <div class="form-group">
-                    <label class="form-label">Select an Icon</label>
-                    <div class="emoji-picker" id="emojiPicker">
-                        <div class="emoji-option" data-emoji="🎯" onclick="selectEmoji(this)">🎯</div>
-                        <div class="emoji-option" data-emoji="💪" onclick="selectEmoji(this)">💪</div>
-                        <div class="emoji-option" data-emoji="🏃" onclick="selectEmoji(this)">🏃</div>
-                        <div class="emoji-option" data-emoji="🥗" onclick="selectEmoji(this)">🥗</div>
-                        <div class="emoji-option" data-emoji="😴" onclick="selectEmoji(this)">😴</div>
-                        <div class="emoji-option" data-emoji="🧘" onclick="selectEmoji(this)">🧘</div>
-                        <div class="emoji-option" data-emoji="📊" onclick="selectEmoji(this)">📊</div>
-                        <div class="emoji-option" data-emoji="🚶" onclick="selectEmoji(this)">🚶</div>
-                        <div class="emoji-option" data-emoji="💧" onclick="selectEmoji(this)">💧</div>
-                        <div class="emoji-option" data-emoji="🍎" onclick="selectEmoji(this)">🍎</div>
-                        <div class="emoji-option" data-emoji="⏰" onclick="selectEmoji(this)">⏰</div>
-                        <div class="emoji-option" data-emoji="🎧" onclick="selectEmoji(this)">🎧</div>
-                        <div class="emoji-option" data-emoji="📝" onclick="selectEmoji(this)">📝</div>
-                        <div class="emoji-option" data-emoji="🏋️" onclick="selectEmoji(this)">🏋️</div>
-                        <div class="emoji-option" data-emoji="🔄" onclick="selectEmoji(this)">🔄</div>
-                        <div class="emoji-option selected" data-emoji="✨" onclick="selectEmoji(this)">✨</div>
-                    </div>
+                    <label class="form-label" for="goalSpecific">
+                        <span class="smart-badge">S</span> Specific *
+                    </label>
+                    <input type="text" id="goalSpecific" class="form-input"
+                        placeholder="What exactly do you want to accomplish?"
+                        required maxlength="100" />
+                    <small class="form-hint">This will be your goal title</small>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="goalTitle">Goal Title *</label>
-                    <input type="text" id="goalTitle" class="form-input" placeholder="e.g., Walk 10,000 steps daily"
-                        required maxlength="60" />
+                    <label class="form-label" for="goalMeasurable">
+                        <span class="smart-badge">M</span> Measurable *
+                    </label>
+                    <input type="text" id="goalMeasurable" class="form-input"
+                        placeholder="How will you track your progress?"
+                        required maxlength="150" />
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="goalDescription">Goal Description *</label>
-                    <textarea id="goalDescription" class="form-textarea"
-                        placeholder="Describe your goal in detail. What do you want to achieve and how will you do it?"
-                        required maxlength="300"></textarea>
+                    <label class="form-label" for="goalAttainable">
+                        <span class="smart-badge">A</span> Attainable *
+                    </label>
+                    <input type="text" id="goalAttainable" class="form-input"
+                        placeholder="How will you achieve this goal?"
+                        required maxlength="150" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="goalRelevant">
+                        <span class="smart-badge">R</span> Relevant *
+                    </label>
+                    <input type="text" id="goalRelevant" class="form-input"
+                        placeholder="Why is this goal important to you?"
+                        required maxlength="150" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="goalTimeBound">
+                        <span class="smart-badge">T</span> Time-bound *
+                    </label>
+                    <input type="text" id="goalTimeBound" class="form-input"
+                        placeholder="When will you achieve this goal?"
+                        required maxlength="80" />
                 </div>
 
                 <div class="modal-actions">
@@ -582,13 +695,14 @@
                         Cancel
                     </button>
                     <button type="submit" class="modal-btn modal-btn-primary">
-                        Add Goal
+                        Save Goal
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <script src="../js/api.js"></script>
     <script>
 
         // Current state
@@ -608,24 +722,51 @@
             document.getElementById('manualGoalForm').addEventListener('submit', function (e) {
                 e.preventDefault();
 
-                const title = document.getElementById('goalTitle').value.trim();
-                const description = document.getElementById('goalDescription').value.trim();
+                const specific = document.getElementById('goalSpecific').value.trim();
+                const measurable = document.getElementById('goalMeasurable').value.trim();
+                const attainable = document.getElementById('goalAttainable').value.trim();
+                const relevant = document.getElementById('goalRelevant').value.trim();
+                const timeBound = document.getElementById('goalTimeBound').value.trim();
 
-                if (!title || !description) {
-                    alert('Please fill in all required fields.');
+                if (!specific || !measurable || !attainable || !relevant || !timeBound) {
+                    alert('Please fill in all SMART goal fields.');
                     return;
                 }
 
-                // Add the custom goal to the displayed goals
-                const newGoal = {
-                    icon: selectedEmoji,
-                    title: title,
-                    description: description,
-                    id: Date.now() + Math.random(),
-                    status: 'pending'
+                const smartGoalData = {
+                    Specific: specific,
+                    Measurable: measurable,
+                    Attainable: attainable,
+                    Relevant: relevant,
+                    Time_Bound: timeBound
                 };
 
-                displayedGoals.push(newGoal);
+                // Auto-assign icon based on goal keywords
+                const icon = getIconForGoal(specific);
+
+                if (editingGoalId) {
+                    // Update existing goal
+                    const goal = displayedGoals.find(g => g.id === editingGoalId);
+                    if (goal) {
+                        goal.icon = icon;
+                        goal.title = specific;
+                        goal.fullSMART = smartGoalData;
+                        goal.description = `${measurable} • ${timeBound}`;
+                    }
+                    editingGoalId = null;
+                } else {
+                    // Add new custom goal
+                    const newGoal = {
+                        icon: icon,
+                        title: specific,
+                        description: `${measurable} • ${timeBound}`,
+                        id: Date.now() + Math.random(),
+                        status: 'pending',
+                        fullSMART: smartGoalData
+                    };
+                    displayedGoals.push(newGoal);
+                }
+
                 renderGoals();
                 closeManualInputModal();
             });
@@ -637,6 +778,43 @@
                 }
             });
         });
+
+        // Get appropriate icon based on goal keywords
+        function getIconForGoal(goalText) {
+            const text = goalText.toLowerCase();
+
+            // Exercise & Fitness
+            if (text.includes('walk') || text.includes('step')) return 'fa-walking';
+            if (text.includes('run') || text.includes('jog')) return 'fa-running';
+            if (text.includes('exercise') || text.includes('workout') || text.includes('gym')) return 'fa-dumbbell';
+            if (text.includes('bike') || text.includes('cycle')) return 'fa-bicycle';
+            if (text.includes('weight') || text.includes('lift')) return 'fa-weight';
+
+            // Nutrition & Diet
+            if (text.includes('eat') || text.includes('meal') || text.includes('diet') || text.includes('food')) return 'fa-apple-alt';
+            if (text.includes('water') || text.includes('hydrat')) return 'fa-tint';
+            if (text.includes('vegetable') || text.includes('fruit')) return 'fa-carrot';
+
+            // Sleep & Rest
+            if (text.includes('sleep') || text.includes('rest') || text.includes('bed')) return 'fa-bed';
+            if (text.includes('night')) return 'fa-moon';
+
+            // Mental Health & Mindfulness
+            if (text.includes('meditat') || text.includes('mindful') || text.includes('relax')) return 'fa-spa';
+            if (text.includes('stress') || text.includes('anxiety') || text.includes('mental')) return 'fa-brain';
+            if (text.includes('happy') || text.includes('mood') || text.includes('joy')) return 'fa-smile';
+
+            // Health Metrics
+            if (text.includes('heart') || text.includes('cardio') || text.includes('pulse')) return 'fa-heartbeat';
+            if (text.includes('track') || text.includes('monitor') || text.includes('measure')) return 'fa-chart-line';
+            if (text.includes('calori') || text.includes('burn')) return 'fa-fire';
+
+            // Achievement
+            if (text.includes('goal') || text.includes('achieve') || text.includes('success')) return 'fa-trophy';
+
+            // Default
+            return 'fa-bullseye';
+        }
 
         // Initialize with 5 random goals
         async function initializeGoals() {
@@ -654,7 +832,7 @@
                     // visible fields
                     title: goal.Specific,
                     description: `${goal.Measurable} • ${goal.Time_Bound}`,
-                    icon: "🎯",
+                    icon: getIconForGoal(goal.Specific),
 
                     // hidden full SMART goal (stored but not shown)
                     fullSMART: goal
@@ -682,36 +860,52 @@
         // Create a single goal card element
         function createGoalCard(goal) {
             const card = document.createElement('div');
-            card.className = `goal-card ${goal.status === 'accepted' ? 'accepted' : ''} ${goal.status === 'skipped' ? 'skipped' : ''}`;
+            card.className = `goal-card ${goal.status === 'accepted' ? 'accepted' : ''}`;
             card.id = `goal-${goal.id}`;
 
-            let statusContent = '';
-            let buttonLabel = 'Accept Goal';
-            let buttonAction = `acceptGoal('${goal.id}')`;
+            // Build SMART details if available
+            const smartData = goal.fullSMART || goal;
+            let smartDetails = '';
 
+            if (smartData.Measurable) {
+                smartDetails += `<div class="smart-detail"><strong>Measurable:</strong> ${smartData.Measurable}</div>`;
+            }
+            if (smartData.Attainable) {
+                smartDetails += `<div class="smart-detail"><strong>Attainable:</strong> ${smartData.Attainable}</div>`;
+            }
+            if (smartData.Relevant) {
+                smartDetails += `<div class="smart-detail"><strong>Relevant:</strong> ${smartData.Relevant}</div>`;
+            }
+            if (smartData.Time_Bound) {
+                smartDetails += `<div class="smart-detail"><strong>Time-bound:</strong> ${smartData.Time_Bound}</div>`;
+            }
+
+            let statusContent = '';
             if (goal.status === 'accepted') {
-                statusContent = '<div class="goal-status accepted" onclick="unacceptGoal(\'' + goal.id + '\')" style="cursor: pointer;">Undo</div>';
-            } else if (goal.status === 'skipped') {
-                statusContent = '<div class="goal-status skipped" onclick="unskipGoal(\'' + goal.id + '\')" style="cursor: pointer;">Undo</div>';
+                statusContent = `<div class="goal-status accepted" onclick="unacceptGoal('${goal.id}')" style="cursor: pointer;">
+                    <i class="fas fa-check-circle"></i> Accepted · tap to undo
+                </div>`;
             } else {
                 statusContent = `<div class="goal-actions">
                     <button class="goal-btn goal-btn-accept" onclick="acceptGoal('${goal.id}')">
-                        Accept Goal
+                        <i class="fas fa-check-circle"></i> Accept Goal
                     </button>
-                    <button class="goal-btn goal-btn-reject" onclick="skipGoal('${goal.id}')">
-                        Skip for Now
+                    <button class="goal-btn goal-btn-reject" onclick="editGoal('${goal.id}')">
+                        <i class="fas fa-edit"></i> Edit
                     </button>
                    </div>`;
             }
 
             card.innerHTML = `
                 <div class="goal-header">
-                    <span class="goal-icon">${goal.icon}</span>
+                    <div class="goal-icon">
+                        <i class="fas ${goal.icon}"></i>
+                    </div>
                     <div class="goal-content">
                         <h3 class="goal-title">${goal.title}</h3>
                     </div>
                 </div>
-                <p class="goal-description">${goal.description}</p>
+                ${smartDetails ? `<div class="goal-smart-details">${smartDetails}</div>` : `<p class="goal-description">${goal.description}</p>`}
                 ${statusContent}
             `;
 
@@ -736,22 +930,23 @@
             }
         }
 
-        // Skip a goal for now (grey it out)
-        function skipGoal(goalId) {
+        // Edit a goal
+        let editingGoalId = null;
+        function editGoal(goalId) {
             const goal = displayedGoals.find(g => g.id.toString() === goalId.toString());
-            if (goal) {
-                goal.status = 'skipped';
-                renderGoals();
-            }
-        }
+            if (!goal) return;
 
-        // Unskip a goal (bring it back to pending)
-        function unskipGoal(goalId) {
-            const goal = displayedGoals.find(g => g.id.toString() === goalId.toString());
-            if (goal) {
-                goal.status = 'pending';
-                renderGoals();
-            }
+            editingGoalId = goal.id;
+            const smartData = goal.fullSMART || goal;
+
+            // Pre-fill the form with existing values
+            document.getElementById('goalSpecific').value = smartData.Specific || goal.title || '';
+            document.getElementById('goalMeasurable').value = smartData.Measurable || '';
+            document.getElementById('goalAttainable').value = smartData.Attainable || '';
+            document.getElementById('goalRelevant').value = smartData.Relevant || '';
+            document.getElementById('goalTimeBound').value = smartData.Time_Bound || '';
+
+            manuallyInputGoals();
         }
 
         // Update the goal counter and finalize button
@@ -763,9 +958,6 @@
             const finalizeBtn = document.getElementById('finalizeBtn');
             finalizeBtn.disabled = acceptedGoals.length === 0;
         }
-
-        // Modal state
-        let selectedEmoji = '✨';
 
         // Open manual input modal
         function manuallyInputGoals() {
@@ -780,29 +972,46 @@
             modal.classList.remove('active');
             document.body.style.overflow = '';
 
-            // Reset form
+            // Reset form and editing state
             document.getElementById('manualGoalForm').reset();
-            selectedEmoji = '✨';
-
-            // Reset emoji selection
-            document.querySelectorAll('.emoji-option').forEach(option => {
-                option.classList.remove('selected');
-                if (option.dataset.emoji === '✨') {
-                    option.classList.add('selected');
-                }
-            });
+            editingGoalId = null;
         }
 
-        // Select emoji
-        function selectEmoji(element) {
-            // Remove selected class from all emojis
-            document.querySelectorAll('.emoji-option').forEach(option => {
-                option.classList.remove('selected');
-            });
+        // Regenerate goals - keeps accepted ones, replaces pending ones
+        function regenerateGoals() {
+            const acceptedGoals = displayedGoals.filter(g => g.status === 'accepted');
+            const pendingCount = displayedGoals.filter(g => g.status === 'pending').length;
 
-            // Add selected class to clicked emoji
-            element.classList.add('selected');
-            selectedEmoji = element.dataset.emoji;
+            if (pendingCount === 0) {
+                alert('All goals are already accepted. Add a custom goal or unaccept some goals to regenerate.');
+                return;
+            }
+
+            if (!confirm(`This will replace ${pendingCount} pending goal${pendingCount > 1 ? 's' : ''} with new suggestions. Your ${acceptedGoals.length} accepted goal${acceptedGoals.length !== 1 ? 's' : ''} will be kept. Continue?`)) {
+                return;
+            }
+
+            // Get fresh goals from localStorage
+            const allSmartGoals = JSON.parse(localStorage.getItem('smartGoals') || "[]");
+
+            // Filter out goals that are already accepted
+            const acceptedTitles = new Set(acceptedGoals.map(g => g.title));
+            const availableGoals = allSmartGoals.filter(g => !acceptedTitles.has(g.Specific));
+
+            // Take new goals to fill the pending slots
+            const neededCount = Math.min(pendingCount, availableGoals.length);
+            const newGoals = availableGoals.slice(0, neededCount).map(goal => ({
+                id: Date.now() + Math.random(),
+                status: 'pending',
+                title: goal.Specific,
+                description: `${goal.Measurable} • ${goal.Time_Bound}`,
+                icon: getIconForGoal(goal.Specific),
+                fullSMART: goal
+            }));
+
+            // Combine accepted goals with new goals
+            displayedGoals = [...acceptedGoals, ...newGoals];
+            renderGoals();
         }
 
         // Finalize and save accepted goals
