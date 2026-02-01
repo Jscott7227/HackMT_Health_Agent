@@ -14,6 +14,8 @@ const session = JSON.parse(
     "{}"
 );
 
+var FINALGOAL = "";
+
 /* --------------------------------------------------------
 STATE – mirrors the profile schema from the handoff doc
 -------------------------------------------------------- */
@@ -146,7 +148,7 @@ function updateStepLabels() {
 /* --------------------------------------------------------
 NAVIGATION
 -------------------------------------------------------- */
-function goTo(n) {
+async function goTo(n) {
     updateStepLabels();
     if (n === 12) buildReview();
 
@@ -189,8 +191,7 @@ function goTo(n) {
             void ring.offsetWidth;
             ring.style.animation = '';
         }
-        // Auto-complete after 3 seconds of "analyzing"
-        fetchGoalsAndContinue();
+        await fetchGoalsAndContinue();
     }
 
     updateCtaForScreen(n);
@@ -199,7 +200,7 @@ function goTo(n) {
 }
 
 async function fetchGoalsAndContinue() {
-    var finalGoal = localStorage.getItem('finalGoal') || "";
+    var finalGoal = FINALGOAL
     const userId = session.user_id || null;
 
     try {
@@ -222,9 +223,7 @@ async function fetchGoalsAndContinue() {
         localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
 
         // slight delay so animation feels intentional
-        setTimeout(function () {
-            completeSetup();
-        }, 800);
+        await completeSetup()
 
     } catch (err) {
         console.error("Goal fetch error:", err);
@@ -705,7 +704,7 @@ var finalGoalInput = document.getElementById('finalGoalInput');
 
 if (finalGoalInput) {
     finalGoalInput.addEventListener('input', function () {
-        localStorage.setItem('finalGoal', finalGoalInput.value);
+        FINALGOAL = finalGoalInput.value
     });
 }
 

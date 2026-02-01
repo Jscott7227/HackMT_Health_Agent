@@ -613,7 +613,7 @@
         </div>
 
         <p class="goals-count"><span id="acceptedCount">0</span> of 3 goals accepted</p>
-        
+
         <div class="goals-list" id="goalsList"></div>
 
         <div class="finalize-section">
@@ -709,8 +709,8 @@
         let displayedGoals = [];
         let usedGoalIndices = new Set();
         const session = JSON.parse(
-            sessionStorage.getItem("sanctuary_session") ||
             localStorage.getItem("sanctuary_session") ||
+            sessionStorage.getItem("sanctuary_session") ||
             "{}"
         );
 
@@ -1018,73 +1018,45 @@
         async function finalizeGoals() {
             const validationMsg = document.getElementById('finalizeValidationMsg');
             validationMsg.classList.remove('visible');
-            const acceptedGoals = displayedGoals.filter(g => g.status === 'accepted');
+
+            const acceptedGoals = displayedGoals
+                .filter(g => g.status === 'accepted')
+                .map(g => g.fullSMART);
 
             if (acceptedGoals.length === 0) {
                 validationMsg.classList.add('visible');
                 return;
             }
 
-            // Get user ID from session
             const userId = session.user_id || null;
-            if (!userId) {
-                alert('User session not found. Please log in again.');
-                return;
-            }
-
-            // Disable button while saving
-            const finalizeBtn = document.getElementById('finalizeBtn');
-            finalizeBtn.disabled = true;
-            finalizeBtn.textContent = 'Saving Goals...';
 
             try {
-                // Format goals for database with all required fields
-                const currentDate = new Date();
-                const endDate = new Date();
-                endDate.setMonth(endDate.getMonth() + 1); // Default to 1 month from now
-
-                const goalsToSave = acceptedGoals.map(g => {
-                    const smartData = g.fullSMART || {
-                        Specific: g.title,
-                        Measurable: '',
-                        Attainable: '',
-                        Relevant: '',
-                        Time_Bound: ''
-                    };
-
-                    return {
-                        Specific: smartData.Specific,
-                        Measurable: smartData.Measurable,
-                        Attainable: smartData.Attainable,
-                        Relevant: smartData.Relevant,
-                        Time_Bound: smartData.Time_Bound,
-                        Description: smartData.Specific,
-                        DateCreated: currentDate.toISOString(),
-                        EndDate: endDate.toISOString(),
-                        UserID: userId,
-                        CheckIns: JSON.stringify({ checkins: [] }),
-                        icon: g.icon // Keep icon for frontend display
-                    };
+                const res = await fetch(`http://localhost:8000/goals/${userId}/accepted`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        goals: acceptedGoals
+                    })
                 });
 
-                // Save to backend
-                await BenjiAPI.postGoalsAccepted(userId, goalsToSave);
+                if (!res.ok) throw new Error('Failed to save goals');
 
-                // Also save to localStorage for quick access in frontend
-                localStorage.setItem('benjiAcceptedGoals', JSON.stringify(goalsToSave));
+                const data = await res.json();
 
-                // Smooth fade-out then navigate to main app
-                document.body.classList.add('page-transition-out');
-                setTimeout(function () {
-                    window.location.href = 'index.html';
-                }, 450);
-
-            } catch (error) {
-                console.error('Failed to save goals:', error);
-                alert('Failed to save goals. Please try again.');
-                finalizeBtn.disabled = false;
-                finalizeBtn.textContent = 'Continue with Selected Goals';
+            } catch (err) {
+                console.error(err);
+                validationMsg.textContent = "Error saving goals. Please try again.";
+                validationMsg.classList.add('visible');
             }
+
+
+            // Smooth fade-out then navigate to main app (no popup)
+            document.body.classList.add('page-transition-out');
+            setTimeout(function () {
+                window.location.href = 'index.html';
+            }, 450);
         }
 
         // Fade-in on load

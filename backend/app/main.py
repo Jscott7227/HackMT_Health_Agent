@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from typing import Optional, Dict, Any, List
@@ -50,6 +50,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def disable_cache(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 benji = BenjiLLM()
 
@@ -382,7 +390,6 @@ def run_goals_endpoint(payload: RunGoalsRequest):
             "height": d.height,
             "weight": d.weight,
         }
-        
         result = benji.run_goals(
             user_goal=payload.user_goal,
             user_facts=user_facts
@@ -612,15 +619,47 @@ def get_goals(user_id: str):
     }
 
 
+from google.cloud import firestore
+
 @app.post("/goals/{user_id}/accepted")
 def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
-    """Save accepted goals for user in Firestore."""
+    """Save SMART goals as individual documents in Goals collection."""
+
+    # Validate user exists
     user_snap = db.collection("User").document(user_id).get()
     if not user_snap.exists:
         raise HTTPException(status_code=404, detail="User not found")
-    doc_ref = db.collection("Goals").document(user_id)
-    doc_ref.set({"UserID": user_id, "accepted": payload.goals}, merge=True)
-    return {"message": "Goals saved", "goals": payload.goals}
+
+    saved_ids = []
+
+    for goal in payload.goals:
+        doc_ref = db.collection("Goals").document()
+
+        doc_ref.set({
+            "Specific": goal.get("Specific"),
+            "Measurable": goal.get("Measurable"),
+            "Attainable": goal.get("Attainable"),
+            "Relevant": goal.get("Relevant"),
+            "Time_Bound": goal.get("Time_Bound"),  # keep as string
+
+            # duplicate for UI convenience
+            "Description": goal.get("Specific"),
+
+            # empty structured check-ins
+            "CheckIns": {
+                "checkins": []
+            },
+
+            "DateCreated": firestore.SERVER_TIMESTAMP,
+            "UserID": user_id
+        })
+
+        saved_ids.append(doc_ref.id)
+
+    return {
+        "message": f"{len(saved_ids)} goals saved",
+        "goal_ids": saved_ids
+    }
 
 
 # ---------- Firestore: Check-ins ----------
