@@ -31,6 +31,7 @@ async function initializeCheckIn() {
     
     // Build goal screens dynamically
     buildGoalScreens();
+    hideTabs();
     
     // Initialize visibility
     updateScreenVisibility();
@@ -120,6 +121,18 @@ function buildGoalScreens() {
       }
     }, 0);
   });
+}
+
+// Hide the tab bar (we use linear flow only)
+function hideTabs() {
+  const nav = document.getElementById('checkinTabs');
+  if (nav) {
+    nav.style.display = 'none';
+    nav.style.margin = '0';
+    nav.style.padding = '0';
+    nav.style.border = 'none';
+    nav.style.boxShadow = 'none';
+  }
 }
 
 function getGoalIcon(goalType) {

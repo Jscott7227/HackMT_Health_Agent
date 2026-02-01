@@ -116,7 +116,7 @@ These sections may appear multiple times when the user has multiple ongoing goal
 - **Today’s / tomorrow’s goal preview** (e.g. "Today is a rest day," "Tomorrow you are walking for fifteen minutes," or similar context from provided goals)
 - **Overall view** of wellness/physical timelines
 - **Disclaimer** if goals for the day are not completed (e.g. header: "Do daily check-in")
-- **Today at a glance** (summary section after check-in):
+- **Week at a Glance** (summary section after check-in):
     - Rest day or not
     - Today’s rating (overall)
     - Goal ratings (averages of everything you did, displayed)

@@ -115,7 +115,7 @@
     el("injuryWarningText").innerHTML = "<p>" + injuryWarning + "</p>";
   }
 
-  /* ---------- RENDER: TODAY AT A GLANCE ---------- */
+  /* ---------- RENDER: Week at a Glance ---------- */
   function renderGlance() {
     var section = el("glanceSection");
     var header = el("glanceHeading");

@@ -1628,6 +1628,7 @@ body {
     animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s backwards;
     -webkit-overflow-scrolling: touch;
 }
+.Benji-nav:empty { display:none; margin:0; padding:0; box-shadow:none; border:none; }
 
 .nav-tab {
     flex: 1;
@@ -1751,15 +1752,15 @@ body {
 
 .nav-arrow-btn {
     flex: 1;
-    max-width: 200px;
-    padding: var(--space-md) var(--space-lg);
+    max-width: 180px;
+    padding: 10px 14px;
     font-family: var(--font-body);
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text-secondary);
     background: white;
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
     cursor: pointer;
     transition: all var(--transition-base);
 }
@@ -1781,6 +1782,7 @@ body {
     background: linear-gradient(135deg, var(--sage-light), var(--sage));
     color: white;
     border-color: var(--sage);
+    box-shadow: 0 6px 16px rgba(1,104,68,0.2);
 }
 
 .nav-arrow-btn.primary:hover:not(:disabled) {
@@ -1795,10 +1797,10 @@ body {
 
 .section-title {
     font-family: var(--font-display);
-    font-size: 2.5rem;
-    font-weight: 400;
+    font-size: 2rem;
+    font-weight: 500;
     color: var(--clay-800);
-    margin-bottom: var(--space-xs);
+    margin-bottom: var(--space-2xs);
 }
 
 .section-description {
@@ -2251,23 +2253,26 @@ textarea.form-input {
 .submit-btn {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-xl);
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 14px;
     font-family: var(--font-body);
-    font-size: 1.125rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: white;
-    background: linear-gradient(135deg, var(--sage), var(--sage-dark));
-    border: none;
-    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, var(--sage-light), var(--sage));
+    border: 1px solid var(--sage);
+    border-radius: 10px;
     cursor: pointer;
     transition: all var(--transition-base);
-    box-shadow: 0 4px 16px rgba(139, 157, 131, 0.3);
+    box-shadow: 0 6px 16px rgba(1, 104, 68, 0.2);
+    max-width: 180px;
+    flex: 1;
 }
 
 .submit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(139, 157, 131, 0.4);
+    box-shadow: 0 8px 22px rgba(1, 104, 68, 0.28);
 }
 
 .submit-btn:active {
@@ -2857,6 +2862,7 @@ textarea.form-input {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
+.Benji-nav:empty { display:none; margin:0; padding:0; box-shadow:none; border:none; }
 
     .nav-tab {
         min-width: 80px;
@@ -3276,7 +3282,7 @@ textarea:focus-visible {
     color: #5a4a20;
 }
 
-/* --- Today at a Glance --- */
+/* --- Week at a Glance --- */
 .glance-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -4662,6 +4668,7 @@ textarea:focus-visible {
 .checkin-modal-body .Benji-nav {
     margin-right: 44px;
 }
+.Benji-nav:empty { display:none; margin:0; padding:0; box-shadow:none; border:none; }
 
 .checkin-modal-close {
     position: absolute;
