@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from hashlib import sha256
 from uuid import uuid4
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 
 import json
 import os
@@ -47,6 +48,26 @@ app.add_middleware(
 )
 
 benji = BenjiLLM()
+
+class CreateGoalEntryRequest(BaseModel):
+    end_date: datetime
+    check_ins: List[str] = []
+
+class UpdateGoalEntryRequest(BaseModel):
+    # each optional
+    date_created: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    check_ins: Optional[List[str]] = None
+
+class GoalEntryOut(BaseModel):
+    goal_id: str
+    user_id: str
+    date_created: datetime
+    end_date: datetime
+    check_ins: List[str]
+
+class DeleteGoalEntryResponse(BaseModel):
+    message: str
 
 class CreateProfileInfoRequest(BaseModel):
     benji_facts: Optional[str] = None
@@ -425,3 +446,142 @@ def update_profileinfo(user_id: str, payload: UpdateProfileInfoRequest):
         weight=d.get("Weight"),
     )
 
+
+@app.post("/goalsdb/{user_id}", response_model=GoalEntryOut)
+def create_goal_entry(user_id: str, payload: CreateGoalEntryRequest):
+    """
+    Create a new Goals entry for a specific UserID (User doc id).
+    Multiple entries per user are allowed.
+    """
+    # verify user exists (same style as ProfileInfo create)
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    doc_data = {
+        "UserID": user_id,
+        "DateCreated": datetime.utcnow(),
+        "EndDate": payload.end_date,
+        "CheckIns": payload.check_ins or []
+    }
+
+    # Firestore auto-generated ID
+    doc_ref = db.collection("Goals").document()
+    doc_ref.set(doc_data)
+
+    return GoalEntryOut(
+        goal_id=doc_ref.id,
+        user_id=user_id,
+        date_created=doc_data["DateCreated"],
+        end_date=doc_data["EndDate"],
+        check_ins=doc_data["CheckIns"],
+    )
+
+
+@app.patch("/goalsdb/{user_id}/{goal_id}", response_model=GoalEntryOut)
+def update_goal_entry(user_id: str, goal_id: str, payload: UpdateGoalEntryRequest):
+    """
+    Update a Goals entry (fields optional). UserID is not editable.
+    Requires the entry to belong to the provided user_id.
+    """
+    doc_ref = db.collection("Goals").document(goal_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="Goal entry not found")
+
+    data = snap.to_dict() or {}
+    if data.get("UserID") != user_id:
+        # treat as not found (prevents leaking ids between users)
+        raise HTTPException(status_code=404, detail="Goal entry not found")
+
+    updates = {}
+    if payload.date_created is not None:
+        updates["DateCreated"] = payload.date_created
+    if payload.end_date is not None:
+        updates["EndDate"] = payload.end_date
+    if payload.check_ins is not None:
+        updates["CheckIns"] = payload.check_ins
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields provided to update")
+
+    doc_ref.update(updates)
+
+    # return fresh doc
+    updated = doc_ref.get().to_dict() or {}
+    return GoalEntryOut(
+        goal_id=goal_id,
+        user_id=updated.get("UserID"),
+        date_created=updated.get("DateCreated"),
+        end_date=updated.get("EndDate"),
+        check_ins=updated.get("CheckIns") or [],
+    )
+
+
+@app.delete("/goalsdb/{user_id}/{goal_id}", response_model=DeleteGoalEntryResponse)
+def delete_goal_entry(user_id: str, goal_id: str):
+    """
+    Delete a Goals entry by goal_id, but only if it belongs to the given user_id.
+    """
+    doc_ref = db.collection("Goals").document(goal_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="Goal entry not found")
+
+    data = snap.to_dict() or {}
+    if data.get("UserID") != user_id:
+        raise HTTPException(status_code=404, detail="Goal entry not found")
+
+    doc_ref.delete()
+    return DeleteGoalEntryResponse(message="Goal entry deleted successfully")
+
+
+@app.get("/goalsdb/{goal_id}", response_model=GoalEntryOut)
+def get_goal_entry_by_id(goal_id: str):
+    """
+    Pull a specific Goals entry by its document id.
+    """
+    snap = db.collection("Goals").document(goal_id).get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="Goal entry not found")
+
+    d = snap.to_dict() or {}
+    return GoalEntryOut(
+        goal_id=goal_id,
+        user_id=d.get("UserID"),
+        date_created=d.get("DateCreated"),
+        end_date=d.get("EndDate"),
+        check_ins=d.get("CheckIns") or [],
+    )
+
+
+@app.get("/goalsdb/by-user/{user_id}", response_model=List[GoalEntryOut])
+def list_goal_entries_for_user(user_id: str):
+    """
+    Pull all Goals entries for a given user_id.
+    """
+    # optional: verify user exists (keeps behavior consistent)
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    docs = (
+        db.collection("Goals")
+          .where("UserID", "==", user_id)
+          .stream()
+    )
+
+    results: List[GoalEntryOut] = []
+    for doc in docs:
+        d = doc.to_dict() or {}
+        results.append(
+            GoalEntryOut(
+                goal_id=doc.id,
+                user_id=d.get("UserID"),
+                date_created=d.get("DateCreated"),
+                end_date=d.get("EndDate"),
+                check_ins=d.get("CheckIns") or [],
+            )
+        )
+
+    return results
