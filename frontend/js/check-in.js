@@ -81,18 +81,18 @@ function buildGoalScreens() {
       </div>
       
       <div class="form-domain">
-        <div class="form-group">
-          <label class="form-label">How much progress did you make on this goal today? (1-5)</label>
-          <div class="scale-input">
-            <input type="range" min="1" max="5" value="3" id="goal-${index}-progress" class="range-slider" data-goal-index="${index}">
-            <div class="scale-labels">
-              <span>0</span><span>2</span><span>5</span>
-            </div>
-          </div>
-          <div class="value-readout">
-            <span id="goal-${index}-progress-value">3</span>/5
+      <div class="form-group">
+        <label class="form-label">How much progress did you make on this goal today? (1-5)</label>
+        <div class="scale-input">
+          <input type="range" min="0" max="5" value="2" id="goal-${index}-progress" class="range-slider" data-goal-index="${index}">
+          <div class="scale-labels">
+            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
           </div>
         </div>
+        <div class="value-readout">
+          <span id="goal-${index}-progress-value">2</span>/5
+        </div>
+      </div>
         
         <div class="form-group">
           <label class="form-label">Notes about today's progress</label>
@@ -172,10 +172,12 @@ function attachEventListeners() {
   const prevBtn = document.getElementById('prevDomain');
   const nextBtn = document.getElementById('nextDomain');
   const submitBtn = document.getElementById('submitCheckin');
+  const clearBtn = document.getElementById('clearTodayBtn');
   
   if (prevBtn) prevBtn.addEventListener('click', navigatePrevious);
   if (nextBtn) nextBtn.addEventListener('click', navigateNext);
   if (submitBtn) submitBtn.addEventListener('click', submitCheckIn);
+  if (clearBtn) clearBtn.addEventListener('click', clearTodayCheckin);
   
   // Range sliders with live updates for Overall Day
   attachRangeSliderListeners();
@@ -199,6 +201,34 @@ function attachRangeSliderListeners() {
       });
     }
   });
+}
+
+// Clear today's (latest) check-in for demo/reset
+async function clearTodayCheckin() {
+  const btn = document.getElementById('clearTodayBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const session = window.BenjiAPI?.getSession?.();
+    if (session && session.user_id) {
+      if (window.BenjiAPI?.deleteLatestCheckin) {
+        await window.BenjiAPI.deleteLatestCheckin(session.user_id);
+      } else {
+        // Try a generic endpoint if available
+        await fetch('/api/checkin/delete-latest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: session.user_id })
+        });
+      }
+    }
+    alert("Today's check-in cleared for demo. Reloading...");
+    window.location.reload();
+  } catch (err) {
+    console.error('Clear check-in failed', err);
+    alert('Could not clear the latest check-in. Please try again.');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 // ==========================================
@@ -397,20 +427,20 @@ function collectCheckInData() {
     goals: []
   };
   
-  // Collect data for each goal
-  userGoals.forEach((goal, index) => {
-    const progressSlider = document.getElementById(`goal-${index}-progress`);
-    const notesField = document.getElementById(`goal-${index}-notes`);
-    
-    data.goals.push({
-      goalId: goal.id || goal.goalId || `goal-${index}`,
-      goalTitle: goal.title || goal.name || '',
-      goalType: goal.type || goal.goalType || '',
-      progress: parseInt(progressSlider?.value || 3),
-      notes: notesField?.value || '',
-      timestamp: new Date().toISOString()
+    // Collect data for each goal
+    userGoals.forEach((goal, index) => {
+      const progressSlider = document.getElementById(`goal-${index}-progress`);
+      const notesField = document.getElementById(`goal-${index}-notes`);
+      
+      data.goals.push({
+        goalId: goal.id || goal.goalId || `goal-${index}`,
+        goalTitle: goal.title || goal.name || '',
+        goalType: goal.type || goal.goalType || '',
+        progress: parseInt(progressSlider?.value || 0, 10),
+        notes: notesField?.value || '',
+        timestamp: new Date().toISOString()
+      });
     });
-  });
   
   return data;
 }

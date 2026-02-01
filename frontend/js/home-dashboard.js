@@ -29,6 +29,14 @@
   /* Store today's check-in data (if available) for rendering glance */
   var todayCheckinData = null;
 
+  /* Hardcoded last 7 days (excluding today) for demo graphs; values 0-5 */
+  var fauxHistory = {
+    feeling:   [3, 4, 3, 5, 4, 2, 1],
+    nutrition: [3, 4, 2, 5, 4, 3, 1],
+    drink:     [4, 4, 3, 5, 4, 2, 1],
+    sleep:     [5, 4, 3, 5, 4, 3, 5]
+  };
+
   /* Store Benji's Notes from post check-in sensing */
   var benjiNotesData = null;
 
@@ -110,75 +118,62 @@
   /* ---------- RENDER: TODAY AT A GLANCE ---------- */
   function renderGlance() {
     var section = el("glanceSection");
+    var header = el("glanceHeading");
     var grid = el("glanceGrid");
+    if (header) header.textContent = "Week at a Glance";
     if (!section || !grid) return;
-    if (!checkinDone) { section.style.display = "none"; return; }
 
-    // Build glance cards from today's check-in data if available
-    var glanceItems = [];
-    if (todayCheckinData) {
-      // Nutrition (from eatScore 1-5)
-      var eatScore = todayCheckinData.eatScore || 0;
-      var nutritionLabel = eatScore <= 2 ? "Needs work" : eatScore === 3 ? "Balanced" : "Great";
-      glanceItems.push({
-        icon: "🍽️",
-        label: "Nutrition",
-        value: nutritionLabel + " (" + eatScore + "/5)"
-      });
-
-      // Hydration (from drinkScore 1-5)
-      var drinkScore = todayCheckinData.drinkScore || 0;
-      var hydrationLabel = drinkScore <= 2 ? "Low" : drinkScore === 3 ? "Okay" : "Good";
-      glanceItems.push({
-        icon: "💧",
-        label: "Hydration",
-        value: hydrationLabel + " (" + drinkScore + "/5)"
-      });
-
-      // Movement (from fitnessScore + fitnessNotes or recoveryDay)
-      var fitnessScore = todayCheckinData.fitnessScore || 0;
-      var fitnessNotes = todayCheckinData.fitnessNotes || "";
-      var isRecovery = todayCheckinData.recoveryDay === true;
-      var movementValue;
-      if (isRecovery) {
-        movementValue = "Recovery Day";
-      } else if (fitnessNotes && fitnessNotes.trim()) {
-        movementValue = fitnessNotes.trim().substring(0, 25) + (fitnessNotes.length > 25 ? "…" : "");
-      } else {
-        movementValue = fitnessScore + "/5";
-      }
-      glanceItems.push({
-        icon: "🏃",
-        label: "Movement",
-        value: movementValue
-      });
-
-      // Sleep (from sleepScore 1-5)
-      var sleepScore = todayCheckinData.sleepScore || 0;
-      var sleepLabel = sleepScore <= 2 ? "Poor" : sleepScore === 3 ? "Fair" : "Good";
-      glanceItems.push({
-        icon: "😴",
-        label: "Sleep",
-        value: sleepLabel + " (" + sleepScore + "/5)"
-      });
-    } else {
-      // Fallback: use fauxGlance (static demo values) or hide section
-      // For now, hide the section if no real data
-      section.style.display = "none";
-      return;
+    // Use today's data if present, else rely on fauxHistory for demo
+    function toFive(val, max) {
+      if (val == null) return null;
+      var n = Number(val);
+      if (isNaN(n)) return null;
+      if (max && max > 0) return Math.round((n / max) * 5);
+      return n;
     }
+    var todayFeelingRaw = todayCheckinData ? (todayCheckinData.dayScore || 0) : null;
+    var todayFeeling   = todayCheckinData ? toFive(todayFeelingRaw, 10) : null;
+    var todayNutrition = todayCheckinData ? (todayCheckinData.eatScore || 0) : null;
+    var todayDrink     = todayCheckinData ? (todayCheckinData.drinkScore || 0) : null;
+    var todaySleep     = todayCheckinData ? (todayCheckinData.sleepScore || 0) : null;
+
+    function bars(values, todayVal) {
+      var arr = (values || []).slice(-6); // past 6 days
+      // add today's value (may be null) to make 7 slots
+      arr.push(todayVal != null ? todayVal : 0);
+      return arr;
+    }
+
+    var cards = [
+      { label: "Feeling",   values: bars(fauxHistory.feeling,   todayFeeling) },
+      { label: "Nutrition", values: bars(fauxHistory.nutrition, todayNutrition) },
+      { label: "Drink",     values: bars(fauxHistory.drink,     todayDrink) },
+      { label: "Sleep",     values: bars(fauxHistory.sleep,     todaySleep) }
+    ];
 
     section.style.display = "block";
     var html = "";
-    for (var i = 0; i < glanceItems.length; i++) {
-      var g = glanceItems[i];
+    cards.forEach(function (c) {
+      var barsHtml = c.values.map(function (v) {
+        var pct = Math.max(0, Math.min(5, v)) / 5 * 100;
+        return '<div class="spark-bar" style="height:' + (pct || 2) + '%"></div>';
+      }).join("");
+      var todayVal = c.values[c.values.length-1] || 0;
+      var todayLabel;
+      if (!todayCheckinData) {
+        todayLabel = "Please complete";
+      } else if (c.label === "Feeling" && todayFeelingRaw != null) {
+        todayLabel = todayFeelingRaw + "/10";
+      } else {
+        todayLabel = todayVal + "/5";
+      }
       html +=
         '<div class="glance-card">' +
-          '<span class="glance-icon">' + g.icon + '</span>' +
-          '<span class="glance-label">' + g.label + '</span>' +
-          '<span class="glance-value">' + g.value + '</span>' +
+          '<div class="glance-label-row"><span class="glance-label">' + c.label + '</span></div>' +
+          '<div class="sparkline">' + barsHtml + '</div>' +
+          '<div class="glance-value">Today: ' + todayLabel + '</div>' +
         '</div>';
-    }
+    });
     grid.innerHTML = html;
   }
 
@@ -694,6 +689,19 @@
                 if (isToday(dateField)) {
                   checkinDone = true;
                   todayCheckinData = c;
+                  // Update goal ring progress based on today's goal responses if available
+                  if (c.goals && Array.isArray(c.goals) && fauxGoals.length) {
+                    fauxGoals = fauxGoals.map(function(g) {
+                      var match = c.goals.find(function(gr) { return gr.goalId === g.id || gr.goalTitle === g.label; });
+                      if (match && typeof match.progress === 'number') {
+                        // treat progress 1-5 as percent of target for demo
+                        var pctIncrement = (match.progress / 5) * 20; // arbitrary 20% max boost per day
+                        g.progressPct = Math.min(100, Math.round(g.progressPct + pctIncrement));
+                        g.currentValue = Math.min(g.targetValue, Math.round((g.progressPct / 100) * g.targetValue));
+                      }
+                      return g;
+                    });
+                  }
                   // Load Benji's Notes if persisted on the check-in document
                   if (c.benji_notes && Array.isArray(c.benji_notes)) {
                     benjiNotesData = c.benji_notes;

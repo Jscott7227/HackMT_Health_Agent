@@ -127,7 +127,10 @@
                 <label class="form-label">Day rating overall (1-10)</label>
                 <div class="scale-input">
                   <input type="range" min="1" max="10" value="7" id="dayScore" class="range-slider">
-                  <div class="scale-labels"><span>1</span><span>3</span><span>5</span><span>7</span><span>10</span></div>
+                  <div class="scale-labels">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                    <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                  </div>
                 </div>
                 <div class="value-readout"><span id="dayScoreValue">7</span>/10</div>
               </div>
@@ -196,6 +199,7 @@
       <div class="domain-navigation">
         <button class="nav-arrow-btn" id="prevDomain" disabled><span>&larr; Previous</span></button>
         <button class="nav-arrow-btn primary" id="nextDomain"><span>Next &rarr;</span></button>
+        <button class="nav-arrow-btn" id="clearTodayBtn" style="margin-left:auto;"><span>Clear today</span></button>
         <button class="submit-btn" id="submitCheckin" style="display: none;">
           <span class="btn-text">Complete Check-in</span>
         </button>
