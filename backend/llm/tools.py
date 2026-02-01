@@ -1,5 +1,5 @@
 from typing import Dict, List
-from datetime import datetime
+from datetime import datetime, timedelta
 from langchain_core.messages import SystemMessage, HumanMessage
 import json
 
@@ -311,17 +311,18 @@ def UpcomingPlanTool(facts: Dict, smart_goals: list, model) -> Dict:
 
 def BenjiGoalsTool(facts: Dict, user_goal: str, model) -> Dict:
     """
-    Generate SMART goals using the LLM based on user facts + goal.
-    
-    model = ChatGoogleGenerativeAI instance
+    Generate SMART goals + computed end date.
     """
 
     prompt = (
         "You are a professional fitness coach.\n\n"
-        "Given the user's goal and known facts, generate 1-3 SMART goals.\n\n"
+        "Generate 1-3 SMART goals.\n\n"
         "SMART = Specific, Measurable, Attainable, Relevant, Time-bound.\n\n"
-        "IMPORTANT: The Measurable field must contain a numeric/quantifiable target "
-        "Return STRICT JSON in this format:\n\n"
+        "IMPORTANT RULES:\n"
+        "- Measurable must contain a numeric target\n"
+        "- Duration_Days must be an integer number of days\n"
+        "- Duration_Days represents how long the goal lasts\n\n"
+        "Return STRICT JSON:\n\n"
         "{\n"
         '  "smart_goals": [\n'
         "    {\n"
@@ -329,41 +330,40 @@ def BenjiGoalsTool(facts: Dict, user_goal: str, model) -> Dict:
         '      "Measurable": \"...\",\n'
         '      "Attainable": \"...\",\n'
         '      "Relevant": \"...\",\n'
-        '      "Time_Bound": \"...\"\n'
+        '      "Time_Bound": \"...\",\n'
+        '      "Duration_Days": 30\n'
         "    }\n"
         "  ]\n"
         "}\n\n"
-        "Do not include explanations.\n"
-        "Do not include markdown.\n"
         "Only output JSON.\n\n"
         f"USER GOAL:\n{user_goal}\n\n"
         f"USER FACTS:\n{json.dumps(facts, indent=2)}"
     )
 
     messages = [
-        SystemMessage(content="You are a smart fitness agent that outputs only valid JSON."),
+        SystemMessage(content="Output only valid JSON."),
         HumanMessage(content=prompt)
     ]
 
     response = model.invoke(messages)
     raw = response.content.strip()
 
-    # Strip markdown code blocks if model adds them
+    # Remove markdown fences if present
     if raw.startswith("```"):
-        lines = raw.split("\n")
-        if lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines[-1].startswith("```"):
-            lines = lines[:-1]
+        lines = raw.split("\n")[1:-1]
         raw = "\n".join(lines)
 
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
-        # Safe fallback
-        data = {
-            "smart_goals": []
-        }
+        return {"smart_goals": []}
+
+    # Compute end dates using server time
+    now = datetime.utcnow()
+
+    for goal in data.get("smart_goals", []):
+        days = goal.get("Duration_Days", 30)
+        goal["EndDate"] = now + timedelta(days=int(days))
 
     return data
     

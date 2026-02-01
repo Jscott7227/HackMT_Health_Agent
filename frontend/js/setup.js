@@ -108,6 +108,7 @@ if (state.mood) factsObj.mood = GENERIC_SCALE[state.mood];
 if (state.stress) factsObj.stress = GENERIC_SCALE[state.stress];
 if (state.energy) factsObj.energy = GENERIC_SCALE[state.energy];
 if (state.sleep) factsObj.sleep = SLEEP_LABELS[state.sleep];
+if (state.activity !== undefined && state.activity !== null) factsObj.activity = ACTIVITY_LABELS[state.activity];
 if (state.confidence) factsObj.confidence = state.confidence;
 return factsObj;
 }
@@ -218,16 +219,15 @@ async function fetchGoalsAndContinue() {
         if (!res.ok) throw new Error('Failed to fetch goals');
 
         var data = await res.json();
+        await data
         var smartGoals = data.smart_goals || [];
 
         localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
 
-        // slight delay so animation feels intentional
         await completeSetup()
 
     } catch (err) {
-        console.error("Goal fetch error:", err);
-        completeSetup(); // fail forward instead of trapping user
+        console.error("Goal fetch error:", err); // fail forward instead of trapping user
     }
 }
 
@@ -520,7 +520,8 @@ ACTIVITY SLIDER
 -------------------------------------------------------- */
 function updateActivity() {
     state.activity = parseInt(document.getElementById('activitySlider').value);
-    document.getElementById('activityLabel').textContent = ACTIVITY_LABELS[state.activity];
+    var labelEl = document.getElementById('activityLabel');
+    if (labelEl) labelEl.textContent = ACTIVITY_LABELS[state.activity];
     state.activityTouched = true;
     updateCtaForScreen(8);
 }
@@ -748,6 +749,7 @@ async function completeSetup() {
             if (state.stress) factsObj.stress = GENERIC_SCALE[state.stress];
             if (state.energy) factsObj.energy = GENERIC_SCALE[state.energy];
             if (state.sleep) factsObj.sleep = SLEEP_LABELS[state.sleep];
+            if (state.activity !== undefined && state.activity !== null) factsObj.activity = ACTIVITY_LABELS[state.activity];
             if (state.confidence) factsObj.confidence = state.confidence;
 
             var payload = {
