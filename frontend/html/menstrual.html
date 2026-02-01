@@ -12,6 +12,36 @@
     <style>
       body { opacity: 0; transition: opacity 0.4s ease; }
       body.page-visible { opacity: 1; }
+
+      /* Cycle Prediction Line */
+      .cycle-prediction-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+        margin-bottom: var(--space-md);
+        padding: var(--space-sm) var(--space-md);
+        background: rgba(var(--accent-primary-rgb), 0.08);
+        border-radius: var(--radius-md);
+        font-size: 0.95rem;
+      }
+      .cycle-prediction-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        color: var(--text-secondary);
+      }
+      .cycle-prediction-item i {
+        color: var(--accent-primary);
+        font-size: 0.9rem;
+      }
+      .cycle-prediction-item strong {
+        color: var(--text-primary);
+      }
+      .prediction-disclaimer {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-left: var(--space-xs);
+      }
     </style>
 </head>
 
@@ -88,9 +118,37 @@
 
       <!-- Recommendations -->
       <div class="form-domain" id="recSection">
-        <div class="domain-header">
+        <div class="domain-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-sm);">
           <h3 class="domain-title" id="recTitle">Phase Recommendations</h3>
+          <button class="btn btn-primary" id="benjiRecsBtn" title="Get AI-powered recommendations from Benji">
+            <i class="fas fa-magic"></i>
+            <span>Get Benji's Recommendations</span>
+          </button>
         </div>
+
+        <!-- Prediction Line (shown when Benji data is available) -->
+        <div id="cyclePredictionLine" class="cycle-prediction-line" style="display: none;">
+          <div class="cycle-prediction-item">
+            <i class="fa-solid fa-calendar-day"></i>
+            <span>Current phase: <strong id="benjiCurrentPhase">—</strong></span>
+            <span style="margin-left: var(--space-md);">Day <strong id="benjiCycleDay">—</strong></span>
+          </div>
+          <div class="cycle-prediction-item">
+            <i class="fa-solid fa-clock"></i>
+            <span>Predicted next period: <strong id="benjiPredictedOnset">—</strong></span>
+            <span class="prediction-disclaimer">(estimate only)</span>
+          </div>
+        </div>
+
+        <!-- Benji's Note (personalization notes from AI) -->
+        <div id="benjiNotes" class="personalization-notes" style="display: none;">
+          <div class="personalization-notes-header">
+            <i class="fas fa-lightbulb"></i>
+            <span>Benji's Note</span>
+          </div>
+          <p id="benjiNotesText"></p>
+        </div>
+
         <p class="checkin-hint" style="margin-bottom: var(--space-sm);">These recommendations will be personalized by Benji based on your cycle data and check-in history.</p>
         <div class="cycle-rec-grid" id="recGrid"></div>
       </div>

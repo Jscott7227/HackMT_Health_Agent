@@ -410,6 +410,8 @@
     }
 
     await saveFlowLog();
+    // Invalidate Benji recommendations cache when flow data changes
+    clearBenjiCache();
     closeFlowEditor();
     renderAll();
   }
@@ -418,6 +420,8 @@
     if (!editingDate) return;
     delete flowLog[editingDate];
     await saveFlowLog();
+    // Invalidate Benji recommendations cache when flow data changes
+    clearBenjiCache();
     closeFlowEditor();
     renderAll();
   }
@@ -502,6 +506,130 @@
     `).join("");
   }
 
+  /* ── Benji Recommendations (AI-powered) ────────────── */
+  let benjiRecsLoading = false;
+
+  function displayBenjiRecommendations(data) {
+    const predictionLine = $("#cyclePredictionLine");
+    const benjiNotes = $("#benjiNotes");
+    const benjiNotesText = $("#benjiNotesText");
+    const benjiCurrentPhase = $("#benjiCurrentPhase");
+    const benjiCycleDay = $("#benjiCycleDay");
+    const benjiPredictedOnset = $("#benjiPredictedOnset");
+    const recGrid = $("#recGrid");
+
+    // Show prediction line if we have phase or prediction data
+    if (data.current_phase || data.predicted_period_onset) {
+      benjiCurrentPhase.textContent = data.current_phase || "—";
+      benjiCycleDay.textContent = data.cycle_day || "—";
+      benjiPredictedOnset.textContent = data.predicted_period_onset || "—";
+      predictionLine.style.display = "flex";
+    } else {
+      predictionLine.style.display = "none";
+    }
+
+    // Show Benji's Note if we have personalization notes
+    if (data.personalization_notes) {
+      benjiNotesText.textContent = data.personalization_notes;
+      benjiNotes.style.display = "block";
+    } else {
+      benjiNotes.style.display = "none";
+    }
+
+    // Update recommendations grid if AI recommendations provided
+    if (data.recommendations && data.recommendations.length > 0) {
+      // Get phase color for styling
+      const phase = getPhase(getCycleDay(new Date()));
+      const phaseColor = phase ? phase.color : "#4fc193";
+
+      recGrid.innerHTML = data.recommendations.map(r => `
+        <div class="cycle-rec-card" style="border-left: 3px solid ${phaseColor}">
+          <div class="cycle-rec-icon"><i class="fa-solid ${r.icon || 'fa-heart-pulse'}"></i></div>
+          <div class="cycle-rec-body">
+            <strong class="cycle-rec-title">${r.title}</strong>
+            <p class="cycle-rec-text">${r.text}</p>
+          </div>
+        </div>
+      `).join("");
+    }
+  }
+
+  function hideBenjiUI() {
+    const predictionLine = $("#cyclePredictionLine");
+    const benjiNotes = $("#benjiNotes");
+    if (predictionLine) predictionLine.style.display = "none";
+    if (benjiNotes) benjiNotes.style.display = "none";
+  }
+
+  async function fetchBenjiRecommendations(forceRefresh = false) {
+    const userId = getUserId();
+    const benjiRecsBtn = $("#benjiRecsBtn");
+
+    // Must be logged in
+    if (!userId) {
+      alert("Please log in to get Benji's personalized recommendations.");
+      return;
+    }
+
+    // Check cache first (unless forcing refresh)
+    if (!forceRefresh && window.BenjiAPI && window.BenjiAPI.getCachedCycleRecommendations) {
+      const cached = window.BenjiAPI.getCachedCycleRecommendations(userId);
+      if (cached && cached.personalization_notes) {
+        displayBenjiRecommendations(cached);
+        return;
+      }
+    }
+
+    // Show loading state
+    if (benjiRecsLoading) return;
+    benjiRecsLoading = true;
+    if (benjiRecsBtn) {
+      benjiRecsBtn.disabled = true;
+      benjiRecsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Loading...</span>';
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/menstrual-recommendations/${userId}`);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Cache the response
+      if (window.BenjiAPI && window.BenjiAPI.setCachedCycleRecommendations) {
+        window.BenjiAPI.setCachedCycleRecommendations(userId, data);
+      }
+
+      // Display the data
+      displayBenjiRecommendations(data);
+
+    } catch (e) {
+      console.error("Error fetching Benji recommendations:", e);
+      // Show error in Benji's Note
+      const benjiNotes = $("#benjiNotes");
+      const benjiNotesText = $("#benjiNotesText");
+      if (benjiNotes && benjiNotesText) {
+        benjiNotesText.textContent = "I couldn't load personalized recommendations right now. Please try again later.";
+        benjiNotes.style.display = "block";
+      }
+    } finally {
+      benjiRecsLoading = false;
+      if (benjiRecsBtn) {
+        benjiRecsBtn.disabled = false;
+        benjiRecsBtn.innerHTML = '<i class="fas fa-magic"></i> <span>Get Benji\'s Recommendations</span>';
+      }
+    }
+  }
+
+  function clearBenjiCache() {
+    const userId = getUserId();
+    if (userId && window.BenjiAPI && window.BenjiAPI.clearCachedCycleRecommendations) {
+      window.BenjiAPI.clearCachedCycleRecommendations(userId);
+    }
+  }
+
   /* ── Event listeners ────────────────────────────────── */
   async function init() {
     const now = new Date();
@@ -557,6 +685,21 @@
     // Flow reminder dismiss
     const dismissBtn = $("#flowReminderDismiss");
     if (dismissBtn) dismissBtn.addEventListener("click", dismissFlowReminder);
+
+    // Benji recommendations button
+    const benjiRecsBtn = $("#benjiRecsBtn");
+    if (benjiRecsBtn) {
+      benjiRecsBtn.addEventListener("click", () => fetchBenjiRecommendations(true));
+    }
+
+    // Load cached Benji recommendations if available
+    const userId = getUserId();
+    if (userId && window.BenjiAPI && window.BenjiAPI.getCachedCycleRecommendations) {
+      const cached = window.BenjiAPI.getCachedCycleRecommendations(userId);
+      if (cached && cached.personalization_notes) {
+        displayBenjiRecommendations(cached);
+      }
+    }
 
     // Save / delete / close
     $("#flowEditorSave").addEventListener("click", saveFlowEntry);

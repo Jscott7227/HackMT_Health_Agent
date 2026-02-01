@@ -707,6 +707,161 @@ def MedicationScheduleAgentTool(
         return {"_fallback": True}
 
 
+def CycleRecommendationsAgentTool(
+    flow_log_entries: Dict,
+    model
+) -> Dict:
+    """
+    Generate personalized cycle phase recommendations using LLM.
+    
+    Args:
+        flow_log_entries: Dict of date strings to entry objects
+            e.g. { "2025-01-15": { "flow": "medium", "symptoms": ["cramps"], "crampPain": 5, "discharge": "none" }, ... }
+        model: ChatGoogleGenerativeAI instance
+    
+    Returns:
+        Dict with current_phase, cycle_day, predicted_period_onset, recommendations, personalization_notes
+        Or {"_fallback": True} if LLM fails
+    """
+    from datetime import datetime, timedelta
+    
+    if not flow_log_entries:
+        return {"_fallback": True}
+    
+    # Get today's date for context
+    today_str = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    # Build the prompt
+    prompt = (
+        "You are a wellness assistant helping users track their menstrual cycle. Your role is to:\n"
+        "1. Infer the user's current cycle phase and cycle day from their flow log\n"
+        "2. Predict their next period onset date (as an estimate)\n"
+        "3. Provide 3-5 short wellness recommendations for the current phase\n\n"
+        
+        "IMPORTANT RULES:\n"
+        "- Do NOT give medical or diagnostic advice.\n"
+        "- Do NOT predict fertility or give pregnancy advice.\n"
+        "- Only provide tracking support, phase awareness, and general wellness recommendations.\n"
+        "- Always recommend consulting a healthcare provider for medical concerns.\n"
+        "- Predictions are estimates only; include this disclaimer.\n\n"
+        
+        "CYCLE PHASE LOGIC (use this to derive phase):\n"
+        "- A period starts when flow is logged (light/medium/heavy/clots) after a gap of >5 days from the previous flow.\n"
+        "- Typical cycle length is 28 days (can vary 21-35 days).\n"
+        "- Phases based on cycle day (day 1 = first day of period):\n"
+        "  - Menstrual: Days 1-5 (bleeding phase)\n"
+        "  - Follicular: Days 6-13 (post-period, before ovulation)\n"
+        "  - Ovulation: Days 14-16 (most fertile window)\n"
+        "  - Luteal: Days 17-28 (post-ovulation, before next period)\n\n"
+        
+        f"TODAY'S DATE: {today_str}\n\n"
+        
+        f"USER'S FLOW LOG (dates with logged data):\n{json.dumps(flow_log_entries, indent=2)}\n\n"
+        
+        "ANALYSIS STEPS:\n"
+        "1. Find the most recent period start (first day of consecutive flow days after a gap >5 days).\n"
+        "2. Calculate cycle day = (today - period_start) % 28 + 1.\n"
+        "3. Determine current phase from cycle day.\n"
+        "4. Predict next period onset = last_period_start + 28 days (give a range of 2-3 days for variability).\n"
+        "5. Generate 3-5 wellness recommendations based on current phase and any logged symptoms.\n\n"
+        
+        "OUTPUT FORMAT - Return STRICT JSON only, no markdown:\n"
+        "{\n"
+        '  "current_phase": "Luteal",\n'
+        '  "cycle_day": 22,\n'
+        '  "predicted_period_onset": "2025-02-15 to 2025-02-17",\n'
+        '  "recommendations": [\n'
+        '    { "icon": "fa-spa", "title": "Wind Down Gradually", "text": "Energy may be lower as your period approaches. Focus on gentle exercise like yoga or walking." },\n'
+        '    { "icon": "fa-moon", "title": "Prioritize Sleep", "text": "Progesterone levels are high. Aim for 8 hours and avoid caffeine after noon." },\n'
+        '    { "icon": "fa-wheat-awn", "title": "Complex Carbs", "text": "Cravings are common. Choose whole grains, sweet potatoes, and magnesium-rich foods." }\n'
+        '  ],\n'
+        '  "personalization_notes": "Based on your logged data, you appear to be in the Luteal phase (day 22). Your next period is predicted around Feb 15-17. I noticed you logged cramps recently—consider gentle stretching and warmth for comfort. This is an estimate; cycles can vary."\n'
+        "}\n\n"
+        
+        "ICON OPTIONS (use Font Awesome solid icons):\n"
+        "- fa-mug-hot, fa-bowl-food, fa-droplet, fa-bed, fa-dumbbell, fa-carrot, fa-brain, fa-people-group\n"
+        "- fa-fire, fa-apple-whole, fa-heart-pulse, fa-comments, fa-spa, fa-wheat-awn, fa-moon, fa-hand-holding-heart\n\n"
+        
+        "CRITICAL REQUIREMENTS:\n"
+        "1. current_phase must be one of: 'Menstrual', 'Follicular', 'Ovulation', 'Luteal', or null if unknown.\n"
+        "2. cycle_day must be an integer 1-28, or null if unknown.\n"
+        "3. predicted_period_onset should be a date or short range (e.g. '2025-02-15' or '2025-02-15 to 2025-02-17'), or null.\n"
+        "4. recommendations must be an array of objects with icon, title, and text.\n"
+        "5. personalization_notes should be a brief, friendly summary mentioning the phase, prediction, and any relevant logged symptoms.\n"
+        "6. If there's not enough data to determine phase, set current_phase to null and provide generic wellness advice.\n"
+        "Only output JSON. No explanations outside the JSON."
+    )
+    
+    messages = [
+        SystemMessage(content="You are a menstrual cycle wellness assistant that outputs only valid JSON. Do not give medical advice, fertility predictions, or diagnoses. Only provide phase tracking, period onset estimates, and general wellness recommendations."),
+        HumanMessage(content=prompt)
+    ]
+    
+    try:
+        response = model.invoke(messages)
+        raw = response.content.strip()
+        
+        # Strip markdown code blocks if model adds them
+        if raw.startswith("```"):
+            lines = raw.split("\n")
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines[-1].startswith("```"):
+                lines = lines[:-1]
+            raw = "\n".join(lines)
+        
+        data = json.loads(raw)
+        
+        # Validate required fields exist
+        if "current_phase" not in data:
+            data["current_phase"] = None
+        if "cycle_day" not in data:
+            data["cycle_day"] = None
+        if "predicted_period_onset" not in data:
+            data["predicted_period_onset"] = None
+        if "recommendations" not in data or not isinstance(data.get("recommendations"), list):
+            print("CycleRecommendationsAgentTool: Missing or invalid recommendations")
+            return {"_fallback": True}
+        if "personalization_notes" not in data:
+            data["personalization_notes"] = None
+        
+        # Validate recommendations structure
+        for rec in data["recommendations"]:
+            if not isinstance(rec, dict):
+                print("CycleRecommendationsAgentTool: recommendation is not a dict")
+                return {"_fallback": True}
+            if "title" not in rec or "text" not in rec:
+                print("CycleRecommendationsAgentTool: recommendation missing title or text")
+                return {"_fallback": True}
+            # Ensure icon exists (default if missing)
+            if "icon" not in rec:
+                rec["icon"] = "fa-heart-pulse"
+        
+        # Validate current_phase if present
+        valid_phases = ["Menstrual", "Follicular", "Ovulation", "Luteal", None]
+        if data["current_phase"] not in valid_phases:
+            # Try to normalize
+            phase_lower = str(data["current_phase"]).lower() if data["current_phase"] else None
+            phase_map = {"menstrual": "Menstrual", "follicular": "Follicular", "ovulation": "Ovulation", "luteal": "Luteal"}
+            data["current_phase"] = phase_map.get(phase_lower, None)
+        
+        # Validate cycle_day if present
+        if data["cycle_day"] is not None:
+            try:
+                data["cycle_day"] = int(data["cycle_day"])
+                if data["cycle_day"] < 1 or data["cycle_day"] > 35:
+                    data["cycle_day"] = None
+            except (ValueError, TypeError):
+                data["cycle_day"] = None
+        
+        return data
+        
+    except (json.JSONDecodeError, Exception) as e:
+        # Return fallback sentinel on any error
+        print(f"CycleRecommendationsAgentTool error: {e}")
+        return {"_fallback": True}
+
+
 # -----------------------------
 # TOOL REGISTRIES
 # -----------------------------
@@ -731,4 +886,5 @@ OPTIONAL_TOOLS = {
     "medication_schedule": MedicationScheduleTool,
     "contraindication_check": ContraindicationCheckTool,
     "medication_schedule_agent": MedicationScheduleAgentTool,
+    "cycle_recommendations_agent": CycleRecommendationsAgentTool,
 }

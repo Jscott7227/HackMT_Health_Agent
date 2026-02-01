@@ -163,6 +163,56 @@
         // ignore
       }
     },
+
+    // Cycle recommendations API method
+    getCycleRecommendations: function (userId) {
+      return request("/menstrual-recommendations/" + userId).then(function (r) {
+        if (r.status === 404) {
+          return {
+            user_id: userId,
+            current_phase: null,
+            cycle_day: null,
+            predicted_period_onset: null,
+            recommendations: [],
+            personalization_notes: null
+          };
+        }
+        if (!r.ok) throw new Error("Cycle recommendations fetch failed");
+        return r.json();
+      });
+    },
+
+    // Cycle recommendations cache (localStorage) – agent runs only on "Get Benji's recommendations" click
+    CYCLE_RECOMMENDATIONS_CACHE_KEY_PREFIX: "Benji_cycle_recommendations_cache_",
+
+    getCachedCycleRecommendations: function (userId) {
+      if (!userId || typeof localStorage === "undefined") return null;
+      try {
+        var raw = localStorage.getItem(this.CYCLE_RECOMMENDATIONS_CACHE_KEY_PREFIX + userId);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (e) {
+        return null;
+      }
+    },
+
+    setCachedCycleRecommendations: function (userId, data) {
+      if (!userId || typeof localStorage === "undefined" || !data) return;
+      try {
+        localStorage.setItem(this.CYCLE_RECOMMENDATIONS_CACHE_KEY_PREFIX + userId, JSON.stringify(data));
+      } catch (e) {
+        // ignore quota or parse errors
+      }
+    },
+
+    clearCachedCycleRecommendations: function (userId) {
+      if (!userId || typeof localStorage === "undefined") return;
+      try {
+        localStorage.removeItem(this.CYCLE_RECOMMENDATIONS_CACHE_KEY_PREFIX + userId);
+      } catch (e) {
+        // ignore
+      }
+    },
   };
 
   global.BenjiAPI = BenjiAPI;

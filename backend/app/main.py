@@ -883,6 +883,101 @@ def update_menstrual_flow_log(user_id: str, payload: MenstrualFlowLogRequest):
     return MenstrualFlowLogResponse(user_id=user_id, entries=entries_dict)
 
 
+# ---------- Cycle Recommendations (AI-powered) ----------
+class CycleRecommendationItem(BaseModel):
+    icon: Optional[str] = None  # Font Awesome icon class
+    title: str
+    text: str
+
+
+class CycleRecommendationsResponse(BaseModel):
+    user_id: str
+    current_phase: Optional[str] = None  # "Menstrual", "Follicular", "Ovulation", "Luteal"
+    cycle_day: Optional[int] = None  # 1-28
+    predicted_period_onset: Optional[str] = None  # Date or range string
+    recommendations: List[CycleRecommendationItem] = []
+    personalization_notes: Optional[str] = None
+
+
+@app.get("/menstrual-recommendations/{user_id}", response_model=CycleRecommendationsResponse)
+def get_cycle_recommendations(user_id: str):
+    """
+    Get AI-powered cycle phase recommendations based on user's flow log.
+    
+    Returns current phase, cycle day, predicted next period onset,
+    personalized recommendations, and Benji's notes.
+    """
+    from backend.llm.tools import CycleRecommendationsAgentTool
+    
+    # Validate user exists
+    user_snap = db.collection("User").document(user_id).get()
+    if not user_snap.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get menstrual flow log from Firestore
+    doc_ref = db.collection("MenstrualFlowLog").document(user_id)
+    snap = doc_ref.get()
+    
+    # Handle empty/missing flow log
+    if not snap.exists:
+        return CycleRecommendationsResponse(
+            user_id=user_id,
+            current_phase=None,
+            cycle_day=None,
+            predicted_period_onset=None,
+            recommendations=[],
+            personalization_notes="Log your flow on the calendar to get personalized phase and period predictions from Benji."
+        )
+    
+    data = snap.to_dict()
+    entries = data.get("entries", {})
+    
+    if not entries:
+        return CycleRecommendationsResponse(
+            user_id=user_id,
+            current_phase=None,
+            cycle_day=None,
+            predicted_period_onset=None,
+            recommendations=[],
+            personalization_notes="Log your flow on the calendar to get personalized phase and period predictions from Benji."
+        )
+    
+    # Call the CycleRecommendationsAgentTool
+    agent_result = CycleRecommendationsAgentTool(
+        flow_log_entries=entries,
+        model=benji.model
+    )
+    
+    # Handle fallback (LLM failed)
+    if agent_result.get("_fallback"):
+        return CycleRecommendationsResponse(
+            user_id=user_id,
+            current_phase=None,
+            cycle_day=None,
+            predicted_period_onset=None,
+            recommendations=[],
+            personalization_notes="I couldn't analyze your cycle data right now. Please try again later, or log more flow data for better predictions."
+        )
+    
+    # Build recommendations list from agent result
+    recommendations = []
+    for rec in agent_result.get("recommendations", []):
+        recommendations.append(CycleRecommendationItem(
+            icon=rec.get("icon"),
+            title=rec.get("title", ""),
+            text=rec.get("text", "")
+        ))
+    
+    return CycleRecommendationsResponse(
+        user_id=user_id,
+        current_phase=agent_result.get("current_phase"),
+        cycle_day=agent_result.get("cycle_day"),
+        predicted_period_onset=agent_result.get("predicted_period_onset"),
+        recommendations=recommendations,
+        personalization_notes=agent_result.get("personalization_notes")
+    )
+
+
 # ---------- Medication Schedule (structured) ----------
 class DetailedTimeSlot(BaseModel):
     time: str  # "HH:mm"
