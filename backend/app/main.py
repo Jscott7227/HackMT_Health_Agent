@@ -329,10 +329,17 @@ def run_goals_endpoint(payload: RunGoalsRequest):
     Generate SMART goals for a user's input goal and optionally persist to user facts.
     """
     try:
+        d =  get_profileinfo(payload.user_id)
+
+        user_facts = {
+            "benji_facts": d.benji_facts,
+            "height": d.height,
+            "weight": d.weight,
+        }
+        
         result = benji.run_goals(
             user_goal=payload.user_goal,
-            user_facts=payload.user_facts,
-            user_id=payload.user_id
+            user_facts=user_facts
         )
         # Return only the smart_goals list
         smart_goals = result.get("smart_goals", [])
@@ -352,8 +359,16 @@ def run_upcoming_endpoint(payload: RunUpcomingRequest):
     """
 
     try:
+        d =  get_profileinfo(payload.user_id)
+
+        user_facts = {
+            "benji_facts": d.benji_facts,
+            "height": d.height,
+            "weight": d.weight,
+        }
+        
         result = benji.run_upcoming_plan(
-            user_facts=payload.user_facts,
+            user_facts=user_facts,
             user_id=payload.user_id
         )
 
@@ -412,6 +427,15 @@ def get_profileinfo(user_id: str):
         raise HTTPException(status_code=404, detail="ProfileInfo not found")
 
     d = snap.to_dict() or {}
+    
+    benji_facts = d.get("BenjiFacts") or {}
+    if isinstance(benji_facts, str):
+        try:
+            benji_facts = json.loads(benji_facts)
+        except json.JSONDecodeError:
+            # fallback to empty dict if invalid JSON
+            benji_facts = {}
+    
     return ProfileInfoOut(
         user_id=user_id,
         benji_facts=d.get("BenjiFacts"),

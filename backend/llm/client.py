@@ -214,35 +214,14 @@ Provide clear, actionable guidance while emphasizing the importance of professio
             dict containing "smart_goals" (list of SMART goal dicts)
         """
 
-        facts = self.user_facts.copy()
-        
-        if user_id:
-            try:
-                from backend.app.main import get_user_by_id
-                user = get_user_by_id(user_id)
+        facts = user_facts.copy()
 
-                if user:
-                    stored = user.get("user_facts", {})
-                    facts.update(stored)
-            except Exception as e:
-                print(f"Warning: failed to load user facts for {user_id}: {e}")
-        
-        
-        if user_facts:
-            facts.update(user_facts)
-
+        print(user_facts)
         # Generate SMART goals via LLM
         goals = BenjiGoalsTool(facts=facts, user_goal=user_goal, model=self.model)
 
         # Persist generated goals in user_facts
         facts["smart_goals"] = goals.get("smart_goals", [])
-
-        if user_id:
-            try:
-                from backend.app.main import update_user_facts
-                update_user_facts(user_id=user_id, user_facts={"smart_goals": facts["smart_goals"]})
-            except Exception as e:
-                print(f"Warning: failed to save SMART goals for user {user_id}: {e}")
 
         # Update local session
         self.user_facts = facts
@@ -281,7 +260,7 @@ Provide clear, actionable guidance while emphasizing the importance of professio
         if user_facts:
             facts.update(user_facts)
 
-        smart_goals = facts.get("smart_goals", [])
+        smart_goals = facts.pop("smart_goals", [])
         
         # Generate plan via LLM
         plan = UpcomingPlanTool(
@@ -289,9 +268,6 @@ Provide clear, actionable guidance while emphasizing the importance of professio
             smart_goals=smart_goals,
             model=self.model
         )
-
-        # Persist generated plan
-        facts["upcoming_plan"] = plan.get("upcoming", {})
 
         if user_id:
             try:
