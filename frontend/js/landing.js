@@ -55,6 +55,7 @@
 
   wireEye("#login-togglePw", "#login-password", "#login-eyeSlash");
   wireEye("#signup-togglePw", "#signup-password", "#signup-eyeSlash");
+  wireEye("#signup-confirmToggle", "#signup-confirm", "#signup-confirmSlash");
 
   // ─────────────────────────────────────────
   // LOGIN
