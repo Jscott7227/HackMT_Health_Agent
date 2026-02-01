@@ -807,7 +807,7 @@
     stroke-linecap: round;
     stroke-dasharray: 188;
     stroke-dashoffset: 188;
-    animation: ringDraw 2.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: ringDraw 11s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes ringDraw {

@@ -643,46 +643,25 @@
             displayedGoals = [];
             usedGoalIndices.clear();
 
-            var finalGoal = localStorage.getItem('finalGoal') || "";
-            const userId = session.user_id || null;
-            try {
-                var res = await fetch('/goals', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        user_goal: finalGoal
-                    })
-                });
+            var smartGoals = JSON.parse(localStorage.getItem('smartGoals') || "[]");
 
-                if (!res.ok) throw new Error('Failed to fetch goals');
+            smartGoals.forEach(function (goal) {
 
-                var data = await res.json();
-                var smartGoals = data.smart_goals || [];
+                var displayGoal = {
+                    id: Date.now() + Math.random(),
+                    status: 'pending',
 
-                smartGoals.forEach(function (goal) {
+                    // visible fields
+                    title: goal.Specific,
+                    description: `${goal.Measurable} • ${goal.Time_Bound}`,
+                    icon: "🎯",
 
-                    var displayGoal = {
-                        id: Date.now() + Math.random(),
-                        status: 'pending',
+                    // hidden full SMART goal (stored but not shown)
+                    fullSMART: goal
+                };
 
-                        // visible fields
-                        title: goal.Specific,
-                        description: `${goal.Measurable} • ${goal.Time_Bound}`,
-                        icon: "🎯",
-
-                        // hidden full SMART goal (stored but not shown)
-                        fullSMART: goal
-                    };
-
-                    displayedGoals.push(displayGoal);
-                });
-
-            } catch (err) {
-                console.error("Goal fetch error:", err);
-            }
+                displayedGoals.push(displayGoal);
+            });
 
             renderGoals();
         }

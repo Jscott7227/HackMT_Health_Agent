@@ -6,6 +6,11 @@ at runtime based on the consent answer on screen 3.
 var ROUTE = [1, 2, 3, 4, 16, 6, 7, 8, 9, 10, 14, 15, 11, 12, 13];
 var returnToReview = false;
 var currentRouteIndex = 0;
+const session = JSON.parse(
+    sessionStorage.getItem("sanctuary_session") ||
+    localStorage.getItem("sanctuary_session") ||
+    "{}"
+);
 
 /* --------------------------------------------------------
 STATE – mirrors the profile schema from the handoff doc
@@ -178,15 +183,48 @@ function goTo(n) {
             ring.style.animation = '';
         }
         // Auto-complete after 3 seconds of "analyzing"
-        setTimeout(function () {
-            completeSetup();
-        }, 3000);
+        fetchGoalsAndContinue();
     }
 
     updateCtaForScreen(n);
     updateBackVisibility(n);
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+async function fetchGoalsAndContinue() {
+    var finalGoal = localStorage.getItem('finalGoal') || "";
+    const userId = session.user_id || null;
+
+    try {
+        var res = await fetch('http://localhost:8000/goals', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                user_goal: finalGoal
+            })
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch goals');
+
+        var data = await res.json();
+        var smartGoals = data.smart_goals || [];
+
+        localStorage.setItem('smartGoals', JSON.stringify(smartGoals));
+
+        // slight delay so animation feels intentional
+        setTimeout(function () {
+            completeSetup();
+        }, 800);
+
+    } catch (err) {
+        console.error("Goal fetch error:", err);
+        completeSetup(); // fail forward instead of trapping user
+    }
+}
+
 
 // Used by screen 3 CTA – updates the route first, then advances
 function advanceFrom(fromScreen) {
