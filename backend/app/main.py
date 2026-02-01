@@ -407,7 +407,7 @@ def run_goals_endpoint(payload: RunGoalsRequest):
         print("Payload received:", payload)
         
 
-        user_facts = fetch_profileinfo(user_id)
+        user_facts = fetch_profileinfo(payload.user_id)
         result = benji.run_goals(
             user_goal=payload.user_goal,
             user_facts=user_facts
