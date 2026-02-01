@@ -341,6 +341,26 @@ def update_facts(update: UpdateUserFacts):
     save_users(users)
     return {"message": "User facts updated successfully", "user_facts": user["user_facts"]}
 
+def fetch_profileinfo(user_id: str):
+    snap = db.collection("ProfileInfo").document(user_id).get()
+    if not snap.exists:
+        return None  # don’t raise HTTPException here
+
+    d = snap.to_dict() or {}
+
+    benji_facts = d.get("BenjiFacts") or {}
+    if isinstance(benji_facts, str):
+        try:
+            benji_facts = json.loads(benji_facts)
+        except json.JSONDecodeError:
+            benji_facts = {}
+
+    return {
+        "user_id": user_id,
+        "benji_facts": benji_facts,
+        "height": d.get("Height"),
+        "weight": d.get("Weight"),
+    }
 
 @app.post("/run", response_model=RunResponse)
 def run_agent(payload: RunRequest):
@@ -385,17 +405,9 @@ def run_goals_endpoint(payload: RunGoalsRequest):
     """
     try:
         print("Payload received:", payload)
-        try:
-            d = get_profileinfo(payload.user_id)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"get_profileinfo failed: {str(e)}")
-        if not d:
-            raise HTTPException(404, detail=f"No profile found for user {payload.user_id}")
-        user_facts = {
-            "benji_facts": d.benji_facts,
-            "height": d.height,
-            "weight": d.weight,
-        }
+        
+
+        user_facts = fetch_profileinfo(user_id)
         result = benji.run_goals(
             user_goal=payload.user_goal,
             user_facts=user_facts
