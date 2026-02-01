@@ -15,16 +15,20 @@
 
   <div id="benji-root"></div>
 
-  <div class="container">
-    <!-- Chat content goes here -->
-     <!-- ===== LLM CHAT (stays on top) ===== -->
-    <div class="benji-llm-section">
-      <textarea id="llmInput" placeholder="Ask Benji anything about your fitness or wellness..."></textarea>
-      <button id="sendBtn">Ask Benji</button>
-      <div id="llmResponse"></div>
+  <div class="chat-container">
+    <!-- Chat messages -->
+    <div id="chatHistory"></div>
+
+    <!-- Input area -->
+    <div id="inputSection">
+      <textarea id="llmInput" placeholder="Ask Benji anything..." rows="1"></textarea>
+      <button id="sendBtn">Send</button>
     </div>
   </div>
 
   <script src="../components/topbar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="../js/chat.js"></script>
+
 </body>
 </html>

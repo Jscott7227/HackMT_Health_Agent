@@ -5,10 +5,35 @@ from typing import Optional, Dict
 load_dotenv()
 
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 
 from backend.llm.tools import MANDATORY_TOOLS, OPTIONAL_TOOLS, BenjiGoalsTool, UpcomingPlanTool
+
+SYSTEM_PROMPT = """
+You are a professional fitness and wellness coach named Benji.
+
+Your role:
+- Answer the user's question clearly and directly
+- Use the provided background facts as context, not as the main topic
+- Personalize advice when relevant
+- Avoid making medical diagnoses
+- Encourage professional guidance for medical concerns
+
+Guidelines:
+- Focus primarily on the user's question
+- Use facts only when they improve relevance
+- Be practical, actionable, and supportive
+- Keep responses structured and easy to follow
+"""
+
+def format_user_facts(user_facts: dict) -> str:
+    if not user_facts:
+        return "No background facts provided."
+
+    lines = [f"- {k}: {v}" for k, v in user_facts.items()]
+    return "User background facts:\n" + "\n".join(lines)
+
 
 class BenjiLLM:
     def __init__(self):
@@ -20,6 +45,7 @@ class BenjiLLM:
         self.user_facts = {}
         self.mandatory_tools = MANDATORY_TOOLS
         self.optional_tools = OPTIONAL_TOOLS
+        self.history = []
     
     def select_optional_tools(self, user_input: str) -> list:
         """
@@ -188,35 +214,14 @@ Provide clear, actionable guidance while emphasizing the importance of professio
             dict containing "smart_goals" (list of SMART goal dicts)
         """
 
-        facts = self.user_facts.copy()
-        
-        if user_id:
-            try:
-                from backend.app.main import get_user_by_id
-                user = get_user_by_id(user_id)
+        facts = user_facts.copy()
 
-                if user:
-                    stored = user.get("user_facts", {})
-                    facts.update(stored)
-            except Exception as e:
-                print(f"Warning: failed to load user facts for {user_id}: {e}")
-        
-        
-        if user_facts:
-            facts.update(user_facts)
-
+        print(user_facts)
         # Generate SMART goals via LLM
         goals = BenjiGoalsTool(facts=facts, user_goal=user_goal, model=self.model)
 
         # Persist generated goals in user_facts
         facts["smart_goals"] = goals.get("smart_goals", [])
-
-        if user_id:
-            try:
-                from backend.app.main import update_user_facts
-                update_user_facts(user_id=user_id, user_facts={"smart_goals": facts["smart_goals"]})
-            except Exception as e:
-                print(f"Warning: failed to save SMART goals for user {user_id}: {e}")
 
         # Update local session
         self.user_facts = facts
@@ -255,7 +260,7 @@ Provide clear, actionable guidance while emphasizing the importance of professio
         if user_facts:
             facts.update(user_facts)
 
-        smart_goals = facts.get("smart_goals", [])
+        smart_goals = facts.pop("smart_goals", [])
         
         # Generate plan via LLM
         plan = UpcomingPlanTool(
@@ -263,9 +268,6 @@ Provide clear, actionable guidance while emphasizing the importance of professio
             smart_goals=smart_goals,
             model=self.model
         )
-
-        # Persist generated plan
-        facts["upcoming_plan"] = plan.get("upcoming", {})
 
         if user_id:
             try:
@@ -282,6 +284,27 @@ Provide clear, actionable guidance while emphasizing the importance of professio
 
         return plan
     
+    def chat(self, user_input: str, history: list = None, user_facts: dict = None):
+        history = history or []
+
+        facts_context = format_user_facts(user_facts=user_facts)
+
+        messages = [
+            SystemMessage(content=SYSTEM_PROMPT),
+            SystemMessage(content=facts_context),
+            *history,
+            HumanMessage(content=user_input),
+        ]
+
+        response = self.model.invoke(messages)
+
+        # Save to internal memory if needed
+        self.history.append(HumanMessage(content=user_input))
+        self.history.append(AIMessage(content=response.content))
+
+        return response.content
+
+
     
 if __name__ == "__main__":
     benji = BenjiLLM()

@@ -5,6 +5,7 @@ from hashlib import sha256
 from uuid import uuid4
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 import json
 import os
@@ -49,6 +50,17 @@ app.add_middleware(
 
 benji = BenjiLLM()
 
+class ChatMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+
+class ChatRequest(BaseModel):
+    user_input: str
+    user_id: Optional[str] = None
+    history: Optional[List[ChatMessage]] = []
+
+class ChatResponse(BaseModel):
+    response: str
 class UpdateUserNameRequest(BaseModel):
     email: str
     password: str
@@ -358,10 +370,17 @@ def run_goals_endpoint(payload: RunGoalsRequest):
     Generate SMART goals for a user's input goal and optionally persist to user facts.
     """
     try:
+        d =  get_profileinfo(payload.user_id)
+
+        user_facts = {
+            "benji_facts": d.benji_facts,
+            "height": d.height,
+            "weight": d.weight,
+        }
+        
         result = benji.run_goals(
             user_goal=payload.user_goal,
-            user_facts=payload.user_facts,
-            user_id=payload.user_id
+            user_facts=user_facts
         )
         # Return only the smart_goals list
         smart_goals = result.get("smart_goals", [])
@@ -381,8 +400,16 @@ def run_upcoming_endpoint(payload: RunUpcomingRequest):
     """
 
     try:
+        d =  get_profileinfo(payload.user_id)
+
+        user_facts = {
+            "benji_facts": d.benji_facts,
+            "height": d.height,
+            "weight": d.weight,
+        }
+        
         result = benji.run_upcoming_plan(
-            user_facts=payload.user_facts,
+            user_facts=user_facts,
             user_id=payload.user_id
         )
 
@@ -391,6 +418,28 @@ def run_upcoming_endpoint(payload: RunUpcomingRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/chat", response_model=ChatResponse)
+def chat_endpoint(req: ChatRequest):
+    # Convert frontend history to LangChain messages
+    history_msgs = [
+        HumanMessage(content=msg.content) if msg.role == "user" else AIMessage(content=msg.content)
+        for msg in (req.history or [])
+    ]
+    
+    if req.user_id:
+        d =  get_profileinfo(req.user_id)
+
+        user_facts = {
+            "benji_facts": d.benji_facts,
+            "height": d.height,
+            "weight": d.weight,
+        }
+
+    print(user_facts)
+    # Call chat function, passing LangChain message objects
+    reply = benji.chat(req.user_input, history=history_msgs, user_facts=user_facts)
+    return ChatResponse(response=reply)
 
 @app.post("/profileinfo/{user_id}", response_model=ProfileInfoOut)
 def create_profileinfo(user_id: str, payload: CreateProfileInfoRequest):
@@ -431,6 +480,15 @@ def get_profileinfo(user_id: str):
         raise HTTPException(status_code=404, detail="ProfileInfo not found")
 
     d = snap.to_dict() or {}
+    
+    benji_facts = d.get("BenjiFacts") or {}
+    if isinstance(benji_facts, str):
+        try:
+            benji_facts = json.loads(benji_facts)
+        except json.JSONDecodeError:
+            # fallback to empty dict if invalid JSON
+            benji_facts = {}
+    
     return ProfileInfoOut(
         user_id=user_id,
         benji_facts=d.get("BenjiFacts"),
