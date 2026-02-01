@@ -209,6 +209,8 @@ class BenjiLLM:
 
         # Update local session
         self.user_facts = facts
+        
+        print(goals)
 
         return goals
     

@@ -11,6 +11,468 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    /* Goal Card Styles */
+    .goals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .goal-card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid rgba(140, 162, 145, 0.2);
+      border-radius: 18px;
+      padding: 1.5rem;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(10, 24, 16, 0.08);
+    }
+
+    .goal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    .goal-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(10, 24, 16, 0.12);
+    }
+
+    .goal-card:hover::before {
+      opacity: 1;
+    }
+
+    .goal-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .goal-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(140, 162, 145, 0.1), rgba(140, 162, 145, 0.15));
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+
+    .goal-icon i {
+      font-size: 1.5rem;
+      color: var(--sage, #8ca291);
+    }
+
+    .goal-content {
+      flex: 1;
+    }
+
+    .goal-title {
+      font-family: 'Crimson Pro', serif;
+      font-size: 1.375rem;
+      font-weight: 600;
+      color: var(--text-primary, #1a1a1a);
+      margin-bottom: 0.375rem;
+      line-height: 1.3;
+    }
+
+    .goal-description {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-secondary, #666);
+      line-height: 1.5;
+    }
+
+    .goal-smart-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.875rem;
+      background: rgba(140, 162, 145, 0.05);
+      border-radius: 10px;
+      border-left: 3px solid var(--sage, #8ca291);
+    }
+
+    .smart-detail {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-secondary, #555);
+      line-height: 1.4;
+    }
+
+    .smart-detail strong {
+      color: var(--sage, #8ca291);
+      font-weight: 600;
+      display: inline-block;
+      min-width: 90px;
+    }
+
+    .goal-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 20px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .goal-type-badge.wellness {
+      background: rgba(140, 162, 145, 0.15);
+      color: var(--sage, #8ca291);
+    }
+
+    .goal-type-badge.fitness {
+      background: rgba(99, 102, 241, 0.15);
+      color: #6366f1;
+    }
+
+    /* Create Task Button */
+    .create-task-section {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .create-task-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 16px rgba(140, 162, 145, 0.3);
+    }
+
+    .create-task-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(140, 162, 145, 0.4);
+    }
+
+    .create-task-btn i {
+      font-size: 1rem;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 550px;
+      width: 92%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3);
+      transform: scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-family: 'Crimson Pro', serif;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--text-primary, #1a1a1a);
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-subtitle {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-secondary, #666);
+      line-height: 1.5;
+    }
+
+    .modal-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary, #1a1a1a);
+    }
+
+    .modal-form .form-input {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      padding: 0.875rem 1rem;
+      border: 2px solid rgba(140, 162, 145, 0.25);
+      border-radius: 10px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--text-primary, #1a1a1a);
+    }
+
+    .modal-form .form-input:hover {
+      border-color: rgba(140, 162, 145, 0.4);
+    }
+
+    .modal-form .form-input:focus {
+      outline: none;
+      border-color: var(--sage, #8ca291);
+      background: white;
+      box-shadow: 0 0 0 4px rgba(140, 162, 145, 0.12);
+    }
+
+    .form-hint {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-secondary, #999);
+      margin-top: 0.25rem;
+      font-style: italic;
+    }
+
+    .smart-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
+      color: white;
+      border-radius: 5px;
+      font-weight: 700;
+      font-size: 0.7rem;
+      margin-right: 0.5rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 0.875rem 1.5rem;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .modal-btn-primary {
+      background: linear-gradient(135deg, var(--sage-light, #a8c4ae), var(--sage, #8ca291));
+      color: white;
+      box-shadow: 0 4px 16px rgba(140, 162, 145, 0.25);
+    }
+
+    .modal-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(140, 162, 145, 0.35);
+    }
+
+    .modal-btn-secondary {
+      background: white;
+      color: var(--text-secondary, #666);
+      border: 2px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-btn-secondary:hover {
+      background: rgba(0, 0, 0, 0.03);
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+
+    /* Empty state adjustments */
+    .goals-empty-state {
+      text-align: center;
+      padding: 3rem 1.5rem;
+    }
+
+    .goals-empty-state .empty-icon {
+      font-size: 3rem;
+      color: var(--sage, #8ca291);
+      margin-bottom: 1rem;
+      opacity: 0.7;
+    }
+
+    .goals-empty-state p {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-secondary, #666);
+      margin-bottom: 0.5rem;
+    }
+
+    .goals-empty-state .empty-hint {
+      font-size: 0.9rem;
+      color: var(--text-muted, #999);
+    }
+
+    /* Tab Intro Styles */
+    .tab-intro {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+    }
+
+    .tab-intro p {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text-secondary, #666);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .wellness-intro {
+      background: rgba(140, 162, 145, 0.08);
+      border: 1px solid rgba(140, 162, 145, 0.15);
+    }
+
+    .fitness-intro {
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+    }
+
+    /* Fitness Accent Styles */
+    .fitness-btn {
+      background: linear-gradient(135deg, #818cf8, #6366f1) !important;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3) !important;
+    }
+
+    .fitness-btn:hover {
+      box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4) !important;
+    }
+
+    /* Fitness Goal Card Styles */
+    .goal-card.fitness {
+      border-color: rgba(99, 102, 241, 0.2);
+    }
+
+    .goal-card.fitness::before {
+      background: linear-gradient(90deg, #818cf8, #6366f1);
+    }
+
+    .goal-card.fitness .goal-icon {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.15));
+    }
+
+    .goal-card.fitness .goal-icon i {
+      color: #6366f1;
+    }
+
+    .goal-card.fitness .goal-smart-details {
+      background: rgba(99, 102, 241, 0.05);
+      border-left-color: #6366f1;
+    }
+
+    .goal-card.fitness .smart-detail strong {
+      color: #6366f1;
+    }
+
+    /* Fitness Empty State */
+    .fitness-empty .empty-icon {
+      color: #6366f1 !important;
+    }
+
+    /* Modal Focus Areas */
+    .modal-focus-areas {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--sage, #8ca291);
+      margin-top: 0.75rem;
+      padding: 0.5rem 1rem;
+      background: rgba(140, 162, 145, 0.1);
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    /* Fitness Modal Styling */
+    .modal-overlay.fitness .modal-focus-areas {
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .modal-overlay.fitness .smart-badge {
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+    }
+
+    .modal-overlay.fitness .modal-btn-primary {
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+    }
+
+    .modal-overlay.fitness .modal-btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+    }
+
+    .modal-overlay.fitness .modal-form .form-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+    }
+  </style>
 </head>
 <body data-page="journal">
 
@@ -30,13 +492,16 @@
     <!-- Page Header -->
     <div class="section-intro">
       <h2 class="section-title">Your Wellness Journal</h2>
-      <p class="section-description">Track your progress and reflect on your wellness journey through daily check-ins and conversations.</p>
+      <p class="section-description">Manage your wellness and fitness goals, track conversations, and monitor your health history.</p>
     </div>
 
     <!-- Tab Strip -->
     <div class="journal-tabs" id="journalTabs">
       <button class="journal-tab active" data-tab="wellness">
         <i class="fas fa-heart"></i> Wellness
+      </button>
+      <button class="journal-tab" data-tab="fitness">
+        <i class="fas fa-dumbbell"></i> Fitness
       </button>
       <button class="journal-tab" data-tab="conversations">
         <i class="fas fa-comments"></i> Conversations
@@ -48,30 +513,74 @@
 
     <!-- Wellness Tab Content -->
     <div class="journal-tab-content" id="wellnessTab">
-      <!-- Journal Content Area -->
-      <div class="journal-container" id="journalContainer">
-        <!-- Entries or empty state rendered by JS -->
+      <!-- Tab Intro -->
+      <div class="tab-intro wellness-intro">
+        <p>Set goals for sleep, mood, stress, and recovery. Benji uses these in check-ins and support.</p>
       </div>
 
-      <!-- Empty State for Wellness (hidden by default) -->
-      <div class="form-domain" id="emptyState" style="display: none;">
-        <div class="empty-state">
-          <div class="empty-icon"><i class="fas fa-book-open"></i></div>
-          <p>Your journal will fill as you complete daily check-ins.</p>
-          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: var(--space-xs);">
-            Check-ins help Benji understand your wellness patterns and provide personalized support.
-          </p>
-          <a href="index.html" class="ob-cta" style="display: inline-block; max-width: 220px; margin-top: var(--space-md);">
-            <i class="fas fa-clipboard-check" style="margin-right: 8px;"></i> Do a Check-in
-          </a>
+      <!-- Create Task Button -->
+      <div class="create-task-section">
+        <button class="create-task-btn wellness-btn" id="createWellnessTaskBtn">
+          <i class="fas fa-plus-circle"></i> Create Wellness Goal
+        </button>
+      </div>
+
+      <!-- Wellness Goals List -->
+      <div class="goals-list" id="wellnessGoalsList">
+        <!-- Goals rendered by JS -->
+      </div>
+
+      <!-- Empty State for Wellness Goals -->
+      <div class="form-domain" id="wellnessEmptyState" style="display: none;">
+        <div class="goals-empty-state wellness-empty">
+          <div class="empty-icon"><i class="fas fa-heart"></i></div>
+          <p>No wellness goals yet.</p>
+          <p class="empty-hint">Set one for sleep, mood, stress, or recovery.</p>
         </div>
       </div>
 
       <!-- Loading State for Wellness -->
-      <div class="form-domain" id="loadingState" style="display: none;">
+      <div class="form-domain" id="wellnessLoadingState" style="display: none;">
         <div class="empty-state">
           <div class="loading-spinner" style="margin: 0 auto var(--space-md);"></div>
-          <p>Loading your journal entries...</p>
+          <p>Loading your wellness goals...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fitness Tab Content -->
+    <div class="journal-tab-content" id="fitnessTab" style="display: none;">
+      <!-- Tab Intro -->
+      <div class="tab-intro fitness-intro">
+        <p>Set goals for exercise, nutrition, and physical performance. Keep them measurable so you can track progress.</p>
+      </div>
+
+      <!-- Create Task Button -->
+      <div class="create-task-section">
+        <button class="create-task-btn fitness-btn" id="createFitnessTaskBtn">
+          <i class="fas fa-plus-circle"></i> Create Fitness Goal
+        </button>
+      </div>
+
+      <!-- Fitness Goals List -->
+      <div class="goals-list" id="fitnessGoalsList">
+        <!-- Goals rendered by JS -->
+      </div>
+
+      <!-- Empty State for Fitness Goals -->
+      <div class="form-domain" id="fitnessEmptyState" style="display: none;">
+        <div class="goals-empty-state fitness-empty">
+          <div class="empty-icon"><i class="fas fa-dumbbell"></i></div>
+          <p>No fitness goals yet.</p>
+          <p class="empty-hint">Set one for exercise, nutrition, or performance.</p>
+        </div>
+      </div>
+
+      <!-- Loading State for Fitness -->
+      <div class="form-domain" id="fitnessLoadingState" style="display: none;">
+        <div class="empty-state">
+          <div class="loading-spinner" style="margin: 0 auto var(--space-md);"></div>
+          <p>Loading your fitness goals...</p>
         </div>
       </div>
     </div>
@@ -147,6 +656,74 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Create Goal Modal (shared for wellness and fitness) -->
+  <div class="modal-overlay" id="createGoalModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Create SMART Goal</h2>
+        <p class="modal-subtitle" id="modalSubtitle">Design a goal that's Specific, Measurable, Attainable, Relevant, and Time-bound</p>
+        <p class="modal-focus-areas" id="modalFocusAreas">Focus areas: Sleep, Mood, Stress, Recovery.</p>
+      </div>
+
+      <form class="modal-form" id="createGoalForm">
+        <div class="form-group">
+          <label class="form-label" for="goalSpecific">
+            <span class="smart-badge">S</span> Specific *
+          </label>
+          <input type="text" id="goalSpecific" class="form-input"
+            placeholder="What exactly do you want to accomplish?"
+            required maxlength="100" />
+          <small class="form-hint" id="goalSpecificHint">Think sleep, mood, stress, recovery.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="goalMeasurable">
+            <span class="smart-badge">M</span> Measurable *
+          </label>
+          <input type="text" id="goalMeasurable" class="form-input"
+            placeholder="How will you track your progress?"
+            required maxlength="150" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="goalAttainable">
+            <span class="smart-badge">A</span> Attainable *
+          </label>
+          <input type="text" id="goalAttainable" class="form-input"
+            placeholder="How will you achieve this goal?"
+            required maxlength="150" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="goalRelevant">
+            <span class="smart-badge">R</span> Relevant *
+          </label>
+          <input type="text" id="goalRelevant" class="form-input"
+            placeholder="Why is this goal important to you?"
+            required maxlength="150" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="goalTimeBound">
+            <span class="smart-badge">T</span> Time-bound *
+          </label>
+          <input type="text" id="goalTimeBound" class="form-input"
+            placeholder="When will you achieve this goal?"
+            required maxlength="80" />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="modal-btn modal-btn-secondary" id="cancelGoalBtn">
+            Cancel
+          </button>
+          <button type="submit" class="modal-btn modal-btn-primary">
+            Save Goal
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Scripts -->

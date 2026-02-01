@@ -1,21 +1,58 @@
 /**
- * Journal Page - Display check-in history and conversation history as journal entries
+ * Journal Page - Manage wellness and fitness goals, conversations, and health history
  */
 (() => {
   "use strict";
 
   const API_BASE = "http://127.0.0.1:8000";
 
+  // Modal copy for wellness vs fitness differentiation
+  const WELLNESS_MODAL_COPY = {
+    title: "Create Wellness Goal",
+    subtitle: "Set a goal for sleep, mood, stress, or recovery. Benji can tie it to check-ins and support.",
+    focusAreas: "Focus areas: Sleep, Mood, Stress, Recovery.",
+    specificHint: "Think sleep, mood, stress, recovery.",
+    placeholders: {
+      specific: "e.g. Sleep 7+ hours most nights",
+      measurable: "e.g. Track in check-ins or journal",
+      attainable: "e.g. Wind-down routine, limit screens",
+      relevant: "e.g. Better energy and mood",
+      timeBound: "e.g. For the next 4 weeks"
+    }
+  };
+
+  const FITNESS_MODAL_COPY = {
+    title: "Create Fitness Goal",
+    subtitle: "Set a goal for exercise, nutrition, or performance. Make it measurable so you can track progress.",
+    focusAreas: "Focus areas: Cardio, Strength, Nutrition, Steps.",
+    specificHint: "Think cardio, strength, steps, nutrition.",
+    placeholders: {
+      specific: "e.g. Run 3 times per week",
+      measurable: "e.g. Distance or duration per session",
+      attainable: "e.g. Couch-to-5K or current plan",
+      relevant: "e.g. Heart health, energy",
+      timeBound: "e.g. 8 weeks to 5K"
+    }
+  };
+
   // DOM Elements - Tabs
   const journalTabs = document.getElementById("journalTabs");
   const wellnessTab = document.getElementById("wellnessTab");
+  const fitnessTab = document.getElementById("fitnessTab");
   const conversationsTab = document.getElementById("conversationsTab");
   const healthHistoryTab = document.getElementById("healthHistoryTab");
 
   // DOM Elements - Wellness Tab
-  const journalContainer = document.getElementById("journalContainer");
-  const emptyState = document.getElementById("emptyState");
-  const loadingState = document.getElementById("loadingState");
+  const wellnessGoalsList = document.getElementById("wellnessGoalsList");
+  const wellnessEmptyState = document.getElementById("wellnessEmptyState");
+  const wellnessLoadingState = document.getElementById("wellnessLoadingState");
+  const createWellnessTaskBtn = document.getElementById("createWellnessTaskBtn");
+
+  // DOM Elements - Fitness Tab
+  const fitnessGoalsList = document.getElementById("fitnessGoalsList");
+  const fitnessEmptyState = document.getElementById("fitnessEmptyState");
+  const fitnessLoadingState = document.getElementById("fitnessLoadingState");
+  const createFitnessTaskBtn = document.getElementById("createFitnessTaskBtn");
 
   // DOM Elements - Conversations Tab
   const chatHistoryContainer = document.getElementById("chatHistoryContainer");
@@ -30,10 +67,24 @@
   // DOM Elements - Shared
   const notLoggedInState = document.getElementById("notLoggedInState");
 
+  // DOM Elements - Modal
+  const createGoalModal = document.getElementById("createGoalModal");
+  const createGoalForm = document.getElementById("createGoalForm");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalSubtitle = document.getElementById("modalSubtitle");
+  const modalFocusAreas = document.getElementById("modalFocusAreas");
+  const goalSpecificHint = document.getElementById("goalSpecificHint");
+  const cancelGoalBtn = document.getElementById("cancelGoalBtn");
+
   // State
   let currentTab = "wellness";
+  let currentGoalType = "wellness"; // wellness or fitness
+  let wellnessGoalsLoaded = false;
+  let fitnessGoalsLoaded = false;
   let conversationsLoaded = false;
   let healthHistoryLoaded = false;
+  let cachedWellnessGoals = [];
+  let cachedFitnessGoals = [];
   let cachedChatHistory = null;
   let cachedHealthHistory = null;
 
@@ -53,21 +104,30 @@
   }
 
   /**
-   * Show a specific state for wellness tab, hide others
+   * Show a specific state for wellness goals tab, hide others
    */
   function showWellnessState(state) {
-    journalContainer.style.display = state === "entries" ? "block" : "none";
-    emptyState.style.display = state === "empty" ? "block" : "none";
-    loadingState.style.display = state === "loading" ? "block" : "none";
+    if (wellnessGoalsList) wellnessGoalsList.style.display = state === "goals" ? "flex" : "none";
+    if (wellnessEmptyState) wellnessEmptyState.style.display = state === "empty" ? "block" : "none";
+    if (wellnessLoadingState) wellnessLoadingState.style.display = state === "loading" ? "block" : "none";
+  }
+
+  /**
+   * Show a specific state for fitness goals tab, hide others
+   */
+  function showFitnessState(state) {
+    if (fitnessGoalsList) fitnessGoalsList.style.display = state === "goals" ? "flex" : "none";
+    if (fitnessEmptyState) fitnessEmptyState.style.display = state === "empty" ? "block" : "none";
+    if (fitnessLoadingState) fitnessLoadingState.style.display = state === "loading" ? "block" : "none";
   }
 
   /**
    * Show a specific state for conversations tab, hide others
    */
   function showConversationsState(state) {
-    chatHistoryContainer.style.display = state === "messages" ? "block" : "none";
-    conversationsEmptyState.style.display = state === "empty" ? "block" : "none";
-    conversationsLoadingState.style.display = state === "loading" ? "block" : "none";
+    if (chatHistoryContainer) chatHistoryContainer.style.display = state === "messages" ? "block" : "none";
+    if (conversationsEmptyState) conversationsEmptyState.style.display = state === "empty" ? "block" : "none";
+    if (conversationsLoadingState) conversationsLoadingState.style.display = state === "loading" ? "block" : "none";
   }
 
   /**
@@ -97,12 +157,29 @@
 
     // Show/hide tab content
     if (tabName === "wellness") {
-      wellnessTab.style.display = "block";
-      conversationsTab.style.display = "none";
+      if (wellnessTab) wellnessTab.style.display = "block";
+      if (fitnessTab) fitnessTab.style.display = "none";
+      if (conversationsTab) conversationsTab.style.display = "none";
       if (healthHistoryTab) healthHistoryTab.style.display = "none";
+
+      // Load wellness goals if not already loaded
+      if (!wellnessGoalsLoaded) {
+        loadWellnessGoals();
+      }
+    } else if (tabName === "fitness") {
+      if (wellnessTab) wellnessTab.style.display = "none";
+      if (fitnessTab) fitnessTab.style.display = "block";
+      if (conversationsTab) conversationsTab.style.display = "none";
+      if (healthHistoryTab) healthHistoryTab.style.display = "none";
+
+      // Load fitness goals if not already loaded
+      if (!fitnessGoalsLoaded) {
+        loadFitnessGoals();
+      }
     } else if (tabName === "conversations") {
-      wellnessTab.style.display = "none";
-      conversationsTab.style.display = "block";
+      if (wellnessTab) wellnessTab.style.display = "none";
+      if (fitnessTab) fitnessTab.style.display = "none";
+      if (conversationsTab) conversationsTab.style.display = "block";
       if (healthHistoryTab) healthHistoryTab.style.display = "none";
 
       // Load conversations if not already loaded
@@ -110,8 +187,9 @@
         loadConversations();
       }
     } else if (tabName === "healthHistory") {
-      wellnessTab.style.display = "none";
-      conversationsTab.style.display = "none";
+      if (wellnessTab) wellnessTab.style.display = "none";
+      if (fitnessTab) fitnessTab.style.display = "none";
+      if (conversationsTab) conversationsTab.style.display = "none";
       if (healthHistoryTab) healthHistoryTab.style.display = "block";
 
       // Load health history if not already loaded
@@ -122,12 +200,35 @@
   }
 
   /**
-   * Fetch check-ins from API
+   * Fetch goals from API
    */
-  async function fetchCheckIns(userId) {
-    const response = await fetch(`${API_BASE}/checkins/${userId}`);
+  async function fetchGoals(userId, goalType = null) {
+    let url = `${API_BASE}/goals/${userId}`;
+    if (goalType) {
+      url += `?goal_type=${goalType}`;
+    }
+    const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to fetch check-ins: ${response.statusText}`);
+      throw new Error(`Failed to fetch goals: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Save a new goal via API
+   */
+  async function saveGoal(userId, goalData) {
+    const response = await fetch(`${API_BASE}/goals/${userId}/accepted`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        goals: [goalData]
+      })
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to save goal: ${response.statusText}`);
     }
     return response.json();
   }
@@ -184,15 +285,6 @@
   }
 
   /**
-   * Get mood emoji
-   */
-  function getMoodEmoji(mood) {
-    const emojis = ["😞", "😕", "😐", "🙂", "😊"];
-    if (mood >= 1 && mood <= 5) return emojis[mood - 1];
-    return "";
-  }
-
-  /**
    * Escape HTML to prevent XSS
    */
   function escapeHtml(text) {
@@ -203,142 +295,173 @@
   }
 
   /**
-   * Create a journal entry card from check-in data
+   * Get appropriate icon based on goal keywords
    */
-  function createJournalEntry(checkIn) {
-    const entry = document.createElement("div");
-    entry.className = "journal-entry";
+  function getIconForGoal(goalText) {
+    const text = (goalText || "").toLowerCase();
 
-    // Date
-    const dateStr = formatDate(checkIn.createdAt || checkIn.timestamp);
+    // Exercise & Fitness
+    if (text.includes("walk") || text.includes("step")) return "fa-walking";
+    if (text.includes("run") || text.includes("jog")) return "fa-running";
+    if (text.includes("exercise") || text.includes("workout") || text.includes("gym")) return "fa-dumbbell";
+    if (text.includes("bike") || text.includes("cycle")) return "fa-bicycle";
+    if (text.includes("weight") || text.includes("lift")) return "fa-weight";
 
-    // Build summary sections
-    const sections = [];
+    // Nutrition & Diet
+    if (text.includes("eat") || text.includes("meal") || text.includes("diet") || text.includes("food")) return "fa-apple-alt";
+    if (text.includes("water") || text.includes("hydrat")) return "fa-tint";
+    if (text.includes("vegetable") || text.includes("fruit")) return "fa-carrot";
 
-    // Day score (1-10)
-    if (checkIn.dayScore) {
-      sections.push(`<div class="journal-metric">
-        <span class="metric-icon">📊</span>
-        <span class="metric-label">Day Rating:</span>
-        <span class="metric-value">${checkIn.dayScore}/10</span>
-      </div>`);
-    }
+    // Sleep & Rest
+    if (text.includes("sleep") || text.includes("rest") || text.includes("bed")) return "fa-bed";
+    if (text.includes("night")) return "fa-moon";
 
-    // Recovery day
-    if (checkIn.recoveryDay) {
-      sections.push(`<div class="journal-metric recovery-badge">
-        <span class="metric-icon">🛌</span>
-        <span class="metric-value">Recovery Day</span>
-      </div>`);
-    }
+    // Mental Health & Mindfulness
+    if (text.includes("meditat") || text.includes("mindful") || text.includes("relax")) return "fa-spa";
+    if (text.includes("stress") || text.includes("anxiety") || text.includes("mental")) return "fa-brain";
+    if (text.includes("happy") || text.includes("mood") || text.includes("joy")) return "fa-smile";
 
-    // Day notes
-    if (checkIn.dayNotes) {
-      sections.push(`<div class="journal-note">
-        <span class="note-icon">📝</span>
-        <span class="note-text">${escapeHtml(checkIn.dayNotes)}</span>
-      </div>`);
-    }
+    // Health Metrics
+    if (text.includes("heart") || text.includes("cardio") || text.includes("pulse")) return "fa-heartbeat";
+    if (text.includes("track") || text.includes("monitor") || text.includes("measure")) return "fa-chart-line";
+    if (text.includes("calori") || text.includes("burn")) return "fa-fire";
 
-    // Tags
-    if (checkIn.tags && checkIn.tags.length > 0) {
-      const tagHtml = checkIn.tags.map(t => `<span class="journal-tag">${escapeHtml(t)}</span>`).join("");
-      sections.push(`<div class="journal-tags">${tagHtml}</div>`);
-    }
+    // Achievement
+    if (text.includes("goal") || text.includes("achieve") || text.includes("success")) return "fa-trophy";
 
-    // Basic metrics grid (eat, drink, sleep)
-    const basicMetrics = [];
-    if (checkIn.eatScore) {
-      basicMetrics.push(`<div class="mini-metric"><span>🍽️</span> Eat: ${checkIn.eatScore}/5</div>`);
-    }
-    if (checkIn.drinkScore) {
-      basicMetrics.push(`<div class="mini-metric"><span>💧</span> Hydration: ${checkIn.drinkScore}/5</div>`);
-    }
-    if (checkIn.sleepScore) {
-      basicMetrics.push(`<div class="mini-metric"><span>😴</span> Sleep: ${checkIn.sleepScore}/5</div>`);
-    }
-    if (basicMetrics.length > 0) {
-      sections.push(`<div class="journal-metrics-grid">${basicMetrics.join("")}</div>`);
-    }
+    // Default based on type
+    return "fa-bullseye";
+  }
 
-    // Fitness
-    if (checkIn.fitnessScore) {
-      sections.push(`<div class="journal-metric">
-        <span class="metric-icon">💪</span>
-        <span class="metric-label">Fitness:</span>
-        <span class="metric-value">${checkIn.fitnessScore}/5</span>
-      </div>`);
+  /**
+   * Create a goal card element
+   */
+  function createGoalCard(goal) {
+    const card = document.createElement("div");
+    const goalType = goal.type || "wellness";
+    card.className = `goal-card ${goalType}`;
+    card.dataset.type = goalType;
+
+    const title = goal.Specific || goal.Description || "Untitled Goal";
+    const icon = getIconForGoal(title);
+
+    // Build SMART details
+    let smartDetails = "";
+    if (goal.Measurable) {
+      smartDetails += `<div class="smart-detail"><strong>Measurable:</strong> ${escapeHtml(goal.Measurable)}</div>`;
+    }
+    if (goal.Attainable) {
+      smartDetails += `<div class="smart-detail"><strong>Attainable:</strong> ${escapeHtml(goal.Attainable)}</div>`;
+    }
+    if (goal.Relevant) {
+      smartDetails += `<div class="smart-detail"><strong>Relevant:</strong> ${escapeHtml(goal.Relevant)}</div>`;
+    }
+    if (goal.Time_Bound) {
+      smartDetails += `<div class="smart-detail"><strong>Time-bound:</strong> ${escapeHtml(goal.Time_Bound)}</div>`;
     }
 
-    // Wellness & Mood
-    const wellnessItems = [];
-    if (checkIn.wellnessScore) {
-      wellnessItems.push(`<span>Wellness: ${checkIn.wellnessScore}/5</span>`);
-    }
-    if (checkIn.stress) {
-      wellnessItems.push(`<span>Stress: ${checkIn.stress}/5</span>`);
-    }
-    if (checkIn.mood) {
-      wellnessItems.push(`<span>Mood: ${getMoodEmoji(checkIn.mood)}</span>`);
-    }
-    if (wellnessItems.length > 0) {
-      sections.push(`<div class="journal-metric">
-        <span class="metric-icon">🧘</span>
-        <span class="metric-value">${wellnessItems.join(" · ")}</span>
-      </div>`);
-    }
-
-    // Wellness notes
-    if (checkIn.wellnessNotes) {
-      sections.push(`<div class="journal-note">
-        <span class="note-icon">💭</span>
-        <span class="note-text">${escapeHtml(checkIn.wellnessNotes)}</span>
-      </div>`);
-    }
-
-    // Fitness notes
-    if (checkIn.fitnessNotes) {
-      sections.push(`<div class="journal-note">
-        <span class="note-icon">🏋️</span>
-        <span class="note-text">${escapeHtml(checkIn.fitnessNotes)}</span>
-      </div>`);
-    }
-
-    // Goal-specific summaries
-    if (checkIn.cardio && checkIn.cardio.activityType) {
-      const c = checkIn.cardio;
-      let cardioSummary = `${c.activityType}`;
-      if (c.distance) cardioSummary += ` - ${c.distance} km`;
-      if (c.volume) cardioSummary += ` (${c.volume} min)`;
-      sections.push(`<div class="journal-metric">
-        <span class="metric-icon">🏃</span>
-        <span class="metric-label">Cardio:</span>
-        <span class="metric-value">${cardioSummary}</span>
-      </div>`);
-    }
-
-    if (checkIn.strength && (checkIn.strength.calories || checkIn.strength.protein)) {
-      const s = checkIn.strength;
-      let strengthSummary = [];
-      if (s.calories) strengthSummary.push(`${s.calories} cal`);
-      if (s.protein) strengthSummary.push(`${s.protein}g protein`);
-      sections.push(`<div class="journal-metric">
-        <span class="metric-icon">🏋️</span>
-        <span class="metric-label">Strength:</span>
-        <span class="metric-value">${strengthSummary.join(", ")}</span>
-      </div>`);
-    }
-
-    entry.innerHTML = `
-      <div class="entry-header">
-        <div class="entry-date">${dateStr}</div>
+    card.innerHTML = `
+      <div class="goal-header">
+        <div class="goal-icon">
+          <i class="fas ${icon}"></i>
+        </div>
+        <div class="goal-content">
+          <h3 class="goal-title">${escapeHtml(title)}</h3>
+          <span class="goal-type-badge ${goalType}">${goalType}</span>
+        </div>
       </div>
-      <div class="entry-content">
-        ${sections.length > 0 ? sections.join("") : "<p class=\"text-muted\">Check-in recorded</p>"}
-      </div>
+      ${smartDetails ? `<div class="goal-smart-details">${smartDetails}</div>` : ""}
     `;
 
-    return entry;
+    return card;
+  }
+
+  /**
+   * Render wellness goals
+   */
+  function renderWellnessGoals(goals) {
+    if (!wellnessGoalsList) return;
+
+    wellnessGoalsList.innerHTML = "";
+
+    if (!goals || goals.length === 0) {
+      showWellnessState("empty");
+      return;
+    }
+
+    goals.forEach(goal => {
+      const card = createGoalCard(goal);
+      wellnessGoalsList.appendChild(card);
+    });
+
+    showWellnessState("goals");
+  }
+
+  /**
+   * Render fitness goals
+   */
+  function renderFitnessGoals(goals) {
+    if (!fitnessGoalsList) return;
+
+    fitnessGoalsList.innerHTML = "";
+
+    if (!goals || goals.length === 0) {
+      showFitnessState("empty");
+      return;
+    }
+
+    goals.forEach(goal => {
+      const card = createGoalCard(goal);
+      fitnessGoalsList.appendChild(card);
+    });
+
+    showFitnessState("goals");
+  }
+
+  /**
+   * Load and render wellness goals
+   */
+  async function loadWellnessGoals() {
+    const session = getSession();
+    if (!session || !session.user_id) {
+      return;
+    }
+
+    showWellnessState("loading");
+
+    try {
+      const data = await fetchGoals(session.user_id, "wellness");
+      // Filter goals by type (in case API doesn't filter)
+      cachedWellnessGoals = (data.goals || []).filter(g => g.type === "wellness" || !g.type);
+      renderWellnessGoals(cachedWellnessGoals);
+      wellnessGoalsLoaded = true;
+    } catch (error) {
+      console.error("Error loading wellness goals:", error);
+      showWellnessState("empty");
+    }
+  }
+
+  /**
+   * Load and render fitness goals
+   */
+  async function loadFitnessGoals() {
+    const session = getSession();
+    if (!session || !session.user_id) {
+      return;
+    }
+
+    showFitnessState("loading");
+
+    try {
+      const data = await fetchGoals(session.user_id, "fitness");
+      // Filter goals by type
+      cachedFitnessGoals = (data.goals || []).filter(g => g.type === "fitness");
+      renderFitnessGoals(cachedFitnessGoals);
+      fitnessGoalsLoaded = true;
+    } catch (error) {
+      console.error("Error loading fitness goals:", error);
+      showFitnessState("empty");
+    }
   }
 
   /**
@@ -395,6 +518,8 @@
    * Render conversation history
    */
   function renderConversationHistory(messages) {
+    if (!chatHistoryContainer) return;
+
     chatHistoryContainer.innerHTML = "";
 
     if (!messages || messages.length === 0) {
@@ -431,32 +556,6 @@
   }
 
   /**
-   * Render journal entries
-   */
-  function renderEntries(checkIns) {
-    journalContainer.innerHTML = "";
-
-    if (!checkIns || checkIns.length === 0) {
-      showWellnessState("empty");
-      return;
-    }
-
-    // Sort by date descending (backend should do this, but ensure)
-    checkIns.sort((a, b) => {
-      const dateA = new Date(a.createdAt || a.timestamp || 0);
-      const dateB = new Date(b.createdAt || b.timestamp || 0);
-      return dateB - dateA;
-    });
-
-    checkIns.forEach(checkIn => {
-      const entryEl = createJournalEntry(checkIn);
-      journalContainer.appendChild(entryEl);
-    });
-
-    showWellnessState("entries");
-  }
-
-  /**
    * Load and render conversations
    */
   async function loadConversations() {
@@ -474,18 +573,20 @@
       conversationsLoaded = true;
     } catch (error) {
       console.error("Error loading conversations:", error);
-      chatHistoryContainer.innerHTML = `
-        <div class="form-domain">
-          <div class="empty-state">
-            <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <p>Unable to load conversation history.</p>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">${escapeHtml(error.message)}</p>
-            <button class="ob-cta" style="max-width: 180px; margin-top: var(--space-md);" onclick="location.reload()">
-              Try Again
-            </button>
+      if (chatHistoryContainer) {
+        chatHistoryContainer.innerHTML = `
+          <div class="form-domain">
+            <div class="empty-state">
+              <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+              <p>Unable to load conversation history.</p>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">${escapeHtml(error.message)}</p>
+              <button class="ob-cta" style="max-width: 180px; margin-top: var(--space-md);" onclick="location.reload()">
+                Try Again
+              </button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
       showConversationsState("messages");
     }
   }
@@ -597,6 +698,128 @@
   }
 
   /**
+   * Open the create goal modal
+   */
+  function openCreateGoalModal(goalType) {
+    currentGoalType = goalType;
+
+    // Get the appropriate copy for this goal type
+    const copy = goalType === "fitness" ? FITNESS_MODAL_COPY : WELLNESS_MODAL_COPY;
+
+    // Update modal title
+    if (modalTitle) {
+      modalTitle.textContent = copy.title;
+    }
+
+    // Update modal subtitle
+    if (modalSubtitle) {
+      modalSubtitle.textContent = copy.subtitle;
+    }
+
+    // Update focus areas
+    if (modalFocusAreas) {
+      modalFocusAreas.textContent = copy.focusAreas;
+    }
+
+    // Update specific field hint
+    if (goalSpecificHint) {
+      goalSpecificHint.textContent = copy.specificHint;
+    }
+
+    // Update placeholders
+    const specificInput = document.getElementById("goalSpecific");
+    const measurableInput = document.getElementById("goalMeasurable");
+    const attainableInput = document.getElementById("goalAttainable");
+    const relevantInput = document.getElementById("goalRelevant");
+    const timeBoundInput = document.getElementById("goalTimeBound");
+
+    if (specificInput) specificInput.placeholder = copy.placeholders.specific;
+    if (measurableInput) measurableInput.placeholder = copy.placeholders.measurable;
+    if (attainableInput) attainableInput.placeholder = copy.placeholders.attainable;
+    if (relevantInput) relevantInput.placeholder = copy.placeholders.relevant;
+    if (timeBoundInput) timeBoundInput.placeholder = copy.placeholders.timeBound;
+
+    // Clear form
+    if (createGoalForm) {
+      createGoalForm.reset();
+    }
+
+    // Add/remove fitness class for styling
+    if (createGoalModal) {
+      if (goalType === "fitness") {
+        createGoalModal.classList.add("fitness");
+      } else {
+        createGoalModal.classList.remove("fitness");
+      }
+      createGoalModal.classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+  }
+
+  /**
+   * Close the create goal modal
+   */
+  function closeCreateGoalModal() {
+    if (createGoalModal) {
+      createGoalModal.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+  }
+
+  /**
+   * Handle form submission for creating a goal
+   */
+  async function handleCreateGoal(e) {
+    e.preventDefault();
+
+    const session = getSession();
+    if (!session || !session.user_id) {
+      alert("Please sign in to create goals.");
+      return;
+    }
+
+    // Get form values
+    const specific = document.getElementById("goalSpecific").value.trim();
+    const measurable = document.getElementById("goalMeasurable").value.trim();
+    const attainable = document.getElementById("goalAttainable").value.trim();
+    const relevant = document.getElementById("goalRelevant").value.trim();
+    const timeBound = document.getElementById("goalTimeBound").value.trim();
+
+    if (!specific || !measurable || !attainable || !relevant || !timeBound) {
+      alert("Please fill in all SMART goal fields.");
+      return;
+    }
+
+    const goalData = {
+      Specific: specific,
+      Measurable: measurable,
+      Attainable: attainable,
+      Relevant: relevant,
+      Time_Bound: timeBound,
+      type: currentGoalType
+    };
+
+    try {
+      await saveGoal(session.user_id, goalData);
+
+      // Close modal
+      closeCreateGoalModal();
+
+      // Refresh the appropriate goals list
+      if (currentGoalType === "wellness") {
+        wellnessGoalsLoaded = false;
+        loadWellnessGoals();
+      } else {
+        fitnessGoalsLoaded = false;
+        loadFitnessGoals();
+      }
+    } catch (error) {
+      console.error("Error saving goal:", error);
+      alert("Failed to save goal. Please try again.");
+    }
+  }
+
+  /**
    * Initialize journal page
    */
   async function init() {
@@ -612,40 +835,49 @@
       });
     }
 
+    // Set up create task button handlers
+    if (createWellnessTaskBtn) {
+      createWellnessTaskBtn.addEventListener("click", () => {
+        openCreateGoalModal("wellness");
+      });
+    }
+
+    if (createFitnessTaskBtn) {
+      createFitnessTaskBtn.addEventListener("click", () => {
+        openCreateGoalModal("fitness");
+      });
+    }
+
+    // Set up modal handlers
+    if (cancelGoalBtn) {
+      cancelGoalBtn.addEventListener("click", closeCreateGoalModal);
+    }
+
+    if (createGoalModal) {
+      createGoalModal.addEventListener("click", (e) => {
+        if (e.target === createGoalModal) {
+          closeCreateGoalModal();
+        }
+      });
+    }
+
+    if (createGoalForm) {
+      createGoalForm.addEventListener("submit", handleCreateGoal);
+    }
+
     if (!session || !session.user_id) {
       // Hide all tab contents and show not logged in state
-      wellnessTab.style.display = "none";
-      conversationsTab.style.display = "none";
+      if (wellnessTab) wellnessTab.style.display = "none";
+      if (fitnessTab) fitnessTab.style.display = "none";
+      if (conversationsTab) conversationsTab.style.display = "none";
       if (healthHistoryTab) healthHistoryTab.style.display = "none";
-      notLoggedInState.style.display = "block";
+      if (notLoggedInState) notLoggedInState.style.display = "block";
       return;
     }
 
     // User is logged in - show wellness tab by default
-    notLoggedInState.style.display = "none";
+    if (notLoggedInState) notLoggedInState.style.display = "none";
     switchTab("wellness");
-    showWellnessState("loading");
-
-    try {
-      const checkIns = await fetchCheckIns(session.user_id);
-      renderEntries(checkIns);
-    } catch (error) {
-      console.error("Error loading journal:", error);
-      // Show empty state with error message
-      journalContainer.innerHTML = `
-        <div class="form-domain">
-          <div class="empty-state">
-            <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <p>Unable to load journal entries.</p>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">${escapeHtml(error.message)}</p>
-            <button class="ob-cta" style="max-width: 180px; margin-top: var(--space-md);" onclick="location.reload()">
-              Try Again
-            </button>
-          </div>
-        </div>
-      `;
-      showWellnessState("entries");
-    }
   }
 
   // Run on DOM ready

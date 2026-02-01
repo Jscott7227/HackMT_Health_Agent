@@ -8,7 +8,8 @@ from uuid import uuid4
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from datetime import datetime
+from datetime import datetime, timedelta
+import random
 
 import json
 import os
@@ -383,8 +384,13 @@ def run_goals_endpoint(payload: RunGoalsRequest):
     Generate SMART goals for a user's input goal and optionally persist to user facts.
     """
     try:
-        d =  get_profileinfo(payload.user_id)
-
+        print("Payload received:", payload)
+        try:
+            d = get_profileinfo(payload.user_id)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"get_profileinfo failed: {str(e)}")
+        if not d:
+            raise HTTPException(404, detail=f"No profile found for user {payload.user_id}")
         user_facts = {
             "benji_facts": d.benji_facts,
             "height": d.height,
@@ -606,16 +612,45 @@ class GoalsAcceptedRequest(BaseModel):
 
 
 @app.get("/goals/{user_id}")
-def get_goals(user_id: str):
-    """Return stored goals for user (accepted and optionally generated) from Firestore."""
-    doc_ref = db.collection("Goals").document(user_id)
-    snap = doc_ref.get()
-    if not snap.exists:
-        return {"accepted": [], "generated": []}
-    d = snap.to_dict() or {}
+def get_goals(user_id: str, goal_type: Optional[str] = None):
+    """Return stored goals for user from Firestore.
+    
+    Args:
+        user_id: The user ID to fetch goals for
+        goal_type: Optional filter by type ('wellness' or 'fitness')
+    
+    Returns:
+        List of goal documents for the user
+    """
+    # Query Goals collection by UserID
+    query = db.collection("Goals").where("UserID", "==", user_id)
+    
+    # Optionally filter by type
+    if goal_type:
+        query = query.where("type", "==", goal_type)
+    
+    docs = list(query.limit(100).stream())
+    
+    goals = []
+    for doc in docs:
+        d = doc.to_dict()
+        d["goal_id"] = doc.id
+        goals.append(d)
+    
+    # Also check legacy format (Goals/{user_id} document with accepted/generated arrays)
+    legacy_doc_ref = db.collection("Goals").document(user_id)
+    legacy_snap = legacy_doc_ref.get()
+    legacy_accepted = []
+    legacy_generated = []
+    if legacy_snap.exists:
+        legacy_data = legacy_snap.to_dict() or {}
+        legacy_accepted = legacy_data.get("accepted", [])
+        legacy_generated = legacy_data.get("generated", [])
+    
     return {
-        "accepted": d.get("accepted", []),
-        "generated": d.get("generated", []),
+        "goals": goals,
+        "accepted": legacy_accepted,
+        "generated": legacy_generated,
     }
 
 
@@ -635,6 +670,21 @@ def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
     for goal in payload.goals:
         doc_ref = db.collection("Goals").document()
 
+        # Ensure EndDate is a datetime object; if string, convert
+        end_date = goal.get("EndDate")
+        if isinstance(end_date, str):
+            try:
+                # Attempt ISO format parsing
+                end_date = datetime.datetime.fromisoformat(end_date)
+            except ValueError:
+                # Fallback: random 3-7 weeks from now
+                weeks_offset = random.randint(3, 7)
+                end_date = datetime.datetime.utcnow() + datetime.timedelta(weeks=weeks_offset)
+        elif not end_date:
+            # If EndDate is None, also use random 3-7 weeks
+            weeks_offset = random.randint(3, 7)
+            end_date = datetime.utcnow() + timedelta(weeks=weeks_offset)
+
         doc_ref.set({
             "Specific": goal.get("Specific"),
             "Measurable": goal.get("Measurable"),
@@ -642,9 +692,14 @@ def save_goals_accepted(user_id: str, payload: GoalsAcceptedRequest):
             "Relevant": goal.get("Relevant"),
             "Time_Bound": goal.get("Time_Bound"),  # keep as string
 
+            # Goal type: wellness or fitness (default to wellness for backward compat)
+            "type": goal.get("type", "wellness"),
+
             # duplicate for UI convenience
             "Description": goal.get("Specific"),
-            "EndDate": goal.get("EndDate"),
+
+            # store end date as Firestore timestamp
+            "EndDate": end_date,
 
             # empty structured check-ins
             "CheckIns": {
