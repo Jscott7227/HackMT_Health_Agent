@@ -58,39 +58,7 @@
     }
   ];
 
-  var fauxGlance = [
-    { icon: "🔥", label: "Calories",   value: "1,820 / 2,200" },
-    { icon: "💧", label: "Water",      value: "6 / 8 cups" },
-    { icon: "🏋️", label: "Workout",   value: "Upper Body – done" },
-    { icon: "😴", label: "Sleep",      value: "7.2 hrs" }
-  ];
 
-  var fauxPreview = [
-    { day: "Today",    items: ["Upper Body Strength", "20 min walk", "Stretch routine"] },
-    { day: "Tomorrow", items: ["Lower Body Strength", "Yoga flow", "Meal prep day"] }
-  ];
-
-  var fauxTimeline = [
-    { label: "Mon", fitness: 80, wellness: 70 },
-    { label: "Tue", fitness: 65, wellness: 75 },
-    { label: "Wed", fitness: 90, wellness: 60 },
-    { label: "Thu", fitness: 50, wellness: 85 },
-    { label: "Fri", fitness: 75, wellness: 72 },
-    { label: "Sat", fitness: 40, wellness: 90 },
-    { label: "Sun", fitness: 0,  wellness: 0  }
-  ];
-
-  var fauxTrend = [
-    { day: "Yesterday",     sleep: 6.8, energy: 3, mood: 4, workout: "Cardio 30 min" },
-    { day: "2 days ago",    sleep: 7.5, energy: 4, mood: 4, workout: "Upper Body" },
-    { day: "3 days ago",    sleep: 5.9, energy: 2, mood: 3, workout: "Rest day" }
-  ];
-
-  var fauxAgentNotes = [
-    "Sleep has been trending down — consider an earlier wind-down routine.",
-    "Energy was low on days following poor sleep. Try limiting screen time before bed.",
-    "Great consistency with workouts this week!"
-  ];
 
   /* Recovery day – set to false for normal view, true to test recovery card */
   var isRecoveryDay = false;
@@ -102,6 +70,32 @@
 
   /* Whether today's check-in is completed */
   var checkinDone = false;
+
+  /* Store today's check-in data (if available) for rendering glance */
+  var todayCheckinData = null;
+
+  /* Store Benji's Notes from post check-in sensing */
+  var benjiNotesData = null;
+
+  /* Helper: Check if a date string or timestamp is "today" (same calendar day) */
+  function isToday(dateValue) {
+    if (!dateValue) return false;
+    var d;
+    if (typeof dateValue === 'string') {
+      d = new Date(dateValue);
+    } else if (dateValue.seconds) {
+      d = new Date(dateValue.seconds * 1000);
+    } else if (dateValue._seconds) {
+      d = new Date(dateValue._seconds * 1000);
+    } else {
+      d = new Date(dateValue);
+    }
+    if (isNaN(d.getTime())) return false;
+    var now = new Date();
+    return d.getFullYear() === now.getFullYear() &&
+           d.getMonth() === now.getMonth() &&
+           d.getDate() === now.getDate();
+  }
 
   /* ---------- HELPERS ---------- */
 
@@ -163,10 +157,65 @@
     var grid = el("glanceGrid");
     if (!section || !grid) return;
     if (!checkinDone) { section.style.display = "none"; return; }
+
+    // Build glance cards from today's check-in data if available
+    var glanceItems = [];
+    if (todayCheckinData) {
+      // Nutrition (from eatScore 1-5)
+      var eatScore = todayCheckinData.eatScore || 0;
+      var nutritionLabel = eatScore <= 2 ? "Needs work" : eatScore === 3 ? "Balanced" : "Great";
+      glanceItems.push({
+        icon: "🍽️",
+        label: "Nutrition",
+        value: nutritionLabel + " (" + eatScore + "/5)"
+      });
+
+      // Hydration (from drinkScore 1-5)
+      var drinkScore = todayCheckinData.drinkScore || 0;
+      var hydrationLabel = drinkScore <= 2 ? "Low" : drinkScore === 3 ? "Okay" : "Good";
+      glanceItems.push({
+        icon: "💧",
+        label: "Hydration",
+        value: hydrationLabel + " (" + drinkScore + "/5)"
+      });
+
+      // Movement (from fitnessScore + fitnessNotes or recoveryDay)
+      var fitnessScore = todayCheckinData.fitnessScore || 0;
+      var fitnessNotes = todayCheckinData.fitnessNotes || "";
+      var isRecovery = todayCheckinData.recoveryDay === true;
+      var movementValue;
+      if (isRecovery) {
+        movementValue = "Recovery Day";
+      } else if (fitnessNotes && fitnessNotes.trim()) {
+        movementValue = fitnessNotes.trim().substring(0, 25) + (fitnessNotes.length > 25 ? "…" : "");
+      } else {
+        movementValue = fitnessScore + "/5";
+      }
+      glanceItems.push({
+        icon: "🏃",
+        label: "Movement",
+        value: movementValue
+      });
+
+      // Sleep (from sleepScore 1-5)
+      var sleepScore = todayCheckinData.sleepScore || 0;
+      var sleepLabel = sleepScore <= 2 ? "Poor" : sleepScore === 3 ? "Fair" : "Good";
+      glanceItems.push({
+        icon: "😴",
+        label: "Sleep",
+        value: sleepLabel + " (" + sleepScore + "/5)"
+      });
+    } else {
+      // Fallback: use fauxGlance (static demo values) or hide section
+      // For now, hide the section if no real data
+      section.style.display = "none";
+      return;
+    }
+
     section.style.display = "block";
     var html = "";
-    for (var i = 0; i < fauxGlance.length; i++) {
-      var g = fauxGlance[i];
+    for (var i = 0; i < glanceItems.length; i++) {
+      var g = glanceItems[i];
       html +=
         '<div class="glance-card">' +
           '<span class="glance-icon">' + g.icon + '</span>' +
@@ -175,6 +224,27 @@
         '</div>';
     }
     grid.innerHTML = html;
+  }
+
+  /* ---------- RENDER: BENJI'S NOTES (post check-in insights) ---------- */
+  function renderBenjiNotes() {
+    var section = el("benjiNotesSection");
+    var container = el("benjiNotesContent");
+    if (!section || !container) return;
+    
+    // Only show if we have notes
+    if (!benjiNotesData || !Array.isArray(benjiNotesData) || benjiNotesData.length === 0) {
+      section.style.display = "none";
+      return;
+    }
+    
+    section.style.display = "block";
+    var html = '<ul class="benji-notes-list">';
+    for (var i = 0; i < benjiNotesData.length; i++) {
+      html += '<li>' + escapeHtml(benjiNotesData[i]) + '</li>';
+    }
+    html += '</ul>';
+    container.innerHTML = html;
   }
 
   /* ---------- HELPERS: date formatting ---------- */
@@ -188,13 +258,28 @@
   function renderGoals() {
     var grid = el("goalsRingGrid");
     if (!grid) return;
+
+    if (fauxGoals.length === 0) {
+      grid.innerHTML = '<div class="no-goals-message" style="text-align: center; padding: 2rem; color: var(--text-muted);">' +
+        '<p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No goals yet!</p>' +
+        '<p>Visit the Goals page to set up your wellness and fitness goals.</p>' +
+      '</div>';
+      return;
+    }
+
     var html = "";
     for (var i = 0; i < fauxGoals.length; i++) {
       var g = fauxGoals[i];
       var pct = Math.min(100, Math.max(0, g.progressPct));
-      var weeksLeft = g.weekTotal - g.weekCurrent;
+      var weeksLeft = Math.max(0, g.weekTotal - g.weekCurrent);
+
+      var typeIcon = g.type === 'fitness' ? '' : '';
+      var typeBadge = '<span class="goal-type-badge" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: rgba(0,0,0,0.05); border-radius: 4px; margin-bottom: 0.5rem; display: inline-block;">' +
+        typeIcon + ' ' + (g.type || 'wellness').charAt(0).toUpperCase() + (g.type || 'wellness').slice(1) +
+      '</span>';
+
       html +=
-        '<div class="goal-ring-card" data-goal-id="' + g.id + '">' +
+        '<div class="goal-ring-card" data-goal-id="' + g.id + '" data-goal-type="' + (g.type || 'wellness') + '">' +
           '<div class="ring-wrap">' +
             buildSVGRing(pct, g.color, 110) +
             '<div class="ring-inner-label">' +
@@ -203,8 +288,9 @@
             '</div>' +
           '</div>' +
           '<div class="ring-meta">' +
-            '<strong>' + g.label + '</strong>' +
-            '<span class="ring-measurable">' + g.currentValue + ' / ' + g.targetValue + ' ' + g.unit + '</span>' +
+            typeBadge +
+            '<strong>' + escapeHtml(g.label) + '</strong>' +
+            '<span class="ring-measurable">' + escapeHtml(g.measurable) + '</span>' +
             '<span class="ring-timeline">Week ' + g.weekCurrent + ' of ' + g.weekTotal + '</span>' +
             '<span class="ring-dates">' + shortDate(g.startDate) + ' — ' + shortDate(g.endDate) + '</span>' +
             '<span class="ring-remaining">' + weeksLeft + ' week' + (weeksLeft !== 1 ? 's' : '') + ' remaining</span>' +
@@ -212,77 +298,6 @@
         '</div>';
     }
     grid.innerHTML = html;
-  }
-
-  /* ---------- RENDER: TODAY / TOMORROW PREVIEW ---------- */
-  function renderPreview() {
-    var container = el("previewCards");
-    if (!container) return;
-    var html = "";
-    for (var i = 0; i < fauxPreview.length; i++) {
-      var p = fauxPreview[i];
-      html += '<div class="preview-card">';
-      html += '<h3>' + p.day + '</h3><ul>';
-      for (var j = 0; j < p.items.length; j++) {
-        html += '<li>' + p.items[j] + '</li>';
-      }
-      html += '</ul></div>';
-    }
-    container.innerHTML = html;
-  }
-
-  /* ---------- RENDER: TIMELINE BARS ---------- */
-  function renderTimeline() {
-    var container = el("timelineBars");
-    if (!container) return;
-    var html = '<div class="timeline-legend">' +
-      '<span class="legend-dot fitness-dot"></span> Fitness ' +
-      '<span class="legend-dot wellness-dot"></span> Wellness' +
-      '</div>';
-    html += '<div class="timeline-chart">';
-    for (var i = 0; i < fauxTimeline.length; i++) {
-      var t = fauxTimeline[i];
-      html +=
-        '<div class="timeline-col">' +
-          '<div class="timeline-bar-group">' +
-            '<div class="timeline-bar fitness-bar" style="height:' + t.fitness + '%"></div>' +
-            '<div class="timeline-bar wellness-bar" style="height:' + t.wellness + '%"></div>' +
-          '</div>' +
-          '<span class="timeline-label">' + t.label + '</span>' +
-        '</div>';
-    }
-    html += '</div>';
-    container.innerHTML = html;
-  }
-
-  /* ---------- RENDER: 3-DAY TREND ---------- */
-  function renderTrend() {
-    var cardsEl = el("trendCards");
-    var notesEl = el("trendAgentNotes");
-    if (!cardsEl) return;
-
-    var html = "";
-    for (var i = 0; i < fauxTrend.length; i++) {
-      var t = fauxTrend[i];
-      html +=
-        '<div class="trend-card">' +
-          '<h4>' + t.day + '</h4>' +
-          '<div class="trend-row"><span>Sleep</span><span>' + t.sleep + ' hrs</span></div>' +
-          '<div class="trend-row"><span>Energy</span><span>' + t.energy + ' / 5</span></div>' +
-          '<div class="trend-row"><span>Mood</span><span>' + t.mood + ' / 5</span></div>' +
-          '<div class="trend-row"><span>Workout</span><span>' + t.workout + '</span></div>' +
-        '</div>';
-    }
-    cardsEl.innerHTML = html;
-
-    if (notesEl && fauxAgentNotes.length) {
-      var nhtml = '<h4>Benji\'s Notes</h4><ul>';
-      for (var j = 0; j < fauxAgentNotes.length; j++) {
-        nhtml += '<li>' + fauxAgentNotes[j] + '</li>';
-      }
-      nhtml += '</ul>';
-      notesEl.innerHTML = nhtml;
-    }
   }
 
   /* ---------- CHECK-IN MODAL ---------- */
@@ -315,7 +330,21 @@
     });
 
     // Expose for check-in.js to call after successful submit
-    window.BenjiCheckinModal = { close: closeModal };
+    window.BenjiCheckinModal = {
+      close: closeModal,
+      // Called by check-in.js after successful check-in submit
+      // checkinData: the check-in payload, benjiNotes: array of "Benji's Notes" strings
+      onComplete: function (checkinData, benjiNotes) {
+        checkinDone = true;
+        todayCheckinData = checkinData || null;
+        benjiNotesData = benjiNotes || null;
+        console.log("Check-in completed, updating banner, glance, and notes");
+        renderBanner();
+        renderGlance();
+        renderBenjiNotes();
+        closeModal();
+      }
+    };
   }
 
   /* ---------- RENDER: MEDICATION SCHEDULE (generalized plan) ---------- */
@@ -498,31 +527,96 @@
     renderInjuryWarning();
     renderMedicationSchedule();
     renderGlance();
+    renderBenjiNotes();
     renderGoals();
-    renderPreview();
-    renderTimeline();
-    renderTrend();
     initCheckinModal();
   }
 
-  function mapApiGoalsToRings(accepted) {
-    if (!accepted || accepted.length === 0) return null;
-    var colors = ["#3a7d44", "#5a9a64", "#7ab884"];
-    return accepted.map(function (g, i) {
+  // Helper function to parse Firestore timestamps or date strings
+  function parseFirestoreDate(dateField) {
+    if (!dateField) return new Date();
+
+    // If it's a Firestore timestamp object with toDate method
+    if (dateField.toDate && typeof dateField.toDate === 'function') {
+      return dateField.toDate();
+    }
+
+    // If it's a Firestore timestamp object with _seconds
+    if (dateField._seconds) {
+      return new Date(dateField._seconds * 1000);
+    }
+
+    // If it's an object with seconds property
+    if (dateField.seconds) {
+      return new Date(dateField.seconds * 1000);
+    }
+
+    // Try parsing as ISO string or timestamp
+    var parsed = new Date(dateField);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+
+  function mapApiGoalsToRings(goals) {
+    if (!goals || goals.length === 0) return null;
+    var colors = ["#3a7d44", "#5a9a64", "#7ab884", "#9ad6a4", "#b8e6c4"];
+
+    return goals.map(function (g, i) {
+      // Extract numeric values from Measurable field (e.g., "5 oz" -> 5)
+      var measurableStr = g.Measurable || "";
+      var targetMatch = measurableStr.match(/(\d+(\.\d+)?)/);
+      var targetValue = targetMatch ? parseFloat(targetMatch[1]) : 100;
+
+      // Calculate progress based on check-ins
+      var checkIns = (g.CheckIns && g.CheckIns.checkins) || [];
+      var currentValue = checkIns.length || 0;
+
+      // Calculate progress percentage
+      var progressPct = 0;
+      if (targetValue > 0) {
+        progressPct = Math.min(100, Math.round((currentValue / targetValue) * 100));
+      }
+
+      // Calculate weeks using robust date parsing
+      var now = new Date();
+      var startDate = parseFirestoreDate(g.DateCreated);
+      var endDate = parseFirestoreDate(g.EndDate);
+
+      var totalWeeks = Math.ceil((endDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+      var currentWeek = Math.ceil((now - startDate) / (7 * 24 * 60 * 60 * 1000));
+
+      // Ensure valid week numbers
+      totalWeeks = totalWeeks > 0 ? totalWeeks : 12;
+      currentWeek = Math.max(1, Math.min(currentWeek, totalWeeks));
+
+      // Extract unit from Measurable (e.g., "5 oz" -> "oz", "5 times a week" -> "times/week")
+      var unit = "times";
+      if (measurableStr) {
+        // Check for common patterns
+        if (measurableStr.toLowerCase().includes("times")) {
+          unit = "times";
+        } else {
+          var unitMatch = measurableStr.match(/\d+(\.\d+)?\s*([a-zA-Z]+)/);
+          if (unitMatch && unitMatch[2]) {
+            unit = unitMatch[2];
+          }
+        }
+      }
+
       return {
-        id: g.id || "goal_" + i,
-        label: g.title || g.label || "Goal " + (i + 1),
-        specific: g.description || g.specific || "",
-        measurable: g.measurable || g.description || "",
-        currentValue: g.currentValue != null ? g.currentValue : 0,
-        targetValue: g.targetValue != null ? g.targetValue : 100,
-        unit: g.unit || "",
-        progressPct: g.progressPct != null ? g.progressPct : 0,
-        weekCurrent: g.weekCurrent != null ? g.weekCurrent : 1,
-        weekTotal: g.weekTotal != null ? g.weekTotal : 12,
-        startDate: g.startDate || new Date().toISOString().slice(0, 10),
-        endDate: g.endDate || "",
-        color: g.color || colors[i % colors.length],
+        id: g.goal_id || "goal_" + i,
+        label: g.Specific || "Goal " + (i + 1),
+        specific: g.Description || g.Specific || "",
+        measurable: g.Measurable || "",
+        currentValue: currentValue,
+        targetValue: targetValue,
+        unit: unit,
+        progressPct: progressPct,
+        weekCurrent: currentWeek,
+        weekTotal: totalWeeks,
+        startDate: startDate.toISOString().slice(0, 10),
+        endDate: endDate.toISOString().slice(0, 10),
+        color: colors[i % colors.length],
+        type: g.type || "wellness"
       };
     });
   }
@@ -561,22 +655,64 @@
     if (window.BenjiAPI && window.BenjiAPI.getSession) {
       var session = window.BenjiAPI.getSession();
       if (session && session.user_id) {
-        // Fetch goals and medication schedule in parallel
+        console.log("Fetching goals for user:", session.user_id);
+        // Fetch goals, medication schedule, and check-ins in parallel
         var goalsPromise = window.BenjiAPI.getGoals(session.user_id)
           .then(function (data) {
-            var fromApi = mapApiGoalsToRings(data.accepted);
+            console.log("Goals API response:", data);
+            // Try to use the 'goals' array first (new format), then fall back to 'accepted' (legacy)
+            var goalsArray = data.goals && data.goals.length > 0 ? data.goals : data.accepted;
+            console.log("Using goals array:", goalsArray);
+            var fromApi = mapApiGoalsToRings(goalsArray);
+            console.log("Mapped goals to rings:", fromApi);
             if (fromApi && fromApi.length > 0) {
               fauxGoals = fromApi;
+              console.log("Successfully loaded", fromApi.length, "goals from database");
+            } else {
+              console.log("No goals found, using default faux data");
             }
           })
-          .catch(function () {
+          .catch(function (err) {
+            console.error("Goals fetch failed:", err);
             // Goals fetch failed, use faux data
           });
 
         // Fetch medication schedule using persisted mode (standard or AI)
         var medsPromise = fetchMedicationSchedule(session.user_id);
 
-        Promise.all([goalsPromise, medsPromise])
+        // Fetch check-ins and determine if today's check-in is done
+        var checkinsPromise = window.BenjiAPI.getCheckins(session.user_id)
+          .then(function (checkins) {
+            console.log("Checkins API response:", checkins);
+            if (checkins && checkins.length > 0) {
+              // Check if any check-in is from today
+              for (var i = 0; i < checkins.length; i++) {
+                var c = checkins[i];
+                // Check createdAt or timestamp field
+                var dateField = c.createdAt || c.timestamp || c.date;
+                if (isToday(dateField)) {
+                  checkinDone = true;
+                  todayCheckinData = c;
+                  // Load Benji's Notes if persisted on the check-in document
+                  if (c.benji_notes && Array.isArray(c.benji_notes)) {
+                    benjiNotesData = c.benji_notes;
+                    console.log("Found Benji's Notes:", benjiNotesData);
+                  }
+                  console.log("Found today's check-in:", c);
+                  break;
+                }
+              }
+            }
+            if (!checkinDone) {
+              console.log("No check-in found for today");
+            }
+          })
+          .catch(function (err) {
+            console.error("Checkins fetch failed:", err);
+            // checkinDone stays false
+          });
+
+        Promise.all([goalsPromise, medsPromise, checkinsPromise])
           .then(function () {
             initDashboard();
           })

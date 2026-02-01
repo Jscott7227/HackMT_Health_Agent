@@ -668,61 +668,70 @@
       </div>
 
       <form class="modal-form" id="createGoalForm">
+      <!-- Phase 1: user input -->
+      <div class="form-group" id="goalPhaseGeneral">
+        <label class="form-label" for="goalGeneral">What is your general goal?</label>
+        <input
+          type="text"
+          id="goalGeneral"
+          class="form-input"
+          placeholder="What exactly do you want to accomplish?"
+          required
+          maxlength="100"
+        />
+        <small class="form-hint">Think sleep, mood, stress, recovery.</small>
+      </div>
+
+      <!-- Loading (hidden by default) -->
+      <div class="form-domain" id="goalLoadingState" style="display:none; margin-top: var(--space-md);">
+        <div class="empty-state">
+          <div class="loading-spinner" style="margin: 0 auto var(--space-md);"></div>
+          <p>Generating your SMART goal…</p>
+        </div>
+      </div>
+
+      <!-- Phase 2: SMART fields (hidden until generated) -->
+      <div id="goalPhaseSmart" style="display:none;">
         <div class="form-group">
-          <label class="form-label" for="goalSpecific">
-            <span class="smart-badge">S</span> Specific *
-          </label>
-          <input type="text" id="goalSpecific" class="form-input"
-            placeholder="What exactly do you want to accomplish?"
-            required maxlength="100" />
-          <small class="form-hint" id="goalSpecificHint">Think sleep, mood, stress, recovery.</small>
+          <label class="form-label" for="goalSpecific">Specific *</label>
+          <input type="text" id="goalSpecific" class="form-input" placeholder="e.g. Sleep 7+ hours most nights" />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="goalMeasurable">
-            <span class="smart-badge">M</span> Measurable *
-          </label>
-          <input type="text" id="goalMeasurable" class="form-input"
-            placeholder="How will you track your progress?"
-            required maxlength="150" />
+          <label class="form-label" for="goalMeasurable">Measurable *</label>
+          <input type="text" id="goalMeasurable" class="form-input" placeholder="e.g. Track in check-ins or journal" />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="goalAttainable">
-            <span class="smart-badge">A</span> Attainable *
-          </label>
-          <input type="text" id="goalAttainable" class="form-input"
-            placeholder="How will you achieve this goal?"
-            required maxlength="150" />
+          <label class="form-label" for="goalAttainable">Attainable *</label>
+          <input type="text" id="goalAttainable" class="form-input" placeholder="e.g. Wind-down routine, limit screens" />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="goalRelevant">
-            <span class="smart-badge">R</span> Relevant *
-          </label>
-          <input type="text" id="goalRelevant" class="form-input"
-            placeholder="Why is this goal important to you?"
-            required maxlength="150" />
+          <label class="form-label" for="goalRelevant">Relevant *</label>
+          <input type="text" id="goalRelevant" class="form-input" placeholder="e.g. Better energy and mood" />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="goalTimeBound">
-            <span class="smart-badge">T</span> Time-bound *
-          </label>
-          <input type="text" id="goalTimeBound" class="form-input"
-            placeholder="When will you achieve this goal?"
-            required maxlength="80" />
+          <label class="form-label" for="goalTimeBound">Time-bound *</label>
+          <input type="text" id="goalTimeBound" class="form-input" placeholder="e.g. For the next 4 weeks" />
         </div>
 
-        <div class="modal-actions">
-          <button type="button" class="modal-btn modal-btn-secondary" id="cancelGoalBtn">
-            Cancel
-          </button>
-          <button type="submit" class="modal-btn modal-btn-primary">
-            Save Goal
-          </button>
-        </div>
-      </form>
+        <small class="form-hint" style="display:block; margin-top: var(--space-sm);">
+          You can edit anything before saving.
+        </small>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-secondary" id="cancelGoalBtn">Cancel</button>
+
+        <!-- same button, but JS changes the label -->
+        <button type="submit" class="modal-btn modal-btn-primary" id="goalPrimaryBtn">
+          Generate Goal
+        </button>
+      </div>
+    </form>
+
     </div>
   </div>
 

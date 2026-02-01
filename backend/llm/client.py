@@ -19,7 +19,50 @@ def format_user_facts(user_facts: dict) -> str:
     if not user_facts:
         return "No background facts provided."
 
-    lines = [f"- {k}: {v}" for k, v in user_facts.items()]
+    lines = []
+    
+    # Basic profile facts
+    if user_facts.get("benji_facts"):
+        lines.append(f"- Profile: {user_facts['benji_facts']}")
+    if user_facts.get("height"):
+        lines.append(f"- Height: {user_facts['height']}")
+    if user_facts.get("weight"):
+        lines.append(f"- Weight: {user_facts['weight']}")
+    
+    # Goals (if present)
+    goals = user_facts.get("goals")
+    if goals and isinstance(goals, list) and len(goals) > 0:
+        lines.append("\nUser's Goals:")
+        for g in goals[:5]:
+            if isinstance(g, dict):
+                label = g.get("Specific") or g.get("label") or g.get("goal") or g.get("specific") or str(g)
+                goal_type = g.get("type", "wellness")
+                lines.append(f"  - [{goal_type}] {label}")
+            else:
+                lines.append(f"  - {g}")
+    
+    # Recent check-ins summary (if present)
+    latest = user_facts.get("latest_checkin")
+    if latest:
+        lines.append("\nLatest Check-in:")
+        day_score = latest.get("dayScore")
+        sleep = latest.get("sleepScore")
+        fitness = latest.get("fitnessScore")
+        if day_score:
+            lines.append(f"  - Day Score: {day_score}/10")
+        if sleep:
+            lines.append(f"  - Sleep: {sleep}/5")
+        if fitness:
+            lines.append(f"  - Fitness: {fitness}/5")
+        if latest.get("recoveryDay"):
+            lines.append("  - Recovery Day: Yes")
+        if latest.get("fitnessNotes"):
+            lines.append(f"  - Fitness Notes: {latest['fitnessNotes']}")
+    
+    # Note about check-in awareness
+    if latest or goals:
+        lines.append("\nNote: Reference the user's goals and recent check-in data when relevant (e.g., 'your sleep score', 'your Run 5K goal').")
+    
     return "User background facts:\n" + "\n".join(lines)
 
 
@@ -105,6 +148,25 @@ class BenjiLLM:
                         "fitness_level": None, "goal": None}
             return facts
     
+    def _map_checkin_to_tool_format(self, checkin: dict) -> dict:
+        """Map frontend check-in fields to the format expected by tools."""
+        if not checkin:
+            return {}
+        return {
+            "sleep": checkin.get("sleepScore") or checkin.get("sleep", 3),
+            "stress": checkin.get("stress", 3),
+            "mood": checkin.get("mood", 3),
+            "fitness": checkin.get("fitnessScore") or checkin.get("fitness", 3),
+            "recovery_day": checkin.get("recoveryDay") or checkin.get("recovery_day", False),
+            "day_score": checkin.get("dayScore"),
+            "eat_score": checkin.get("eatScore"),
+            "drink_score": checkin.get("drinkScore"),
+            "wellness_score": checkin.get("wellnessScore"),
+            "fitness_notes": checkin.get("fitnessNotes"),
+            "day_notes": checkin.get("dayNotes"),
+            "tags": checkin.get("tags", []),
+        }
+    
     def safe_call_tool(self, name, tool, goal_type=None):
         try:
             if name == "fitness_plan":
@@ -114,6 +176,24 @@ class BenjiLLM:
                 goal = self.user_facts.get("goal_meta", {})
                 history = self.user_facts.get("history", [])
                 return tool(goal, history)
+
+            elif name == "daily_checkin":
+                # Use latest_checkin from user_facts if available
+                latest = self.user_facts.get("latest_checkin")
+                if latest:
+                    mapped = self._map_checkin_to_tool_format(latest)
+                    return tool(mapped)
+                # Fallback: pass user_facts (tool will use defaults)
+                return tool(self.user_facts)
+
+            elif name == "trend_analysis":
+                # Use checkin_history from user_facts if available
+                history = self.user_facts.get("checkin_history") or self.user_facts.get("recent_checkins")
+                if history and isinstance(history, list):
+                    mapped_history = [self._map_checkin_to_tool_format(c) for c in history]
+                    return tool(mapped_history)
+                # Fallback: pass empty list
+                return tool([])
 
             else:
                 return tool(self.user_facts)
@@ -296,6 +376,7 @@ class BenjiLLM:
     def checkin_recommendations(self, user_facts: dict, user_message: str = None) -> str:
         """
         Generate personalized check-in focus areas based on user profile, goals, and optional message.
+        Uses format_agent_instructions() for theme consistency with the rest of the app.
         
         Args:
             user_facts: Dictionary containing benji_facts, height, weight, goals, etc.
@@ -320,17 +401,34 @@ class BenjiLLM:
         if user_facts.get("weight"):
             context_parts.append(f"Weight: {user_facts['weight']}")
         
+        # Enhanced goal formatting with type for better correlation
+        fitness_goals = []
+        wellness_goals = []
         if user_facts.get("goals"):
             goals = user_facts["goals"]
             if isinstance(goals, list) and len(goals) > 0:
-                goals_summary = []
                 for g in goals[:5]:  # Limit to 5 goals
                     if isinstance(g, dict):
-                        label = g.get("label") or g.get("goal") or g.get("specific") or str(g)
-                        goals_summary.append(f"- {label}")
+                        # Get goal label/description
+                        label = g.get("Specific") or g.get("label") or g.get("goal") or g.get("specific") or g.get("Description") or str(g)
+                        measurable = g.get("Measurable") or g.get("measurable") or ""
+                        goal_type = g.get("type", "wellness").lower()
+                        
+                        goal_text = f"- {label}"
+                        if measurable:
+                            goal_text += f" (Target: {measurable})"
+                        
+                        if goal_type == "fitness":
+                            fitness_goals.append(goal_text)
+                        else:
+                            wellness_goals.append(goal_text)
                     else:
-                        goals_summary.append(f"- {g}")
-                context_parts.append("Active Goals:\n" + "\n".join(goals_summary))
+                        wellness_goals.append(f"- {g}")
+                
+                if fitness_goals:
+                    context_parts.append("Fitness Goals:\n" + "\n".join(fitness_goals))
+                if wellness_goals:
+                    context_parts.append("Wellness Goals:\n" + "\n".join(wellness_goals))
         
         context = "\n".join(context_parts) if context_parts else "No profile or goals data available."
         
@@ -346,17 +444,32 @@ User Context:
 The user also said: "{user_message}"
 Consider this when suggesting focus areas for their check-in today."""
         
-        # System prompt for focused output
-        system_prompt = """You are Benji, a supportive wellness companion. Your task is to generate personalized check-in focus areas.
+        # Use format_agent_instructions() for theme consistency, then add task-specific instructions
+        agent_instructions = format_agent_instructions(
+            include_personality=True,
+            include_scope=True,
+            include_constraints=True
+        )
+        
+        task_instructions = """
+## Your Task: Generate Check-in Focus Areas
 
-IMPORTANT: Output ONLY a numbered list of 3-5 short, actionable check-in focus areas or prompts. Each should be 1-2 sentences max.
+Generate 3-5 personalized check-in focus areas or prompts for today.
+
+IMPORTANT RULES:
+- Output ONLY a numbered list of 3-5 short, actionable focus areas. Each should be 1-2 sentences max.
+- Prioritize focus areas that directly support the user's stated goals (fitness goals vs wellness goals).
+- If the user has fitness goals, include at least one fitness-related focus area.
+- If the user has wellness goals, include at least one wellness-related focus area.
+- Be specific and encouraging, referencing their actual goals when possible.
+- No introductions or conclusions - just the numbered list.
 
 Format example:
-1. **[Focus Area]**: Brief actionable prompt
+1. **[Focus Area]**: Brief actionable prompt related to their goals
 2. **[Focus Area]**: Brief actionable prompt
-...
+..."""
 
-Focus on what matters most for this user today based on their profile, goals, and any context they provided. Be specific and encouraging. No introductions or conclusions - just the list."""
+        system_prompt = agent_instructions + "\n\n" + task_instructions
 
         messages = [
             SystemMessage(content=system_prompt),
@@ -484,6 +597,155 @@ Focus on what matters most for this user today based on their profile, goals, an
 
         return questions_json
 
+    def checkin_sense(self, checkin_data: dict, user_facts: dict, recent_checkins: list = None) -> list:
+        """
+        Generate "Benji's Notes" - actionable insights based on a submitted check-in,
+        correlated with the user's goals and theme from instructions.py.
+        
+        Args:
+            checkin_data: The check-in payload just submitted (scores, notes, recovery day, etc.)
+            user_facts: Dictionary containing benji_facts, height, weight, goals, etc.
+            recent_checkins: Optional list of recent check-ins (last 3-5) for trend context.
+            
+        Returns:
+            List of 2-4 short "Benji's Notes" strings (insights/encouragement).
+        """
+        # Build check-in summary
+        checkin_summary_parts = []
+        
+        # Day score
+        if checkin_data.get("dayScore"):
+            checkin_summary_parts.append(f"Overall Day Score: {checkin_data['dayScore']}/10")
+        
+        # Sleep, nutrition, hydration
+        if checkin_data.get("sleepScore"):
+            checkin_summary_parts.append(f"Sleep Quality: {checkin_data['sleepScore']}/5")
+        if checkin_data.get("eatScore"):
+            checkin_summary_parts.append(f"Nutrition: {checkin_data['eatScore']}/5")
+        if checkin_data.get("drinkScore"):
+            checkin_summary_parts.append(f"Hydration: {checkin_data['drinkScore']}/5")
+        
+        # Fitness
+        if checkin_data.get("fitnessScore"):
+            checkin_summary_parts.append(f"Fitness Check-in: {checkin_data['fitnessScore']}/5")
+        if checkin_data.get("fitnessNotes"):
+            checkin_summary_parts.append(f"Fitness Notes: {checkin_data['fitnessNotes']}")
+        if checkin_data.get("recoveryDay"):
+            checkin_summary_parts.append("Recovery Day: Yes")
+        
+        # Wellness
+        if checkin_data.get("wellnessScore"):
+            checkin_summary_parts.append(f"Wellness Check-in: {checkin_data['wellnessScore']}/5")
+        if checkin_data.get("stress"):
+            checkin_summary_parts.append(f"Stress Level: {checkin_data['stress']}/5")
+        if checkin_data.get("mood"):
+            checkin_summary_parts.append(f"Mood: {checkin_data['mood']}/5")
+        
+        # Tags and notes
+        if checkin_data.get("tags") and len(checkin_data["tags"]) > 0:
+            checkin_summary_parts.append(f"Tags: {', '.join(checkin_data['tags'])}")
+        if checkin_data.get("dayNotes"):
+            checkin_summary_parts.append(f"Day Notes: {checkin_data['dayNotes']}")
+        
+        checkin_summary = "\n".join(checkin_summary_parts) if checkin_summary_parts else "No check-in data available."
+        
+        # Build goals context (same as checkin_recommendations)
+        goals_context = ""
+        if user_facts.get("goals"):
+            goals = user_facts["goals"]
+            if isinstance(goals, list) and len(goals) > 0:
+                fitness_goals = []
+                wellness_goals = []
+                for g in goals[:5]:
+                    if isinstance(g, dict):
+                        label = g.get("Specific") or g.get("label") or g.get("goal") or g.get("specific") or str(g)
+                        goal_type = g.get("type", "wellness").lower()
+                        if goal_type == "fitness":
+                            fitness_goals.append(f"- {label}")
+                        else:
+                            wellness_goals.append(f"- {label}")
+                    else:
+                        wellness_goals.append(f"- {g}")
+                
+                if fitness_goals:
+                    goals_context += "Fitness Goals:\n" + "\n".join(fitness_goals) + "\n"
+                if wellness_goals:
+                    goals_context += "Wellness Goals:\n" + "\n".join(wellness_goals)
+        
+        # Build trend context if recent check-ins provided
+        trend_context = ""
+        if recent_checkins and len(recent_checkins) > 0:
+            trend_parts = []
+            for i, c in enumerate(recent_checkins[:3]):
+                day_label = f"{i+1} day(s) ago"
+                day_score = c.get("dayScore", "?")
+                sleep = c.get("sleepScore", "?")
+                trend_parts.append(f"{day_label}: Day {day_score}/10, Sleep {sleep}/5")
+            if trend_parts:
+                trend_context = "Recent Check-ins:\n" + "\n".join(trend_parts)
+        
+        # Build user input
+        user_input = f"""Based on this check-in and the user's goals, generate 2-4 short "Benji's Notes" - actionable insights or encouragement.
+
+Today's Check-in:
+{checkin_summary}
+
+{goals_context}
+
+{trend_context}"""
+        
+        # Use format_agent_instructions() for theme consistency
+        agent_instructions = format_agent_instructions(
+            include_personality=True,
+            include_scope=True,
+            include_constraints=True
+        )
+        
+        task_instructions = """
+## Your Task: Generate Benji's Notes (Post Check-in Insights)
+
+Based on the user's check-in data and goals, produce 2-4 short "Benji's Notes": actionable insights or encouragement.
+
+IMPORTANT RULES:
+- Output ONLY a JSON array of 2-4 short strings, each being one note/insight.
+- Each note should be 1-2 sentences max.
+- Correlate insights with the user's stated goals (e.g., "Your sleep score may affect your Run 5K training—rest well tonight!").
+- Be supportive and actionable, not just observational.
+- No medical advice. If something concerning (low scores, high stress), encourage self-care or professional support.
+- No introductions or conclusions - just the JSON array.
+
+Format example:
+["Great consistency with your fitness check-in! Keep building that habit.", "Your sleep was a bit low—consider winding down earlier to support your strength goals.", "Hydration looks good today. Stay on track!"]"""
+
+        system_prompt = agent_instructions + "\n\n" + task_instructions
+
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_input),
+        ]
+
+        response = self.model.invoke(messages)
+        raw = response.content.strip()
+        
+        # Parse JSON array from response
+        # Strip markdown backticks if present
+        if raw.startswith("```"):
+            lines = raw.split("\n")
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines[-1].startswith("```"):
+                lines = lines[:-1]
+            raw = "\n".join(lines)
+        
+        try:
+            notes = json.loads(raw)
+            if isinstance(notes, list):
+                return notes[:4]  # Limit to 4 notes
+        except json.JSONDecodeError:
+            pass
+        
+        # Fallback: return the raw response as a single note
+        return [raw] if raw else ["Keep up the great work with your daily check-ins!"]
 
     
 if __name__ == "__main__":
