@@ -727,6 +727,10 @@ function digitsOnly(el) {
     el.value = (el.value || "").replace(/[^\d]/g, "");
 }
 
+function safeValue(val) {
+    return (val === undefined || val === null) ? null : val;
+}
+
 /* --------------------------------------------------------
 COMPLETE SETUP - Redirect to main app
 -------------------------------------------------------- */
@@ -746,25 +750,16 @@ async function completeSetup() {
         var session = getSession();
         if (session && session.user_id) {
             // Build BenjiFacts as a JSON object, then stringify it
-            var factsObj = {};
-            if (state.goal) factsObj.goal = GOAL_LABELS[state.goal] || state.goal;
-            if (state.experience) factsObj.experience = EXP_LABELS[state.experience] || state.experience;
-            if (state.constraints && state.constraints.length) factsObj.constraints = state.constraints;
-            if (state.health && state.health.length) {
-                factsObj.health = state.health;
-                if (state.healthDetail) factsObj.healthDetail = state.healthDetail;
+            var factsObj = buildBenjiFacts();
+
+            var benjiFactsString = "{}";
+            try {
+            benjiFactsString = JSON.stringify(factsObj);
+            console.log("BenjiFacts created:", benjiFactsString);
+            } catch (jsonError) {
+            console.error("Failed to stringify BenjiFacts:", jsonError);
+            benjiFactsString = "{}"; // fallback
             }
-            if (state.gender) factsObj.gender = state.gender;
-            if (state.cycleTracking) factsObj.cycleTracking = state.cycleTracking;
-            if (state.medTracking === 'yes') factsObj.medications = state.medList || 'Yes';
-            if (state.mentalReflection) factsObj.notes = state.mentalReflection;
-            if (state.mentalConsentNote) factsObj.mentalConsentNote = state.mentalConsentNote;
-            if (state.mood) factsObj.mood = GENERIC_SCALE[state.mood];
-            if (state.stress) factsObj.stress = GENERIC_SCALE[state.stress];
-            if (state.energy) factsObj.energy = GENERIC_SCALE[state.energy];
-            if (state.sleep) factsObj.sleep = SLEEP_LABELS[state.sleep];
-            if (state.activity !== undefined && state.activity !== null) factsObj.activity = ACTIVITY_LABELS[state.activity];
-            if (state.confidence) factsObj.confidence = state.confidence;
 
             var payload = {
                 benji_facts: JSON.stringify(factsObj),
