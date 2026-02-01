@@ -226,6 +226,27 @@ class RunRequest(BaseModel):
 class RunResponse(BaseModel):
     response: str
     
+def fetch_profileinfo(user_id: str):
+    snap = db.collection("ProfileInfo").document(user_id).get()
+    if not snap.exists:
+        return None  # don’t raise HTTPException here
+
+    d = snap.to_dict() or {}
+
+    benji_facts = d.get("BenjiFacts") or {}
+    if isinstance(benji_facts, str):
+        try:
+            benji_facts = json.loads(benji_facts)
+        except json.JSONDecodeError:
+            benji_facts = {}
+
+    return {
+        "user_id": user_id,
+        "benji_facts": benji_facts,
+        "height": d.get("Height"),
+        "weight": d.get("Weight"),
+    }
+    
 def authenticate_firestore(email: str, password: str) -> Optional[str]:
     docs = (
         db.collection("User")
@@ -370,18 +391,12 @@ def firebase_health():
 
 
 @app.post("/goals", response_model=RunGoalsResponse)
-def run_goals_endpoint(payload: RunGoalsRequest):
+async def run_goals_endpoint(payload: RunGoalsRequest):
     """
     Generate SMART goals for a user's input goal and optionally persist to user facts.
     """
     try:
-        d =  get_profileinfo(payload.user_id)
-
-        user_facts = {
-            "benji_facts": d.benji_facts,
-            "height": d.height,
-            "weight": d.weight,
-        }
+        user_facts = fetch_profileinfo(payload.user_id)
         
         result = benji.run_goals(
             user_goal=payload.user_goal,
