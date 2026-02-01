@@ -958,25 +958,24 @@ def get_compliance(user_id: str, date: Optional[str] = None, from_date: Optional
         data = snap.to_dict()
         return ComplianceResponse(user_id=user_id, date=date, entries=data.get("entries", []))
     
-    # Date range query (filter/sort in Python to avoid composite index)
+    # Date range query (uses composite index: user_id + date)
     if from_date and to_date:
         docs = db.collection("MedicationCompliance") \
             .where("user_id", "==", user_id) \
-            .limit(200) \
+            .where("date", ">=", from_date) \
+            .where("date", "<=", to_date) \
+            .order_by("date", direction=firestore.Query.DESCENDING) \
+            .limit(100) \
             .stream()
         
         results = []
         for doc in docs:
             d = doc.to_dict()
-            doc_date = d.get("date") or ""
-            if from_date <= doc_date <= to_date:
-                results.append({
-                    "date": doc_date,
-                    "entries": d.get("entries", [])
-                })
+            results.append({
+                "date": d.get("date"),
+                "entries": d.get("entries", [])
+            })
         
-        results.sort(key=lambda x: x["date"], reverse=True)
-        results = results[:100]
         return {"user_id": user_id, "days": results}
     
     return ComplianceResponse(user_id=user_id, date=date or "", entries=[])
@@ -1028,10 +1027,11 @@ def get_health_history(user_id: str, limit: int = 30):
     if not user_snap.exists:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Query compliance documents for this user (no order_by to avoid composite index)
+    # Query compliance documents for this user (uses composite index: user_id + date)
     docs = db.collection("MedicationCompliance") \
         .where("user_id", "==", user_id) \
-        .limit(100) \
+        .order_by("date", direction=firestore.Query.DESCENDING) \
+        .limit(limit) \
         .stream()
     
     days = []
@@ -1041,10 +1041,6 @@ def get_health_history(user_id: str, limit: int = 30):
             "date": d.get("date"),
             "entries": d.get("entries", [])
         })
-    
-    # Sort by date descending in Python and take up to limit
-    days.sort(key=lambda x: x["date"] or "", reverse=True)
-    days = days[:limit]
     
     return HealthHistoryResponse(days=days)
 
