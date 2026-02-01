@@ -16,7 +16,7 @@
 
   <!-- Background layers for visual depth -->
   <div class="background-layers">
-    <div class="grain"></div>
+    <div class="grain"></div> 
     <div class="gradient-orb orb-1"></div>
     <div class="gradient-orb orb-2"></div>
     <div class="gradient-orb orb-3"></div>
@@ -30,8 +30,17 @@
       <div class="chat-layout">
         <aside class="chat-sidebar">
           <div class="history-header">
-            <h3>Chat history</h3>
-            <button id="clearHistoryBtn" class="history-clear-btn" type="button">Clear</button>
+            <h3>Chat History</h3>
+            <div class="history-actions">
+              <button id="newChatBtn" class="history-btn btn btn-primary" type="button">
+                <i class="fas fa-plus"></i>
+                <span>New Chat</span>
+              </button>
+              <button id="clearHistoryBtn" class="history-btn btn" type="button">
+                <i class="fas fa-sync-alt"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
           </div>
           <div id="chatHistorySaved" class="history-list">
             <div class="history-empty">No saved messages yet.</div>
@@ -43,11 +52,8 @@
           <div id="chatHistory">
             <!-- Welcome message -->
             <div class="chat-welcome">
-            <div class="chat-welcome-icon">
-              <img src="../assets/img/benji_hippo.png" alt="Benji" />
-            </div>
-              <h2>Welcome to Benji</h2>
-              <p>I'm here to help with your health and wellness journey. Ask me anything about nutrition, fitness, sleep, mental wellness, or any health-related questions.</p>
+              <h2>Ask Benji</h2>
+              <p>He is here to help with your health and wellness journey. Ask him anything about nutrition, fitness, sleep, mental wellness, or any health-related questions.</p>
               <div class="chat-suggestions">
                 <button class="suggestion-chip" data-suggestion="How can I improve my sleep quality?">
                   <i class="fas fa-moon"></i> Improve sleep
@@ -86,6 +92,24 @@
   <script src="../components/topbar.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="../js/chat.js"></script>
+
+  <div class="history-confirm-overlay" id="clearHistoryModal" aria-hidden="true">
+    <div class="history-confirm-card" role="dialog" aria-modal="true" aria-labelledby="clearHistoryTitle">
+      <header>
+        <div class="history-confirm-icon">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div>
+          <h3 id="clearHistoryTitle">Clear chat history?</h3>
+          <p>This will permanently remove every saved message. Are you sure?</p>
+        </div>
+      </header>
+      <div class="history-confirm-actions">
+        <button type="button" class="history-confirm-btn" id="cancelClearHistory">Cancel</button>
+        <button type="button" class="history-confirm-btn history-confirm-btn-primary" id="confirmClearHistory">Clear</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
